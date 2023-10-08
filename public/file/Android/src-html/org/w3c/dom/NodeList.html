@@ -1,0 +1,119 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (c) 2000 World Wide Web Consortium,<a name="line.2"></a>
+<FONT color="green">003</FONT>     * (Massachusetts Institute of Technology, Institut National de<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Recherche en Informatique et en Automatique, Keio University). All<a name="line.4"></a>
+<FONT color="green">005</FONT>     * Rights Reserved. This program is distributed under the W3C's Software<a name="line.5"></a>
+<FONT color="green">006</FONT>     * Intellectual Property License. This program is distributed in the<a name="line.6"></a>
+<FONT color="green">007</FONT>     * hope that it will be useful, but WITHOUT ANY WARRANTY; without even<a name="line.7"></a>
+<FONT color="green">008</FONT>     * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR<a name="line.8"></a>
+<FONT color="green">009</FONT>     * PURPOSE.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See W3C License http://www.w3.org/Consortium/Legal/ for more details.<a name="line.10"></a>
+<FONT color="green">011</FONT>     */<a name="line.11"></a>
+<FONT color="green">012</FONT>    <a name="line.12"></a>
+<FONT color="green">013</FONT>    package org.w3c.dom;<a name="line.13"></a>
+<FONT color="green">014</FONT>    <a name="line.14"></a>
+<FONT color="green">015</FONT>    // BEGIN android-note<a name="line.15"></a>
+<FONT color="green">016</FONT>    // Cleaned up @param tags that seemed to be missing spaces between<a name="line.16"></a>
+<FONT color="green">017</FONT>    // the parameter name and the start of the description.<a name="line.17"></a>
+<FONT color="green">018</FONT>    // END android-note<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    //BEGIN android-note<a name="line.20"></a>
+<FONT color="green">021</FONT>    //Filled some gaps in the documentation and refactored parts of the existing<a name="line.21"></a>
+<FONT color="green">022</FONT>    //documentation to make the Doclet happy.<a name="line.22"></a>
+<FONT color="green">023</FONT>    //END android-note<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    /**<a name="line.25"></a>
+<FONT color="green">026</FONT>     * The &lt;code&gt;NodeList&lt;/code&gt; interface provides the abstraction of an ordered <a name="line.26"></a>
+<FONT color="green">027</FONT>     * collection of nodes, without defining or constraining how this collection <a name="line.27"></a>
+<FONT color="green">028</FONT>     * is implemented. &lt;code&gt;NodeList&lt;/code&gt; objects in the DOM are live.<a name="line.28"></a>
+<FONT color="green">029</FONT>     * &lt;p&gt;The items in the &lt;code&gt;NodeList&lt;/code&gt; are accessible via an integral <a name="line.29"></a>
+<FONT color="green">030</FONT>     * index, starting from 0.<a name="line.30"></a>
+<FONT color="green">031</FONT>     * &lt;p&gt;See also the &lt;a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Core-20001113'&gt;Document Object Model (DOM) Level 2 Core Specification&lt;/a&gt;.<a name="line.31"></a>
+<FONT color="green">032</FONT>     */<a name="line.32"></a>
+<FONT color="green">033</FONT>    public interface NodeList {<a name="line.33"></a>
+<FONT color="green">034</FONT>        /**<a name="line.34"></a>
+<FONT color="green">035</FONT>         * Returns the &lt;code&gt;index&lt;/code&gt;th item in the collection. If <a name="line.35"></a>
+<FONT color="green">036</FONT>         * &lt;code&gt;index&lt;/code&gt; is greater than or equal to the number of nodes in <a name="line.36"></a>
+<FONT color="green">037</FONT>         * the list, this returns &lt;code&gt;null&lt;/code&gt;.<a name="line.37"></a>
+<FONT color="green">038</FONT>         * @param index Index into the collection.<a name="line.38"></a>
+<FONT color="green">039</FONT>         * @return The node at the &lt;code&gt;index&lt;/code&gt;th position in the <a name="line.39"></a>
+<FONT color="green">040</FONT>         *   &lt;code&gt;NodeList&lt;/code&gt;, or &lt;code&gt;null&lt;/code&gt; if that is not a valid <a name="line.40"></a>
+<FONT color="green">041</FONT>         *   index.<a name="line.41"></a>
+<FONT color="green">042</FONT>         */<a name="line.42"></a>
+<FONT color="green">043</FONT>        public Node item(int index);<a name="line.43"></a>
+<FONT color="green">044</FONT>    <a name="line.44"></a>
+<FONT color="green">045</FONT>        /**<a name="line.45"></a>
+<FONT color="green">046</FONT>         * The number of nodes in the list. The range of valid child node indices <a name="line.46"></a>
+<FONT color="green">047</FONT>         * is 0 to &lt;code&gt;length-1&lt;/code&gt; inclusive.<a name="line.47"></a>
+<FONT color="green">048</FONT>         * <a name="line.48"></a>
+<FONT color="green">049</FONT>         * @return the length of the list. <a name="line.49"></a>
+<FONT color="green">050</FONT>         */<a name="line.50"></a>
+<FONT color="green">051</FONT>        public int getLength();<a name="line.51"></a>
+<FONT color="green">052</FONT>    <a name="line.52"></a>
+<FONT color="green">053</FONT>    }<a name="line.53"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,490 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.view.animation;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.view.View;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.view.ViewGroup;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.content.Context;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.content.res.TypedArray;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.util.AttributeSet;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.util.Random;<a name="line.25"></a>
+<FONT color="green">026</FONT>    <a name="line.26"></a>
+<FONT color="green">027</FONT>    /**<a name="line.27"></a>
+<FONT color="green">028</FONT>     * A layout animation controller is used to animated a grid layout's children.<a name="line.28"></a>
+<FONT color="green">029</FONT>     *<a name="line.29"></a>
+<FONT color="green">030</FONT>     * While {@link LayoutAnimationController} relies only on the index of the child<a name="line.30"></a>
+<FONT color="green">031</FONT>     * in the view group to compute the animation delay, this class uses both the<a name="line.31"></a>
+<FONT color="green">032</FONT>     * X and Y coordinates of the child within a grid.<a name="line.32"></a>
+<FONT color="green">033</FONT>     *<a name="line.33"></a>
+<FONT color="green">034</FONT>     * In addition, the animation direction can be controlled. The default direction<a name="line.34"></a>
+<FONT color="green">035</FONT>     * is &lt;code&gt;DIRECTION_LEFT_TO_RIGHT | DIRECTION_TOP_TO_BOTTOM&lt;/code&gt;. You can<a name="line.35"></a>
+<FONT color="green">036</FONT>     * also set the animation priority to columns or rows. The default priority is<a name="line.36"></a>
+<FONT color="green">037</FONT>     * none.<a name="line.37"></a>
+<FONT color="green">038</FONT>     *<a name="line.38"></a>
+<FONT color="green">039</FONT>     * Information used to compute the animation delay of each child are stored<a name="line.39"></a>
+<FONT color="green">040</FONT>     * in an instance of<a name="line.40"></a>
+<FONT color="green">041</FONT>     * {@link android.view.animation.GridLayoutAnimationController.AnimationParameters},<a name="line.41"></a>
+<FONT color="green">042</FONT>     * itself stored in the {@link android.view.ViewGroup.LayoutParams} of the view.<a name="line.42"></a>
+<FONT color="green">043</FONT>     *<a name="line.43"></a>
+<FONT color="green">044</FONT>     * @see LayoutAnimationController<a name="line.44"></a>
+<FONT color="green">045</FONT>     * @see android.widget.GridView<a name="line.45"></a>
+<FONT color="green">046</FONT>     * <a name="line.46"></a>
+<FONT color="green">047</FONT>     * @attr ref android.R.styleable#GridLayoutAnimation_columnDelay<a name="line.47"></a>
+<FONT color="green">048</FONT>     * @attr ref android.R.styleable#GridLayoutAnimation_rowDelay<a name="line.48"></a>
+<FONT color="green">049</FONT>     * @attr ref android.R.styleable#GridLayoutAnimation_direction<a name="line.49"></a>
+<FONT color="green">050</FONT>     * @attr ref android.R.styleable#GridLayoutAnimation_directionPriority<a name="line.50"></a>
+<FONT color="green">051</FONT>     */<a name="line.51"></a>
+<FONT color="green">052</FONT>    public class GridLayoutAnimationController extends LayoutAnimationController {<a name="line.52"></a>
+<FONT color="green">053</FONT>        /**<a name="line.53"></a>
+<FONT color="green">054</FONT>         * Animates the children starting from the left of the grid to the right.<a name="line.54"></a>
+<FONT color="green">055</FONT>         */<a name="line.55"></a>
+<FONT color="green">056</FONT>        public static final int DIRECTION_LEFT_TO_RIGHT = 0x0;<a name="line.56"></a>
+<FONT color="green">057</FONT>    <a name="line.57"></a>
+<FONT color="green">058</FONT>        /**<a name="line.58"></a>
+<FONT color="green">059</FONT>         * Animates the children starting from the right of the grid to the left.<a name="line.59"></a>
+<FONT color="green">060</FONT>         */<a name="line.60"></a>
+<FONT color="green">061</FONT>        public static final int DIRECTION_RIGHT_TO_LEFT = 0x1;<a name="line.61"></a>
+<FONT color="green">062</FONT>    <a name="line.62"></a>
+<FONT color="green">063</FONT>        /**<a name="line.63"></a>
+<FONT color="green">064</FONT>         * Animates the children starting from the top of the grid to the bottom.<a name="line.64"></a>
+<FONT color="green">065</FONT>         */<a name="line.65"></a>
+<FONT color="green">066</FONT>        public static final int DIRECTION_TOP_TO_BOTTOM = 0x0;<a name="line.66"></a>
+<FONT color="green">067</FONT>    <a name="line.67"></a>
+<FONT color="green">068</FONT>        /**<a name="line.68"></a>
+<FONT color="green">069</FONT>         * Animates the children starting from the bottom of the grid to the top.<a name="line.69"></a>
+<FONT color="green">070</FONT>         */<a name="line.70"></a>
+<FONT color="green">071</FONT>        public static final int DIRECTION_BOTTOM_TO_TOP = 0x2;<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        /**<a name="line.73"></a>
+<FONT color="green">074</FONT>         * Bitmask used to retrieve the horizontal component of the direction.<a name="line.74"></a>
+<FONT color="green">075</FONT>         */<a name="line.75"></a>
+<FONT color="green">076</FONT>        public static final int DIRECTION_HORIZONTAL_MASK = 0x1;<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>        /**<a name="line.78"></a>
+<FONT color="green">079</FONT>         * Bitmask used to retrieve the vertical component of the direction.<a name="line.79"></a>
+<FONT color="green">080</FONT>         */<a name="line.80"></a>
+<FONT color="green">081</FONT>        public static final int DIRECTION_VERTICAL_MASK   = 0x2;<a name="line.81"></a>
+<FONT color="green">082</FONT>    <a name="line.82"></a>
+<FONT color="green">083</FONT>        /**<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Rows and columns are animated at the same time.<a name="line.84"></a>
+<FONT color="green">085</FONT>         */<a name="line.85"></a>
+<FONT color="green">086</FONT>        public static final int PRIORITY_NONE   = 0;<a name="line.86"></a>
+<FONT color="green">087</FONT>    <a name="line.87"></a>
+<FONT color="green">088</FONT>        /**<a name="line.88"></a>
+<FONT color="green">089</FONT>         * Columns are animated first.<a name="line.89"></a>
+<FONT color="green">090</FONT>         */<a name="line.90"></a>
+<FONT color="green">091</FONT>        public static final int PRIORITY_COLUMN = 1;<a name="line.91"></a>
+<FONT color="green">092</FONT>    <a name="line.92"></a>
+<FONT color="green">093</FONT>        /**<a name="line.93"></a>
+<FONT color="green">094</FONT>         * Rows are animated first.<a name="line.94"></a>
+<FONT color="green">095</FONT>         */<a name="line.95"></a>
+<FONT color="green">096</FONT>        public static final int PRIORITY_ROW    = 2;<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>        private float mColumnDelay;<a name="line.98"></a>
+<FONT color="green">099</FONT>        private float mRowDelay;<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>        private int mDirection;<a name="line.101"></a>
+<FONT color="green">102</FONT>        private int mDirectionPriority;<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>        /**<a name="line.104"></a>
+<FONT color="green">105</FONT>         * Creates a new grid layout animation controller from external resources.<a name="line.105"></a>
+<FONT color="green">106</FONT>         *<a name="line.106"></a>
+<FONT color="green">107</FONT>         * @param context the Context the view  group is running in, through which<a name="line.107"></a>
+<FONT color="green">108</FONT>         *        it can access the resources<a name="line.108"></a>
+<FONT color="green">109</FONT>         * @param attrs the attributes of the XML tag that is inflating the<a name="line.109"></a>
+<FONT color="green">110</FONT>         *        layout animation controller<a name="line.110"></a>
+<FONT color="green">111</FONT>         */<a name="line.111"></a>
+<FONT color="green">112</FONT>        public GridLayoutAnimationController(Context context, AttributeSet attrs) {<a name="line.112"></a>
+<FONT color="green">113</FONT>            super(context, attrs);<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>            TypedArray a = context.obtainStyledAttributes(attrs,<a name="line.115"></a>
+<FONT color="green">116</FONT>                    com.android.internal.R.styleable.GridLayoutAnimation);<a name="line.116"></a>
+<FONT color="green">117</FONT>    <a name="line.117"></a>
+<FONT color="green">118</FONT>            Animation.Description d = Animation.Description.parseValue(<a name="line.118"></a>
+<FONT color="green">119</FONT>                    a.peekValue(com.android.internal.R.styleable.GridLayoutAnimation_columnDelay));<a name="line.119"></a>
+<FONT color="green">120</FONT>            mColumnDelay = d.value;<a name="line.120"></a>
+<FONT color="green">121</FONT>            d = Animation.Description.parseValue(<a name="line.121"></a>
+<FONT color="green">122</FONT>                    a.peekValue(com.android.internal.R.styleable.GridLayoutAnimation_rowDelay));<a name="line.122"></a>
+<FONT color="green">123</FONT>            mRowDelay = d.value;<a name="line.123"></a>
+<FONT color="green">124</FONT>            //noinspection PointlessBitwiseExpression<a name="line.124"></a>
+<FONT color="green">125</FONT>            mDirection = a.getInt(com.android.internal.R.styleable.GridLayoutAnimation_direction,<a name="line.125"></a>
+<FONT color="green">126</FONT>                    DIRECTION_LEFT_TO_RIGHT | DIRECTION_TOP_TO_BOTTOM);<a name="line.126"></a>
+<FONT color="green">127</FONT>            mDirectionPriority = a.getInt(com.android.internal.R.styleable.GridLayoutAnimation_directionPriority,<a name="line.127"></a>
+<FONT color="green">128</FONT>                    PRIORITY_NONE);<a name="line.128"></a>
+<FONT color="green">129</FONT>    <a name="line.129"></a>
+<FONT color="green">130</FONT>            a.recycle();<a name="line.130"></a>
+<FONT color="green">131</FONT>        }<a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>        /**<a name="line.133"></a>
+<FONT color="green">134</FONT>         * Creates a new layout animation controller with a delay of 50%<a name="line.134"></a>
+<FONT color="green">135</FONT>         * for both rows and columns and the specified animation.<a name="line.135"></a>
+<FONT color="green">136</FONT>         *<a name="line.136"></a>
+<FONT color="green">137</FONT>         * @param animation the animation to use on each child of the view group<a name="line.137"></a>
+<FONT color="green">138</FONT>         */<a name="line.138"></a>
+<FONT color="green">139</FONT>        public GridLayoutAnimationController(Animation animation) {<a name="line.139"></a>
+<FONT color="green">140</FONT>            this(animation, 0.5f, 0.5f);<a name="line.140"></a>
+<FONT color="green">141</FONT>        }<a name="line.141"></a>
+<FONT color="green">142</FONT>    <a name="line.142"></a>
+<FONT color="green">143</FONT>        /**<a name="line.143"></a>
+<FONT color="green">144</FONT>         * Creates a new layout animation controller with the specified delays<a name="line.144"></a>
+<FONT color="green">145</FONT>         * and the specified animation.<a name="line.145"></a>
+<FONT color="green">146</FONT>         *<a name="line.146"></a>
+<FONT color="green">147</FONT>         * @param animation the animation to use on each child of the view group<a name="line.147"></a>
+<FONT color="green">148</FONT>         * @param columnDelay the delay by which each column animation must be offset<a name="line.148"></a>
+<FONT color="green">149</FONT>         * @param rowDelay the delay by which each row animation must be offset<a name="line.149"></a>
+<FONT color="green">150</FONT>         */<a name="line.150"></a>
+<FONT color="green">151</FONT>        public GridLayoutAnimationController(Animation animation, float columnDelay, float rowDelay) {<a name="line.151"></a>
+<FONT color="green">152</FONT>            super(animation);<a name="line.152"></a>
+<FONT color="green">153</FONT>            mColumnDelay = columnDelay;<a name="line.153"></a>
+<FONT color="green">154</FONT>            mRowDelay = rowDelay;<a name="line.154"></a>
+<FONT color="green">155</FONT>        }<a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Returns the delay by which the children's animation are offset from one<a name="line.158"></a>
+<FONT color="green">159</FONT>         * column to the other. The delay is expressed as a fraction of the<a name="line.159"></a>
+<FONT color="green">160</FONT>         * animation duration.<a name="line.160"></a>
+<FONT color="green">161</FONT>         *<a name="line.161"></a>
+<FONT color="green">162</FONT>         * @return a fraction of the animation duration<a name="line.162"></a>
+<FONT color="green">163</FONT>         *<a name="line.163"></a>
+<FONT color="green">164</FONT>         * @see #setColumnDelay(float)<a name="line.164"></a>
+<FONT color="green">165</FONT>         * @see #getRowDelay()<a name="line.165"></a>
+<FONT color="green">166</FONT>         * @see #setRowDelay(float)<a name="line.166"></a>
+<FONT color="green">167</FONT>         */<a name="line.167"></a>
+<FONT color="green">168</FONT>        public float getColumnDelay() {<a name="line.168"></a>
+<FONT color="green">169</FONT>            return mColumnDelay;<a name="line.169"></a>
+<FONT color="green">170</FONT>        }<a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>        /**<a name="line.172"></a>
+<FONT color="green">173</FONT>         * Sets the delay, as a fraction of the animation duration, by which the<a name="line.173"></a>
+<FONT color="green">174</FONT>         * children's animations are offset from one column to the other.<a name="line.174"></a>
+<FONT color="green">175</FONT>         *<a name="line.175"></a>
+<FONT color="green">176</FONT>         * @param columnDelay a fraction of the animation duration<a name="line.176"></a>
+<FONT color="green">177</FONT>         *<a name="line.177"></a>
+<FONT color="green">178</FONT>         * @see #getColumnDelay()<a name="line.178"></a>
+<FONT color="green">179</FONT>         * @see #getRowDelay()<a name="line.179"></a>
+<FONT color="green">180</FONT>         * @see #setRowDelay(float)<a name="line.180"></a>
+<FONT color="green">181</FONT>         */<a name="line.181"></a>
+<FONT color="green">182</FONT>        public void setColumnDelay(float columnDelay) {<a name="line.182"></a>
+<FONT color="green">183</FONT>            mColumnDelay = columnDelay;<a name="line.183"></a>
+<FONT color="green">184</FONT>        }<a name="line.184"></a>
+<FONT color="green">185</FONT>    <a name="line.185"></a>
+<FONT color="green">186</FONT>        /**<a name="line.186"></a>
+<FONT color="green">187</FONT>         * Returns the delay by which the children's animation are offset from one<a name="line.187"></a>
+<FONT color="green">188</FONT>         * row to the other. The delay is expressed as a fraction of the<a name="line.188"></a>
+<FONT color="green">189</FONT>         * animation duration.<a name="line.189"></a>
+<FONT color="green">190</FONT>         *<a name="line.190"></a>
+<FONT color="green">191</FONT>         * @return a fraction of the animation duration<a name="line.191"></a>
+<FONT color="green">192</FONT>         *<a name="line.192"></a>
+<FONT color="green">193</FONT>         * @see #setRowDelay(float)<a name="line.193"></a>
+<FONT color="green">194</FONT>         * @see #getColumnDelay()<a name="line.194"></a>
+<FONT color="green">195</FONT>         * @see #setColumnDelay(float)<a name="line.195"></a>
+<FONT color="green">196</FONT>         */<a name="line.196"></a>
+<FONT color="green">197</FONT>        public float getRowDelay() {<a name="line.197"></a>
+<FONT color="green">198</FONT>            return mRowDelay;<a name="line.198"></a>
+<FONT color="green">199</FONT>        }<a name="line.199"></a>
+<FONT color="green">200</FONT>    <a name="line.200"></a>
+<FONT color="green">201</FONT>        /**<a name="line.201"></a>
+<FONT color="green">202</FONT>         * Sets the delay, as a fraction of the animation duration, by which the<a name="line.202"></a>
+<FONT color="green">203</FONT>         * children's animations are offset from one row to the other.<a name="line.203"></a>
+<FONT color="green">204</FONT>         *<a name="line.204"></a>
+<FONT color="green">205</FONT>         * @param rowDelay a fraction of the animation duration<a name="line.205"></a>
+<FONT color="green">206</FONT>         *<a name="line.206"></a>
+<FONT color="green">207</FONT>         * @see #getRowDelay()<a name="line.207"></a>
+<FONT color="green">208</FONT>         * @see #getColumnDelay()<a name="line.208"></a>
+<FONT color="green">209</FONT>         * @see #setColumnDelay(float) <a name="line.209"></a>
+<FONT color="green">210</FONT>         */<a name="line.210"></a>
+<FONT color="green">211</FONT>        public void setRowDelay(float rowDelay) {<a name="line.211"></a>
+<FONT color="green">212</FONT>            mRowDelay = rowDelay;<a name="line.212"></a>
+<FONT color="green">213</FONT>        }<a name="line.213"></a>
+<FONT color="green">214</FONT>    <a name="line.214"></a>
+<FONT color="green">215</FONT>        /**<a name="line.215"></a>
+<FONT color="green">216</FONT>         * Returns the direction of the animation. {@link #DIRECTION_HORIZONTAL_MASK}<a name="line.216"></a>
+<FONT color="green">217</FONT>         * and {@link #DIRECTION_VERTICAL_MASK} can be used to retrieve the<a name="line.217"></a>
+<FONT color="green">218</FONT>         * horizontal and vertical components of the direction.<a name="line.218"></a>
+<FONT color="green">219</FONT>         *<a name="line.219"></a>
+<FONT color="green">220</FONT>         * @return the direction of the animation<a name="line.220"></a>
+<FONT color="green">221</FONT>         *<a name="line.221"></a>
+<FONT color="green">222</FONT>         * @see #setDirection(int)<a name="line.222"></a>
+<FONT color="green">223</FONT>         * @see #DIRECTION_BOTTOM_TO_TOP<a name="line.223"></a>
+<FONT color="green">224</FONT>         * @see #DIRECTION_TOP_TO_BOTTOM<a name="line.224"></a>
+<FONT color="green">225</FONT>         * @see #DIRECTION_LEFT_TO_RIGHT<a name="line.225"></a>
+<FONT color="green">226</FONT>         * @see #DIRECTION_RIGHT_TO_LEFT<a name="line.226"></a>
+<FONT color="green">227</FONT>         * @see #DIRECTION_HORIZONTAL_MASK<a name="line.227"></a>
+<FONT color="green">228</FONT>         * @see #DIRECTION_VERTICAL_MASK<a name="line.228"></a>
+<FONT color="green">229</FONT>         */<a name="line.229"></a>
+<FONT color="green">230</FONT>        public int getDirection() {<a name="line.230"></a>
+<FONT color="green">231</FONT>            return mDirection;<a name="line.231"></a>
+<FONT color="green">232</FONT>        }<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>        /**<a name="line.234"></a>
+<FONT color="green">235</FONT>         * Sets the direction of the animation. The direction is expressed as an<a name="line.235"></a>
+<FONT color="green">236</FONT>         * integer containing a horizontal and vertical component. For instance,<a name="line.236"></a>
+<FONT color="green">237</FONT>         * &lt;code&gt;DIRECTION_BOTTOM_TO_TOP | DIRECTION_RIGHT_TO_LEFT&lt;/code&gt;.<a name="line.237"></a>
+<FONT color="green">238</FONT>         *<a name="line.238"></a>
+<FONT color="green">239</FONT>         * @param direction the direction of the animation<a name="line.239"></a>
+<FONT color="green">240</FONT>         *<a name="line.240"></a>
+<FONT color="green">241</FONT>         * @see #getDirection()<a name="line.241"></a>
+<FONT color="green">242</FONT>         * @see #DIRECTION_BOTTOM_TO_TOP<a name="line.242"></a>
+<FONT color="green">243</FONT>         * @see #DIRECTION_TOP_TO_BOTTOM<a name="line.243"></a>
+<FONT color="green">244</FONT>         * @see #DIRECTION_LEFT_TO_RIGHT<a name="line.244"></a>
+<FONT color="green">245</FONT>         * @see #DIRECTION_RIGHT_TO_LEFT<a name="line.245"></a>
+<FONT color="green">246</FONT>         * @see #DIRECTION_HORIZONTAL_MASK<a name="line.246"></a>
+<FONT color="green">247</FONT>         * @see #DIRECTION_VERTICAL_MASK<a name="line.247"></a>
+<FONT color="green">248</FONT>         */<a name="line.248"></a>
+<FONT color="green">249</FONT>        public void setDirection(int direction) {<a name="line.249"></a>
+<FONT color="green">250</FONT>            mDirection = direction;<a name="line.250"></a>
+<FONT color="green">251</FONT>        }<a name="line.251"></a>
+<FONT color="green">252</FONT>    <a name="line.252"></a>
+<FONT color="green">253</FONT>        /**<a name="line.253"></a>
+<FONT color="green">254</FONT>         * Returns the direction priority for the animation. The priority can<a name="line.254"></a>
+<FONT color="green">255</FONT>         * be either {@link #PRIORITY_NONE}, {@link #PRIORITY_COLUMN} or<a name="line.255"></a>
+<FONT color="green">256</FONT>         * {@link #PRIORITY_ROW}.<a name="line.256"></a>
+<FONT color="green">257</FONT>         *<a name="line.257"></a>
+<FONT color="green">258</FONT>         * @return the priority of the animation direction<a name="line.258"></a>
+<FONT color="green">259</FONT>         *<a name="line.259"></a>
+<FONT color="green">260</FONT>         * @see #setDirectionPriority(int)<a name="line.260"></a>
+<FONT color="green">261</FONT>         * @see #PRIORITY_COLUMN<a name="line.261"></a>
+<FONT color="green">262</FONT>         * @see #PRIORITY_NONE<a name="line.262"></a>
+<FONT color="green">263</FONT>         * @see #PRIORITY_ROW<a name="line.263"></a>
+<FONT color="green">264</FONT>         */<a name="line.264"></a>
+<FONT color="green">265</FONT>        public int getDirectionPriority() {<a name="line.265"></a>
+<FONT color="green">266</FONT>            return mDirectionPriority;<a name="line.266"></a>
+<FONT color="green">267</FONT>        }<a name="line.267"></a>
+<FONT color="green">268</FONT>    <a name="line.268"></a>
+<FONT color="green">269</FONT>        /**<a name="line.269"></a>
+<FONT color="green">270</FONT>         * Specifies the direction priority of the animation. For instance,<a name="line.270"></a>
+<FONT color="green">271</FONT>         * {@link #PRIORITY_COLUMN} will give priority to columns: the animation<a name="line.271"></a>
+<FONT color="green">272</FONT>         * will first play on the column, then on the rows.Z<a name="line.272"></a>
+<FONT color="green">273</FONT>         *<a name="line.273"></a>
+<FONT color="green">274</FONT>         * @param directionPriority the direction priority of the animation<a name="line.274"></a>
+<FONT color="green">275</FONT>         *<a name="line.275"></a>
+<FONT color="green">276</FONT>         * @see #getDirectionPriority()<a name="line.276"></a>
+<FONT color="green">277</FONT>         * @see #PRIORITY_COLUMN<a name="line.277"></a>
+<FONT color="green">278</FONT>         * @see #PRIORITY_NONE<a name="line.278"></a>
+<FONT color="green">279</FONT>         * @see #PRIORITY_ROW<a name="line.279"></a>
+<FONT color="green">280</FONT>         */<a name="line.280"></a>
+<FONT color="green">281</FONT>        public void setDirectionPriority(int directionPriority) {<a name="line.281"></a>
+<FONT color="green">282</FONT>            mDirectionPriority = directionPriority;<a name="line.282"></a>
+<FONT color="green">283</FONT>        }<a name="line.283"></a>
+<FONT color="green">284</FONT>    <a name="line.284"></a>
+<FONT color="green">285</FONT>        /**<a name="line.285"></a>
+<FONT color="green">286</FONT>         * {@inheritDoc}<a name="line.286"></a>
+<FONT color="green">287</FONT>         */<a name="line.287"></a>
+<FONT color="green">288</FONT>        @Override<a name="line.288"></a>
+<FONT color="green">289</FONT>        public boolean willOverlap() {<a name="line.289"></a>
+<FONT color="green">290</FONT>            return mColumnDelay &lt; 1.0f || mRowDelay &lt; 1.0f;<a name="line.290"></a>
+<FONT color="green">291</FONT>        }<a name="line.291"></a>
+<FONT color="green">292</FONT>    <a name="line.292"></a>
+<FONT color="green">293</FONT>        /**<a name="line.293"></a>
+<FONT color="green">294</FONT>         * {@inheritDoc}<a name="line.294"></a>
+<FONT color="green">295</FONT>         */<a name="line.295"></a>
+<FONT color="green">296</FONT>        @Override<a name="line.296"></a>
+<FONT color="green">297</FONT>        protected long getDelayForView(View view) {<a name="line.297"></a>
+<FONT color="green">298</FONT>            ViewGroup.LayoutParams lp = view.getLayoutParams();<a name="line.298"></a>
+<FONT color="green">299</FONT>            AnimationParameters params = (AnimationParameters) lp.layoutAnimationParameters;<a name="line.299"></a>
+<FONT color="green">300</FONT>    <a name="line.300"></a>
+<FONT color="green">301</FONT>            if (params == null) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                return 0;<a name="line.302"></a>
+<FONT color="green">303</FONT>            }<a name="line.303"></a>
+<FONT color="green">304</FONT>    <a name="line.304"></a>
+<FONT color="green">305</FONT>            final int column = getTransformedColumnIndex(params);<a name="line.305"></a>
+<FONT color="green">306</FONT>            final int row = getTransformedRowIndex(params);<a name="line.306"></a>
+<FONT color="green">307</FONT>    <a name="line.307"></a>
+<FONT color="green">308</FONT>            final int rowsCount = params.rowsCount;<a name="line.308"></a>
+<FONT color="green">309</FONT>            final int columnsCount = params.columnsCount;<a name="line.309"></a>
+<FONT color="green">310</FONT>    <a name="line.310"></a>
+<FONT color="green">311</FONT>            final long duration = mAnimation.getDuration();<a name="line.311"></a>
+<FONT color="green">312</FONT>            final float columnDelay = mColumnDelay * duration;<a name="line.312"></a>
+<FONT color="green">313</FONT>            final float rowDelay = mRowDelay * duration;<a name="line.313"></a>
+<FONT color="green">314</FONT>    <a name="line.314"></a>
+<FONT color="green">315</FONT>            float totalDelay;<a name="line.315"></a>
+<FONT color="green">316</FONT>            long viewDelay;<a name="line.316"></a>
+<FONT color="green">317</FONT>    <a name="line.317"></a>
+<FONT color="green">318</FONT>            if (mInterpolator == null) {<a name="line.318"></a>
+<FONT color="green">319</FONT>                mInterpolator = new LinearInterpolator();<a name="line.319"></a>
+<FONT color="green">320</FONT>            }<a name="line.320"></a>
+<FONT color="green">321</FONT>    <a name="line.321"></a>
+<FONT color="green">322</FONT>            switch (mDirectionPriority) {<a name="line.322"></a>
+<FONT color="green">323</FONT>                case PRIORITY_COLUMN:<a name="line.323"></a>
+<FONT color="green">324</FONT>                    viewDelay = (long) (row * rowDelay + column * rowsCount * rowDelay);<a name="line.324"></a>
+<FONT color="green">325</FONT>                    totalDelay = rowsCount * rowDelay + columnsCount * rowsCount * rowDelay;<a name="line.325"></a>
+<FONT color="green">326</FONT>                    break;<a name="line.326"></a>
+<FONT color="green">327</FONT>                case PRIORITY_ROW:<a name="line.327"></a>
+<FONT color="green">328</FONT>                    viewDelay = (long) (column * columnDelay + row * columnsCount * columnDelay);<a name="line.328"></a>
+<FONT color="green">329</FONT>                    totalDelay = columnsCount * columnDelay + rowsCount * columnsCount * columnDelay;<a name="line.329"></a>
+<FONT color="green">330</FONT>                    break;<a name="line.330"></a>
+<FONT color="green">331</FONT>                case PRIORITY_NONE:<a name="line.331"></a>
+<FONT color="green">332</FONT>                default:<a name="line.332"></a>
+<FONT color="green">333</FONT>                    viewDelay = (long) (column * columnDelay + row * rowDelay);<a name="line.333"></a>
+<FONT color="green">334</FONT>                    totalDelay = columnsCount * columnDelay + rowsCount * rowDelay;<a name="line.334"></a>
+<FONT color="green">335</FONT>                    break;<a name="line.335"></a>
+<FONT color="green">336</FONT>            }<a name="line.336"></a>
+<FONT color="green">337</FONT>    <a name="line.337"></a>
+<FONT color="green">338</FONT>            float normalizedDelay = viewDelay / totalDelay;<a name="line.338"></a>
+<FONT color="green">339</FONT>            normalizedDelay = mInterpolator.getInterpolation(normalizedDelay);<a name="line.339"></a>
+<FONT color="green">340</FONT>    <a name="line.340"></a>
+<FONT color="green">341</FONT>            return (long) (normalizedDelay * totalDelay);<a name="line.341"></a>
+<FONT color="green">342</FONT>        }<a name="line.342"></a>
+<FONT color="green">343</FONT>    <a name="line.343"></a>
+<FONT color="green">344</FONT>        private int getTransformedColumnIndex(AnimationParameters params) {<a name="line.344"></a>
+<FONT color="green">345</FONT>            int index;<a name="line.345"></a>
+<FONT color="green">346</FONT>            switch (getOrder()) {<a name="line.346"></a>
+<FONT color="green">347</FONT>                case ORDER_REVERSE:<a name="line.347"></a>
+<FONT color="green">348</FONT>                    index = params.columnsCount - 1 - params.column;<a name="line.348"></a>
+<FONT color="green">349</FONT>                    break;<a name="line.349"></a>
+<FONT color="green">350</FONT>                case ORDER_RANDOM:<a name="line.350"></a>
+<FONT color="green">351</FONT>                    if (mRandomizer == null) {<a name="line.351"></a>
+<FONT color="green">352</FONT>                        mRandomizer = new Random();<a name="line.352"></a>
+<FONT color="green">353</FONT>                    }<a name="line.353"></a>
+<FONT color="green">354</FONT>                    index = (int) (params.columnsCount * mRandomizer.nextFloat());<a name="line.354"></a>
+<FONT color="green">355</FONT>                    break;<a name="line.355"></a>
+<FONT color="green">356</FONT>                case ORDER_NORMAL:<a name="line.356"></a>
+<FONT color="green">357</FONT>                default:<a name="line.357"></a>
+<FONT color="green">358</FONT>                    index = params.column;<a name="line.358"></a>
+<FONT color="green">359</FONT>                    break;<a name="line.359"></a>
+<FONT color="green">360</FONT>            }<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>            int direction = mDirection &amp; DIRECTION_HORIZONTAL_MASK;<a name="line.362"></a>
+<FONT color="green">363</FONT>            if (direction == DIRECTION_RIGHT_TO_LEFT) {<a name="line.363"></a>
+<FONT color="green">364</FONT>                index = params.columnsCount - 1 - index;<a name="line.364"></a>
+<FONT color="green">365</FONT>            }<a name="line.365"></a>
+<FONT color="green">366</FONT>    <a name="line.366"></a>
+<FONT color="green">367</FONT>            return index;<a name="line.367"></a>
+<FONT color="green">368</FONT>        }<a name="line.368"></a>
+<FONT color="green">369</FONT>    <a name="line.369"></a>
+<FONT color="green">370</FONT>        private int getTransformedRowIndex(AnimationParameters params) {<a name="line.370"></a>
+<FONT color="green">371</FONT>            int index;<a name="line.371"></a>
+<FONT color="green">372</FONT>            switch (getOrder()) {<a name="line.372"></a>
+<FONT color="green">373</FONT>                case ORDER_REVERSE:<a name="line.373"></a>
+<FONT color="green">374</FONT>                    index = params.rowsCount - 1 - params.row;<a name="line.374"></a>
+<FONT color="green">375</FONT>                    break;<a name="line.375"></a>
+<FONT color="green">376</FONT>                case ORDER_RANDOM:<a name="line.376"></a>
+<FONT color="green">377</FONT>                    if (mRandomizer == null) {<a name="line.377"></a>
+<FONT color="green">378</FONT>                        mRandomizer = new Random();<a name="line.378"></a>
+<FONT color="green">379</FONT>                    }<a name="line.379"></a>
+<FONT color="green">380</FONT>                    index = (int) (params.rowsCount * mRandomizer.nextFloat());<a name="line.380"></a>
+<FONT color="green">381</FONT>                    break;<a name="line.381"></a>
+<FONT color="green">382</FONT>                case ORDER_NORMAL:<a name="line.382"></a>
+<FONT color="green">383</FONT>                default:<a name="line.383"></a>
+<FONT color="green">384</FONT>                    index = params.row;<a name="line.384"></a>
+<FONT color="green">385</FONT>                    break;<a name="line.385"></a>
+<FONT color="green">386</FONT>            }<a name="line.386"></a>
+<FONT color="green">387</FONT>    <a name="line.387"></a>
+<FONT color="green">388</FONT>            int direction = mDirection &amp; DIRECTION_VERTICAL_MASK;<a name="line.388"></a>
+<FONT color="green">389</FONT>            if (direction == DIRECTION_BOTTOM_TO_TOP) {<a name="line.389"></a>
+<FONT color="green">390</FONT>                index = params.rowsCount - 1 - index;<a name="line.390"></a>
+<FONT color="green">391</FONT>            }<a name="line.391"></a>
+<FONT color="green">392</FONT>    <a name="line.392"></a>
+<FONT color="green">393</FONT>            return index;<a name="line.393"></a>
+<FONT color="green">394</FONT>        }<a name="line.394"></a>
+<FONT color="green">395</FONT>    <a name="line.395"></a>
+<FONT color="green">396</FONT>        /**<a name="line.396"></a>
+<FONT color="green">397</FONT>         * The set of parameters that has to be attached to each view contained in<a name="line.397"></a>
+<FONT color="green">398</FONT>         * the view group animated by the grid layout animation controller. These<a name="line.398"></a>
+<FONT color="green">399</FONT>         * parameters are used to compute the start time of each individual view's<a name="line.399"></a>
+<FONT color="green">400</FONT>         * animation.<a name="line.400"></a>
+<FONT color="green">401</FONT>         */<a name="line.401"></a>
+<FONT color="green">402</FONT>        public static class AnimationParameters extends<a name="line.402"></a>
+<FONT color="green">403</FONT>                LayoutAnimationController.AnimationParameters {<a name="line.403"></a>
+<FONT color="green">404</FONT>            /**<a name="line.404"></a>
+<FONT color="green">405</FONT>             * The view group's column to which the view belongs.<a name="line.405"></a>
+<FONT color="green">406</FONT>             */<a name="line.406"></a>
+<FONT color="green">407</FONT>            public int column;<a name="line.407"></a>
+<FONT color="green">408</FONT>    <a name="line.408"></a>
+<FONT color="green">409</FONT>            /**<a name="line.409"></a>
+<FONT color="green">410</FONT>             * The view group's row to which the view belongs.<a name="line.410"></a>
+<FONT color="green">411</FONT>             */<a name="line.411"></a>
+<FONT color="green">412</FONT>            public int row;<a name="line.412"></a>
+<FONT color="green">413</FONT>    <a name="line.413"></a>
+<FONT color="green">414</FONT>            /**<a name="line.414"></a>
+<FONT color="green">415</FONT>             * The number of columns in the view's enclosing grid layout.<a name="line.415"></a>
+<FONT color="green">416</FONT>             */<a name="line.416"></a>
+<FONT color="green">417</FONT>            public int columnsCount;<a name="line.417"></a>
+<FONT color="green">418</FONT>    <a name="line.418"></a>
+<FONT color="green">419</FONT>            /**<a name="line.419"></a>
+<FONT color="green">420</FONT>             * The number of rows in the view's enclosing grid layout.<a name="line.420"></a>
+<FONT color="green">421</FONT>             */<a name="line.421"></a>
+<FONT color="green">422</FONT>            public int rowsCount;<a name="line.422"></a>
+<FONT color="green">423</FONT>        }<a name="line.423"></a>
+<FONT color="green">424</FONT>    }<a name="line.424"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

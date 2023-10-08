@@ -1,0 +1,452 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.widget;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.content.Context;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.view.ViewConfiguration;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.view.animation.AnimationUtils;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.view.animation.Interpolator;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    /**<a name="line.25"></a>
+<FONT color="green">026</FONT>     * This class encapsulates scrolling.  The duration of the scroll<a name="line.26"></a>
+<FONT color="green">027</FONT>     * can be passed in the constructor and specifies the maximum time that<a name="line.27"></a>
+<FONT color="green">028</FONT>     * the scrolling animation should take.  Past this time, the scrolling is <a name="line.28"></a>
+<FONT color="green">029</FONT>     * automatically moved to its final stage and computeScrollOffset()<a name="line.29"></a>
+<FONT color="green">030</FONT>     * will always return false to indicate that scrolling is over.<a name="line.30"></a>
+<FONT color="green">031</FONT>     */<a name="line.31"></a>
+<FONT color="green">032</FONT>    public class Scroller  {<a name="line.32"></a>
+<FONT color="green">033</FONT>        private int mMode;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>        private int mStartX;<a name="line.35"></a>
+<FONT color="green">036</FONT>        private int mStartY;<a name="line.36"></a>
+<FONT color="green">037</FONT>        private int mFinalX;<a name="line.37"></a>
+<FONT color="green">038</FONT>        private int mFinalY;<a name="line.38"></a>
+<FONT color="green">039</FONT>    <a name="line.39"></a>
+<FONT color="green">040</FONT>        private int mMinX;<a name="line.40"></a>
+<FONT color="green">041</FONT>        private int mMaxX;<a name="line.41"></a>
+<FONT color="green">042</FONT>        private int mMinY;<a name="line.42"></a>
+<FONT color="green">043</FONT>        private int mMaxY;<a name="line.43"></a>
+<FONT color="green">044</FONT>    <a name="line.44"></a>
+<FONT color="green">045</FONT>        private int mCurrX;<a name="line.45"></a>
+<FONT color="green">046</FONT>        private int mCurrY;<a name="line.46"></a>
+<FONT color="green">047</FONT>        private long mStartTime;<a name="line.47"></a>
+<FONT color="green">048</FONT>        private int mDuration;<a name="line.48"></a>
+<FONT color="green">049</FONT>        private float mDurationReciprocal;<a name="line.49"></a>
+<FONT color="green">050</FONT>        private float mDeltaX;<a name="line.50"></a>
+<FONT color="green">051</FONT>        private float mDeltaY;<a name="line.51"></a>
+<FONT color="green">052</FONT>        private float mViscousFluidScale;<a name="line.52"></a>
+<FONT color="green">053</FONT>        private float mViscousFluidNormalize;<a name="line.53"></a>
+<FONT color="green">054</FONT>        private boolean mFinished;<a name="line.54"></a>
+<FONT color="green">055</FONT>        private Interpolator mInterpolator;<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>        private float mCoeffX = 0.0f;<a name="line.57"></a>
+<FONT color="green">058</FONT>        private float mCoeffY = 1.0f;<a name="line.58"></a>
+<FONT color="green">059</FONT>        private float mVelocity;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        private static final int DEFAULT_DURATION = 250;<a name="line.61"></a>
+<FONT color="green">062</FONT>        private static final int SCROLL_MODE = 0;<a name="line.62"></a>
+<FONT color="green">063</FONT>        private static final int FLING_MODE = 1;<a name="line.63"></a>
+<FONT color="green">064</FONT>    <a name="line.64"></a>
+<FONT color="green">065</FONT>        private final float mDeceleration;<a name="line.65"></a>
+<FONT color="green">066</FONT>    <a name="line.66"></a>
+<FONT color="green">067</FONT>        /**<a name="line.67"></a>
+<FONT color="green">068</FONT>         * Create a Scroller with the default duration and interpolator.<a name="line.68"></a>
+<FONT color="green">069</FONT>         */<a name="line.69"></a>
+<FONT color="green">070</FONT>        public Scroller(Context context) {<a name="line.70"></a>
+<FONT color="green">071</FONT>            this(context, null);<a name="line.71"></a>
+<FONT color="green">072</FONT>        }<a name="line.72"></a>
+<FONT color="green">073</FONT>    <a name="line.73"></a>
+<FONT color="green">074</FONT>        /**<a name="line.74"></a>
+<FONT color="green">075</FONT>         * Create a Scroller with the specified interpolator. If the interpolator is<a name="line.75"></a>
+<FONT color="green">076</FONT>         * null, the default (viscous) interpolator will be used.<a name="line.76"></a>
+<FONT color="green">077</FONT>         */<a name="line.77"></a>
+<FONT color="green">078</FONT>        public Scroller(Context context, Interpolator interpolator) {<a name="line.78"></a>
+<FONT color="green">079</FONT>            mFinished = true;<a name="line.79"></a>
+<FONT color="green">080</FONT>            mInterpolator = interpolator;<a name="line.80"></a>
+<FONT color="green">081</FONT>            float ppi = context.getResources().getDisplayMetrics().density * 160.0f;<a name="line.81"></a>
+<FONT color="green">082</FONT>            mDeceleration = 9.8f   // g (m/s^2)<a name="line.82"></a>
+<FONT color="green">083</FONT>                          * 39.37f // inch/meter<a name="line.83"></a>
+<FONT color="green">084</FONT>                          * ppi    // pixels per inch<a name="line.84"></a>
+<FONT color="green">085</FONT>                          * ViewConfiguration.getScrollFriction();<a name="line.85"></a>
+<FONT color="green">086</FONT>        }<a name="line.86"></a>
+<FONT color="green">087</FONT>        <a name="line.87"></a>
+<FONT color="green">088</FONT>        /**<a name="line.88"></a>
+<FONT color="green">089</FONT>         * <a name="line.89"></a>
+<FONT color="green">090</FONT>         * Returns whether the scroller has finished scrolling.<a name="line.90"></a>
+<FONT color="green">091</FONT>         * <a name="line.91"></a>
+<FONT color="green">092</FONT>         * @return True if the scroller has finished scrolling, false otherwise.<a name="line.92"></a>
+<FONT color="green">093</FONT>         */<a name="line.93"></a>
+<FONT color="green">094</FONT>        public final boolean isFinished() {<a name="line.94"></a>
+<FONT color="green">095</FONT>            return mFinished;<a name="line.95"></a>
+<FONT color="green">096</FONT>        }<a name="line.96"></a>
+<FONT color="green">097</FONT>        <a name="line.97"></a>
+<FONT color="green">098</FONT>        /**<a name="line.98"></a>
+<FONT color="green">099</FONT>         * Force the finished field to a particular value.<a name="line.99"></a>
+<FONT color="green">100</FONT>         *  <a name="line.100"></a>
+<FONT color="green">101</FONT>         * @param finished The new finished value.<a name="line.101"></a>
+<FONT color="green">102</FONT>         */<a name="line.102"></a>
+<FONT color="green">103</FONT>        public final void forceFinished(boolean finished) {<a name="line.103"></a>
+<FONT color="green">104</FONT>            mFinished = finished;<a name="line.104"></a>
+<FONT color="green">105</FONT>        }<a name="line.105"></a>
+<FONT color="green">106</FONT>        <a name="line.106"></a>
+<FONT color="green">107</FONT>        /**<a name="line.107"></a>
+<FONT color="green">108</FONT>         * Returns how long the scroll event will take, in milliseconds.<a name="line.108"></a>
+<FONT color="green">109</FONT>         * <a name="line.109"></a>
+<FONT color="green">110</FONT>         * @return The duration of the scroll in milliseconds.<a name="line.110"></a>
+<FONT color="green">111</FONT>         */<a name="line.111"></a>
+<FONT color="green">112</FONT>        public final int getDuration() {<a name="line.112"></a>
+<FONT color="green">113</FONT>            return mDuration;<a name="line.113"></a>
+<FONT color="green">114</FONT>        }<a name="line.114"></a>
+<FONT color="green">115</FONT>        <a name="line.115"></a>
+<FONT color="green">116</FONT>        /**<a name="line.116"></a>
+<FONT color="green">117</FONT>         * Returns the current X offset in the scroll. <a name="line.117"></a>
+<FONT color="green">118</FONT>         * <a name="line.118"></a>
+<FONT color="green">119</FONT>         * @return The new X offset as an absolute distance from the origin.<a name="line.119"></a>
+<FONT color="green">120</FONT>         */<a name="line.120"></a>
+<FONT color="green">121</FONT>        public final int getCurrX() {<a name="line.121"></a>
+<FONT color="green">122</FONT>            return mCurrX;<a name="line.122"></a>
+<FONT color="green">123</FONT>        }<a name="line.123"></a>
+<FONT color="green">124</FONT>        <a name="line.124"></a>
+<FONT color="green">125</FONT>        /**<a name="line.125"></a>
+<FONT color="green">126</FONT>         * Returns the current Y offset in the scroll. <a name="line.126"></a>
+<FONT color="green">127</FONT>         * <a name="line.127"></a>
+<FONT color="green">128</FONT>         * @return The new Y offset as an absolute distance from the origin.<a name="line.128"></a>
+<FONT color="green">129</FONT>         */<a name="line.129"></a>
+<FONT color="green">130</FONT>        public final int getCurrY() {<a name="line.130"></a>
+<FONT color="green">131</FONT>            return mCurrY;<a name="line.131"></a>
+<FONT color="green">132</FONT>        }<a name="line.132"></a>
+<FONT color="green">133</FONT>        <a name="line.133"></a>
+<FONT color="green">134</FONT>        /**<a name="line.134"></a>
+<FONT color="green">135</FONT>         * Returns the start X offset in the scroll. <a name="line.135"></a>
+<FONT color="green">136</FONT>         * <a name="line.136"></a>
+<FONT color="green">137</FONT>         * @return The start X offset as an absolute distance from the origin.<a name="line.137"></a>
+<FONT color="green">138</FONT>         */<a name="line.138"></a>
+<FONT color="green">139</FONT>        public final int getStartX() {<a name="line.139"></a>
+<FONT color="green">140</FONT>            return mStartX;<a name="line.140"></a>
+<FONT color="green">141</FONT>        }<a name="line.141"></a>
+<FONT color="green">142</FONT>        <a name="line.142"></a>
+<FONT color="green">143</FONT>        /**<a name="line.143"></a>
+<FONT color="green">144</FONT>         * Returns the start Y offset in the scroll. <a name="line.144"></a>
+<FONT color="green">145</FONT>         * <a name="line.145"></a>
+<FONT color="green">146</FONT>         * @return The start Y offset as an absolute distance from the origin.<a name="line.146"></a>
+<FONT color="green">147</FONT>         */<a name="line.147"></a>
+<FONT color="green">148</FONT>        public final int getStartY() {<a name="line.148"></a>
+<FONT color="green">149</FONT>            return mStartY;<a name="line.149"></a>
+<FONT color="green">150</FONT>        }<a name="line.150"></a>
+<FONT color="green">151</FONT>        <a name="line.151"></a>
+<FONT color="green">152</FONT>        /**<a name="line.152"></a>
+<FONT color="green">153</FONT>         * Returns where the scroll will end. Valid only for "fling" scrolls.<a name="line.153"></a>
+<FONT color="green">154</FONT>         * <a name="line.154"></a>
+<FONT color="green">155</FONT>         * @return The final X offset as an absolute distance from the origin.<a name="line.155"></a>
+<FONT color="green">156</FONT>         */<a name="line.156"></a>
+<FONT color="green">157</FONT>        public final int getFinalX() {<a name="line.157"></a>
+<FONT color="green">158</FONT>            return mFinalX;<a name="line.158"></a>
+<FONT color="green">159</FONT>        }<a name="line.159"></a>
+<FONT color="green">160</FONT>        <a name="line.160"></a>
+<FONT color="green">161</FONT>        /**<a name="line.161"></a>
+<FONT color="green">162</FONT>         * Returns where the scroll will end. Valid only for "fling" scrolls.<a name="line.162"></a>
+<FONT color="green">163</FONT>         * <a name="line.163"></a>
+<FONT color="green">164</FONT>         * @return The final Y offset as an absolute distance from the origin.<a name="line.164"></a>
+<FONT color="green">165</FONT>         */<a name="line.165"></a>
+<FONT color="green">166</FONT>        public final int getFinalY() {<a name="line.166"></a>
+<FONT color="green">167</FONT>            return mFinalY;<a name="line.167"></a>
+<FONT color="green">168</FONT>        }<a name="line.168"></a>
+<FONT color="green">169</FONT>    <a name="line.169"></a>
+<FONT color="green">170</FONT>        /**<a name="line.170"></a>
+<FONT color="green">171</FONT>         * Call this when you want to know the new location.  If it returns true,<a name="line.171"></a>
+<FONT color="green">172</FONT>         * the animation is not yet finished.  loc will be altered to provide the<a name="line.172"></a>
+<FONT color="green">173</FONT>         * new location.<a name="line.173"></a>
+<FONT color="green">174</FONT>         */ <a name="line.174"></a>
+<FONT color="green">175</FONT>        public boolean computeScrollOffset() {<a name="line.175"></a>
+<FONT color="green">176</FONT>            if (mFinished) {<a name="line.176"></a>
+<FONT color="green">177</FONT>                return false;<a name="line.177"></a>
+<FONT color="green">178</FONT>            }<a name="line.178"></a>
+<FONT color="green">179</FONT>    <a name="line.179"></a>
+<FONT color="green">180</FONT>            int timePassed = (int)(AnimationUtils.currentAnimationTimeMillis() - mStartTime);<a name="line.180"></a>
+<FONT color="green">181</FONT>        <a name="line.181"></a>
+<FONT color="green">182</FONT>            if (timePassed &lt; mDuration) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                switch (mMode) {<a name="line.183"></a>
+<FONT color="green">184</FONT>                case SCROLL_MODE:<a name="line.184"></a>
+<FONT color="green">185</FONT>                    float x = (float)timePassed * mDurationReciprocal;<a name="line.185"></a>
+<FONT color="green">186</FONT>        <a name="line.186"></a>
+<FONT color="green">187</FONT>                    if (mInterpolator == null)<a name="line.187"></a>
+<FONT color="green">188</FONT>                        x = viscousFluid(x); <a name="line.188"></a>
+<FONT color="green">189</FONT>                    else<a name="line.189"></a>
+<FONT color="green">190</FONT>                        x = mInterpolator.getInterpolation(x);<a name="line.190"></a>
+<FONT color="green">191</FONT>        <a name="line.191"></a>
+<FONT color="green">192</FONT>                    mCurrX = mStartX + Math.round(x * mDeltaX);<a name="line.192"></a>
+<FONT color="green">193</FONT>                    mCurrY = mStartY + Math.round(x * mDeltaY);<a name="line.193"></a>
+<FONT color="green">194</FONT>                    if ((mCurrX == mFinalX) &amp;&amp; (mCurrY == mFinalY)) {<a name="line.194"></a>
+<FONT color="green">195</FONT>                        mFinished = true;<a name="line.195"></a>
+<FONT color="green">196</FONT>                    }<a name="line.196"></a>
+<FONT color="green">197</FONT>                    break;<a name="line.197"></a>
+<FONT color="green">198</FONT>                case FLING_MODE:<a name="line.198"></a>
+<FONT color="green">199</FONT>                    float timePassedSeconds = timePassed / 1000.0f;<a name="line.199"></a>
+<FONT color="green">200</FONT>                    float distance = (mVelocity * timePassedSeconds)<a name="line.200"></a>
+<FONT color="green">201</FONT>                            - (mDeceleration * timePassedSeconds * timePassedSeconds / 2.0f);<a name="line.201"></a>
+<FONT color="green">202</FONT>                    <a name="line.202"></a>
+<FONT color="green">203</FONT>                    mCurrX = mStartX + Math.round(distance * mCoeffX);<a name="line.203"></a>
+<FONT color="green">204</FONT>                    // Pin to mMinX &lt;= mCurrX &lt;= mMaxX<a name="line.204"></a>
+<FONT color="green">205</FONT>                    mCurrX = Math.min(mCurrX, mMaxX);<a name="line.205"></a>
+<FONT color="green">206</FONT>                    mCurrX = Math.max(mCurrX, mMinX);<a name="line.206"></a>
+<FONT color="green">207</FONT>                    <a name="line.207"></a>
+<FONT color="green">208</FONT>                    mCurrY = mStartY + Math.round(distance * mCoeffY);<a name="line.208"></a>
+<FONT color="green">209</FONT>                    // Pin to mMinY &lt;= mCurrY &lt;= mMaxY<a name="line.209"></a>
+<FONT color="green">210</FONT>                    mCurrY = Math.min(mCurrY, mMaxY);<a name="line.210"></a>
+<FONT color="green">211</FONT>                    mCurrY = Math.max(mCurrY, mMinY);<a name="line.211"></a>
+<FONT color="green">212</FONT>    <a name="line.212"></a>
+<FONT color="green">213</FONT>                    if (mCurrX == mFinalX &amp;&amp; mCurrY == mFinalY) {<a name="line.213"></a>
+<FONT color="green">214</FONT>                        mFinished = true;<a name="line.214"></a>
+<FONT color="green">215</FONT>                    }<a name="line.215"></a>
+<FONT color="green">216</FONT>                    <a name="line.216"></a>
+<FONT color="green">217</FONT>                    break;<a name="line.217"></a>
+<FONT color="green">218</FONT>                }<a name="line.218"></a>
+<FONT color="green">219</FONT>            }<a name="line.219"></a>
+<FONT color="green">220</FONT>            else {<a name="line.220"></a>
+<FONT color="green">221</FONT>                mCurrX = mFinalX;<a name="line.221"></a>
+<FONT color="green">222</FONT>                mCurrY = mFinalY;<a name="line.222"></a>
+<FONT color="green">223</FONT>                mFinished = true;<a name="line.223"></a>
+<FONT color="green">224</FONT>            }<a name="line.224"></a>
+<FONT color="green">225</FONT>            return true;<a name="line.225"></a>
+<FONT color="green">226</FONT>        }<a name="line.226"></a>
+<FONT color="green">227</FONT>        <a name="line.227"></a>
+<FONT color="green">228</FONT>        /**<a name="line.228"></a>
+<FONT color="green">229</FONT>         * Start scrolling by providing a starting point and the distance to travel.<a name="line.229"></a>
+<FONT color="green">230</FONT>         * The scroll will use the default value of 250 milliseconds for the<a name="line.230"></a>
+<FONT color="green">231</FONT>         * duration.<a name="line.231"></a>
+<FONT color="green">232</FONT>         * <a name="line.232"></a>
+<FONT color="green">233</FONT>         * @param startX Starting horizontal scroll offset in pixels. Positive<a name="line.233"></a>
+<FONT color="green">234</FONT>         *        numbers will scroll the content to the left.<a name="line.234"></a>
+<FONT color="green">235</FONT>         * @param startY Starting vertical scroll offset in pixels. Positive numbers<a name="line.235"></a>
+<FONT color="green">236</FONT>         *        will scroll the content up.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * @param dx Horizontal distance to travel. Positive numbers will scroll the<a name="line.237"></a>
+<FONT color="green">238</FONT>         *        content to the left.<a name="line.238"></a>
+<FONT color="green">239</FONT>         * @param dy Vertical distance to travel. Positive numbers will scroll the<a name="line.239"></a>
+<FONT color="green">240</FONT>         *        content up.<a name="line.240"></a>
+<FONT color="green">241</FONT>         */<a name="line.241"></a>
+<FONT color="green">242</FONT>        public void startScroll(int startX, int startY, int dx, int dy) {<a name="line.242"></a>
+<FONT color="green">243</FONT>            startScroll(startX, startY, dx, dy, DEFAULT_DURATION);<a name="line.243"></a>
+<FONT color="green">244</FONT>        }<a name="line.244"></a>
+<FONT color="green">245</FONT>    <a name="line.245"></a>
+<FONT color="green">246</FONT>        /**<a name="line.246"></a>
+<FONT color="green">247</FONT>         * Start scrolling by providing a starting point and the distance to travel.<a name="line.247"></a>
+<FONT color="green">248</FONT>         * <a name="line.248"></a>
+<FONT color="green">249</FONT>         * @param startX Starting horizontal scroll offset in pixels. Positive<a name="line.249"></a>
+<FONT color="green">250</FONT>         *        numbers will scroll the content to the left.<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @param startY Starting vertical scroll offset in pixels. Positive numbers<a name="line.251"></a>
+<FONT color="green">252</FONT>         *        will scroll the content up.<a name="line.252"></a>
+<FONT color="green">253</FONT>         * @param dx Horizontal distance to travel. Positive numbers will scroll the<a name="line.253"></a>
+<FONT color="green">254</FONT>         *        content to the left.<a name="line.254"></a>
+<FONT color="green">255</FONT>         * @param dy Vertical distance to travel. Positive numbers will scroll the<a name="line.255"></a>
+<FONT color="green">256</FONT>         *        content up.<a name="line.256"></a>
+<FONT color="green">257</FONT>         * @param duration Duration of the scroll in milliseconds.<a name="line.257"></a>
+<FONT color="green">258</FONT>         */<a name="line.258"></a>
+<FONT color="green">259</FONT>        public void startScroll(int startX, int startY, int dx, int dy, int duration) {<a name="line.259"></a>
+<FONT color="green">260</FONT>            mMode = SCROLL_MODE;<a name="line.260"></a>
+<FONT color="green">261</FONT>            mFinished = false;<a name="line.261"></a>
+<FONT color="green">262</FONT>            mDuration = duration;<a name="line.262"></a>
+<FONT color="green">263</FONT>            mStartTime = AnimationUtils.currentAnimationTimeMillis();<a name="line.263"></a>
+<FONT color="green">264</FONT>            mStartX = startX;<a name="line.264"></a>
+<FONT color="green">265</FONT>            mStartY = startY;<a name="line.265"></a>
+<FONT color="green">266</FONT>            mFinalX = startX + dx;<a name="line.266"></a>
+<FONT color="green">267</FONT>            mFinalY = startY + dy;<a name="line.267"></a>
+<FONT color="green">268</FONT>            mDeltaX = dx;<a name="line.268"></a>
+<FONT color="green">269</FONT>            mDeltaY = dy;<a name="line.269"></a>
+<FONT color="green">270</FONT>            mDurationReciprocal = 1.0f / (float) mDuration;<a name="line.270"></a>
+<FONT color="green">271</FONT>            // This controls the viscous fluid effect (how much of it)<a name="line.271"></a>
+<FONT color="green">272</FONT>            mViscousFluidScale = 8.0f;<a name="line.272"></a>
+<FONT color="green">273</FONT>            // must be set to 1.0 (used in viscousFluid())<a name="line.273"></a>
+<FONT color="green">274</FONT>            mViscousFluidNormalize = 1.0f;<a name="line.274"></a>
+<FONT color="green">275</FONT>            mViscousFluidNormalize = 1.0f / viscousFluid(1.0f);<a name="line.275"></a>
+<FONT color="green">276</FONT>        }<a name="line.276"></a>
+<FONT color="green">277</FONT>    <a name="line.277"></a>
+<FONT color="green">278</FONT>        /**<a name="line.278"></a>
+<FONT color="green">279</FONT>         * Start scrolling based on a fling gesture. The distance travelled will<a name="line.279"></a>
+<FONT color="green">280</FONT>         * depend on the initial velocity of the fling.<a name="line.280"></a>
+<FONT color="green">281</FONT>         * <a name="line.281"></a>
+<FONT color="green">282</FONT>         * @param startX Starting point of the scroll (X)<a name="line.282"></a>
+<FONT color="green">283</FONT>         * @param startY Starting point of the scroll (Y)<a name="line.283"></a>
+<FONT color="green">284</FONT>         * @param velocityX Initial velocity of the fling (X) measured in pixels per<a name="line.284"></a>
+<FONT color="green">285</FONT>         *        second.<a name="line.285"></a>
+<FONT color="green">286</FONT>         * @param velocityY Initial velocity of the fling (Y) measured in pixels per<a name="line.286"></a>
+<FONT color="green">287</FONT>         *        second<a name="line.287"></a>
+<FONT color="green">288</FONT>         * @param minX Minimum X value. The scroller will not scroll past this<a name="line.288"></a>
+<FONT color="green">289</FONT>         *        point.<a name="line.289"></a>
+<FONT color="green">290</FONT>         * @param maxX Maximum X value. The scroller will not scroll past this<a name="line.290"></a>
+<FONT color="green">291</FONT>         *        point.<a name="line.291"></a>
+<FONT color="green">292</FONT>         * @param minY Minimum Y value. The scroller will not scroll past this<a name="line.292"></a>
+<FONT color="green">293</FONT>         *        point.<a name="line.293"></a>
+<FONT color="green">294</FONT>         * @param maxY Maximum Y value. The scroller will not scroll past this<a name="line.294"></a>
+<FONT color="green">295</FONT>         *        point.<a name="line.295"></a>
+<FONT color="green">296</FONT>         */<a name="line.296"></a>
+<FONT color="green">297</FONT>        public void fling(int startX, int startY, int velocityX, int velocityY,<a name="line.297"></a>
+<FONT color="green">298</FONT>                int minX, int maxX, int minY, int maxY) {<a name="line.298"></a>
+<FONT color="green">299</FONT>            mMode = FLING_MODE;<a name="line.299"></a>
+<FONT color="green">300</FONT>            mFinished = false;<a name="line.300"></a>
+<FONT color="green">301</FONT>    <a name="line.301"></a>
+<FONT color="green">302</FONT>            float velocity = (float)Math.hypot(velocityX, velocityY);<a name="line.302"></a>
+<FONT color="green">303</FONT>         <a name="line.303"></a>
+<FONT color="green">304</FONT>            mVelocity = velocity;<a name="line.304"></a>
+<FONT color="green">305</FONT>            mDuration = (int) (1000 * velocity / mDeceleration); // Duration is in<a name="line.305"></a>
+<FONT color="green">306</FONT>                                                                // milliseconds<a name="line.306"></a>
+<FONT color="green">307</FONT>            mStartTime = AnimationUtils.currentAnimationTimeMillis();<a name="line.307"></a>
+<FONT color="green">308</FONT>            mStartX = startX;<a name="line.308"></a>
+<FONT color="green">309</FONT>            mStartY = startY;<a name="line.309"></a>
+<FONT color="green">310</FONT>    <a name="line.310"></a>
+<FONT color="green">311</FONT>            mCoeffX = velocity == 0 ? 1.0f : velocityX / velocity; <a name="line.311"></a>
+<FONT color="green">312</FONT>            mCoeffY = velocity == 0 ? 1.0f : velocityY / velocity;<a name="line.312"></a>
+<FONT color="green">313</FONT>    <a name="line.313"></a>
+<FONT color="green">314</FONT>            int totalDistance = (int) ((velocity * velocity) / (2 * mDeceleration));<a name="line.314"></a>
+<FONT color="green">315</FONT>            <a name="line.315"></a>
+<FONT color="green">316</FONT>            mMinX = minX;<a name="line.316"></a>
+<FONT color="green">317</FONT>            mMaxX = maxX;<a name="line.317"></a>
+<FONT color="green">318</FONT>            mMinY = minY;<a name="line.318"></a>
+<FONT color="green">319</FONT>            mMaxY = maxY;<a name="line.319"></a>
+<FONT color="green">320</FONT>            <a name="line.320"></a>
+<FONT color="green">321</FONT>            <a name="line.321"></a>
+<FONT color="green">322</FONT>            mFinalX = startX + Math.round(totalDistance * mCoeffX);<a name="line.322"></a>
+<FONT color="green">323</FONT>            // Pin to mMinX &lt;= mFinalX &lt;= mMaxX<a name="line.323"></a>
+<FONT color="green">324</FONT>            mFinalX = Math.min(mFinalX, mMaxX);<a name="line.324"></a>
+<FONT color="green">325</FONT>            mFinalX = Math.max(mFinalX, mMinX);<a name="line.325"></a>
+<FONT color="green">326</FONT>            <a name="line.326"></a>
+<FONT color="green">327</FONT>            mFinalY = startY + Math.round(totalDistance * mCoeffY);<a name="line.327"></a>
+<FONT color="green">328</FONT>            // Pin to mMinY &lt;= mFinalY &lt;= mMaxY<a name="line.328"></a>
+<FONT color="green">329</FONT>            mFinalY = Math.min(mFinalY, mMaxY);<a name="line.329"></a>
+<FONT color="green">330</FONT>            mFinalY = Math.max(mFinalY, mMinY);<a name="line.330"></a>
+<FONT color="green">331</FONT>        }<a name="line.331"></a>
+<FONT color="green">332</FONT>        <a name="line.332"></a>
+<FONT color="green">333</FONT>        <a name="line.333"></a>
+<FONT color="green">334</FONT>        <a name="line.334"></a>
+<FONT color="green">335</FONT>        private float viscousFluid(float x)<a name="line.335"></a>
+<FONT color="green">336</FONT>        {<a name="line.336"></a>
+<FONT color="green">337</FONT>            x *= mViscousFluidScale;<a name="line.337"></a>
+<FONT color="green">338</FONT>            if (x &lt; 1.0f) {<a name="line.338"></a>
+<FONT color="green">339</FONT>                x -= (1.0f - (float)Math.exp(-x));<a name="line.339"></a>
+<FONT color="green">340</FONT>            } else {<a name="line.340"></a>
+<FONT color="green">341</FONT>                float start = 0.36787944117f;   // 1/e == exp(-1)<a name="line.341"></a>
+<FONT color="green">342</FONT>                x = 1.0f - (float)Math.exp(1.0f - x);<a name="line.342"></a>
+<FONT color="green">343</FONT>                x = start + x * (1.0f - start);<a name="line.343"></a>
+<FONT color="green">344</FONT>            }<a name="line.344"></a>
+<FONT color="green">345</FONT>            x *= mViscousFluidNormalize;<a name="line.345"></a>
+<FONT color="green">346</FONT>            return x;<a name="line.346"></a>
+<FONT color="green">347</FONT>        }<a name="line.347"></a>
+<FONT color="green">348</FONT>        <a name="line.348"></a>
+<FONT color="green">349</FONT>        /**<a name="line.349"></a>
+<FONT color="green">350</FONT>         * <a name="line.350"></a>
+<FONT color="green">351</FONT>         */<a name="line.351"></a>
+<FONT color="green">352</FONT>        public void abortAnimation() {<a name="line.352"></a>
+<FONT color="green">353</FONT>            mCurrX = mFinalX;<a name="line.353"></a>
+<FONT color="green">354</FONT>            mCurrY = mFinalY;<a name="line.354"></a>
+<FONT color="green">355</FONT>            mFinished = true;<a name="line.355"></a>
+<FONT color="green">356</FONT>        }<a name="line.356"></a>
+<FONT color="green">357</FONT>        <a name="line.357"></a>
+<FONT color="green">358</FONT>        /**<a name="line.358"></a>
+<FONT color="green">359</FONT>         * Extend the scroll animation. This allows a running animation to <a name="line.359"></a>
+<FONT color="green">360</FONT>         * scroll further and longer, when used with setFinalX() or setFinalY().<a name="line.360"></a>
+<FONT color="green">361</FONT>         *<a name="line.361"></a>
+<FONT color="green">362</FONT>         * @param extend Additional time to scroll in milliseconds.<a name="line.362"></a>
+<FONT color="green">363</FONT>         */<a name="line.363"></a>
+<FONT color="green">364</FONT>        public void extendDuration(int extend) {<a name="line.364"></a>
+<FONT color="green">365</FONT>            int passed = timePassed();<a name="line.365"></a>
+<FONT color="green">366</FONT>            mDuration = passed + extend;<a name="line.366"></a>
+<FONT color="green">367</FONT>            mDurationReciprocal = 1.0f / (float)mDuration;<a name="line.367"></a>
+<FONT color="green">368</FONT>            mFinished = false;<a name="line.368"></a>
+<FONT color="green">369</FONT>        }<a name="line.369"></a>
+<FONT color="green">370</FONT>        <a name="line.370"></a>
+<FONT color="green">371</FONT>        public int timePassed() {<a name="line.371"></a>
+<FONT color="green">372</FONT>            return (int)(AnimationUtils.currentAnimationTimeMillis() - mStartTime);<a name="line.372"></a>
+<FONT color="green">373</FONT>        }<a name="line.373"></a>
+<FONT color="green">374</FONT>        <a name="line.374"></a>
+<FONT color="green">375</FONT>        public void setFinalX(int newX) {<a name="line.375"></a>
+<FONT color="green">376</FONT>            mFinalX = newX;<a name="line.376"></a>
+<FONT color="green">377</FONT>            mDeltaX = mFinalX - mStartX;<a name="line.377"></a>
+<FONT color="green">378</FONT>            mFinished = false;<a name="line.378"></a>
+<FONT color="green">379</FONT>        }<a name="line.379"></a>
+<FONT color="green">380</FONT>    <a name="line.380"></a>
+<FONT color="green">381</FONT>       public void setFinalY(int newY) {<a name="line.381"></a>
+<FONT color="green">382</FONT>            mFinalY = newY;<a name="line.382"></a>
+<FONT color="green">383</FONT>            mDeltaY = mFinalY - mStartY;<a name="line.383"></a>
+<FONT color="green">384</FONT>            mFinished = false;<a name="line.384"></a>
+<FONT color="green">385</FONT>        }<a name="line.385"></a>
+<FONT color="green">386</FONT>    }<a name="line.386"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

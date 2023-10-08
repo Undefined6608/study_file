@@ -1,0 +1,353 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.app;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.content.Context;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.content.Intent;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.RemoteException;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.os.ServiceManager;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    /**<a name="line.24"></a>
+<FONT color="green">025</FONT>     * This class provides access to the system alarm services.  These allow you<a name="line.25"></a>
+<FONT color="green">026</FONT>     * to schedule your application to be run at some point in the future.  When<a name="line.26"></a>
+<FONT color="green">027</FONT>     * an alarm goes off, the {@link Intent} that had been registered for it<a name="line.27"></a>
+<FONT color="green">028</FONT>     * is broadcast by the system, automatically starting the target application<a name="line.28"></a>
+<FONT color="green">029</FONT>     * if it is not already running.  Registered alarms are retained while the<a name="line.29"></a>
+<FONT color="green">030</FONT>     * device is asleep (and can optionally wake the device up if they go off<a name="line.30"></a>
+<FONT color="green">031</FONT>     * during that time), but will be cleared if it is turned off and rebooted.<a name="line.31"></a>
+<FONT color="green">032</FONT>     * <a name="line.32"></a>
+<FONT color="green">033</FONT>     * &lt;p&gt;The Alarm Manager holds a CPU wake lock as long as the alarm receiver's<a name="line.33"></a>
+<FONT color="green">034</FONT>     * onReceive() method is executing. This guarantees that the phone will not sleep<a name="line.34"></a>
+<FONT color="green">035</FONT>     * until you have finished handling the broadcast. Once onReceive() returns, the<a name="line.35"></a>
+<FONT color="green">036</FONT>     * Alarm Manager releases this wake lock. This means that the phone will in some<a name="line.36"></a>
+<FONT color="green">037</FONT>     * cases sleep as soon as your onReceive() method completes.  If your alarm receiver<a name="line.37"></a>
+<FONT color="green">038</FONT>     * called {@link android.content.Context#startService Context.startService()}, it<a name="line.38"></a>
+<FONT color="green">039</FONT>     * is possible that the phone will sleep before the requested service is launched.<a name="line.39"></a>
+<FONT color="green">040</FONT>     * To prevent this, your BroadcastReceiver and Service will need to implement a<a name="line.40"></a>
+<FONT color="green">041</FONT>     * separate wake lock policy to ensure that the phone continues running until the<a name="line.41"></a>
+<FONT color="green">042</FONT>     * service becomes available.<a name="line.42"></a>
+<FONT color="green">043</FONT>     *<a name="line.43"></a>
+<FONT color="green">044</FONT>     * &lt;p&gt;&lt;b&gt;Note: The Alarm Manager is intended for cases where you want to have<a name="line.44"></a>
+<FONT color="green">045</FONT>     * your application code run at a specific time, even if your application is<a name="line.45"></a>
+<FONT color="green">046</FONT>     * not currently running.  For normal timing operations (ticks, timeouts,<a name="line.46"></a>
+<FONT color="green">047</FONT>     * etc) it is easier and much more efficient to use<a name="line.47"></a>
+<FONT color="green">048</FONT>     * {@link android.os.Handler}.&lt;/b&gt;<a name="line.48"></a>
+<FONT color="green">049</FONT>     *<a name="line.49"></a>
+<FONT color="green">050</FONT>     * &lt;p&gt;You do not<a name="line.50"></a>
+<FONT color="green">051</FONT>     * instantiate this class directly; instead, retrieve it through<a name="line.51"></a>
+<FONT color="green">052</FONT>     * {@link android.content.Context#getSystemService<a name="line.52"></a>
+<FONT color="green">053</FONT>     * Context.getSystemService(Context.ALARM_SERVICE)}.<a name="line.53"></a>
+<FONT color="green">054</FONT>     */<a name="line.54"></a>
+<FONT color="green">055</FONT>    public class AlarmManager<a name="line.55"></a>
+<FONT color="green">056</FONT>    {<a name="line.56"></a>
+<FONT color="green">057</FONT>        /**<a name="line.57"></a>
+<FONT color="green">058</FONT>         * Alarm time in {@link System#currentTimeMillis System.currentTimeMillis()}<a name="line.58"></a>
+<FONT color="green">059</FONT>         * (wall clock time in UTC), which will wake up the device when<a name="line.59"></a>
+<FONT color="green">060</FONT>         * it goes off.<a name="line.60"></a>
+<FONT color="green">061</FONT>         */<a name="line.61"></a>
+<FONT color="green">062</FONT>        public static final int RTC_WAKEUP = 0;<a name="line.62"></a>
+<FONT color="green">063</FONT>        /**<a name="line.63"></a>
+<FONT color="green">064</FONT>         * Alarm time in {@link System#currentTimeMillis System.currentTimeMillis()}<a name="line.64"></a>
+<FONT color="green">065</FONT>         * (wall clock time in UTC).  This alarm does not wake the<a name="line.65"></a>
+<FONT color="green">066</FONT>         * device up; if it goes off while the device is asleep, it will not be<a name="line.66"></a>
+<FONT color="green">067</FONT>         * delivered until the next time the device wakes up.<a name="line.67"></a>
+<FONT color="green">068</FONT>         */<a name="line.68"></a>
+<FONT color="green">069</FONT>        public static final int RTC = 1;<a name="line.69"></a>
+<FONT color="green">070</FONT>        /**<a name="line.70"></a>
+<FONT color="green">071</FONT>         * Alarm time in {@link android.os.SystemClock#elapsedRealtime<a name="line.71"></a>
+<FONT color="green">072</FONT>         * SystemClock.elapsedRealtime()} (time since boot, including sleep),<a name="line.72"></a>
+<FONT color="green">073</FONT>         * which will wake up the device when it goes off.<a name="line.73"></a>
+<FONT color="green">074</FONT>         */<a name="line.74"></a>
+<FONT color="green">075</FONT>        public static final int ELAPSED_REALTIME_WAKEUP = 2;<a name="line.75"></a>
+<FONT color="green">076</FONT>        /**<a name="line.76"></a>
+<FONT color="green">077</FONT>         * Alarm time in {@link android.os.SystemClock#elapsedRealtime<a name="line.77"></a>
+<FONT color="green">078</FONT>         * SystemClock.elapsedRealtime()} (time since boot, including sleep).<a name="line.78"></a>
+<FONT color="green">079</FONT>         * This alarm does not wake the device up; if it goes off while the device<a name="line.79"></a>
+<FONT color="green">080</FONT>         * is asleep, it will not be delivered until the next time the device<a name="line.80"></a>
+<FONT color="green">081</FONT>         * wakes up.<a name="line.81"></a>
+<FONT color="green">082</FONT>         */<a name="line.82"></a>
+<FONT color="green">083</FONT>        public static final int ELAPSED_REALTIME = 3;<a name="line.83"></a>
+<FONT color="green">084</FONT>    <a name="line.84"></a>
+<FONT color="green">085</FONT>        private final IAlarmManager mService;<a name="line.85"></a>
+<FONT color="green">086</FONT>    <a name="line.86"></a>
+<FONT color="green">087</FONT>        /**<a name="line.87"></a>
+<FONT color="green">088</FONT>         * package private on purpose<a name="line.88"></a>
+<FONT color="green">089</FONT>         */<a name="line.89"></a>
+<FONT color="green">090</FONT>        AlarmManager(IAlarmManager service) {<a name="line.90"></a>
+<FONT color="green">091</FONT>            mService = service;<a name="line.91"></a>
+<FONT color="green">092</FONT>        }<a name="line.92"></a>
+<FONT color="green">093</FONT>        <a name="line.93"></a>
+<FONT color="green">094</FONT>        /**<a name="line.94"></a>
+<FONT color="green">095</FONT>         * Schedule an alarm.  &lt;b&gt;Note: for timing operations (ticks, timeouts,<a name="line.95"></a>
+<FONT color="green">096</FONT>         * etc) it is easier and much more efficient to use<a name="line.96"></a>
+<FONT color="green">097</FONT>         * {@link android.os.Handler}.&lt;/b&gt;  If there is already an alarm scheduled<a name="line.97"></a>
+<FONT color="green">098</FONT>         * for the same IntentSender, it will first be canceled.<a name="line.98"></a>
+<FONT color="green">099</FONT>         *<a name="line.99"></a>
+<FONT color="green">100</FONT>         * &lt;p&gt;If the time occurs in the past, the alarm will be triggered<a name="line.100"></a>
+<FONT color="green">101</FONT>         * immediately.  If there is already an alarm for this Intent<a name="line.101"></a>
+<FONT color="green">102</FONT>         * scheduled (with the equality of two intents being defined by<a name="line.102"></a>
+<FONT color="green">103</FONT>         * {@link Intent#filterEquals}), then it will be removed and replaced by<a name="line.103"></a>
+<FONT color="green">104</FONT>         * this one.<a name="line.104"></a>
+<FONT color="green">105</FONT>         *<a name="line.105"></a>
+<FONT color="green">106</FONT>         * &lt;p&gt;<a name="line.106"></a>
+<FONT color="green">107</FONT>         * The alarm is an intent broadcast that goes to a broadcast receiver that<a name="line.107"></a>
+<FONT color="green">108</FONT>         * you registered with {@link android.content.Context#registerReceiver}<a name="line.108"></a>
+<FONT color="green">109</FONT>         * or through the &amp;lt;receiver&amp;gt; tag in an AndroidManifest.xml file.<a name="line.109"></a>
+<FONT color="green">110</FONT>         *<a name="line.110"></a>
+<FONT color="green">111</FONT>         * &lt;p&gt;<a name="line.111"></a>
+<FONT color="green">112</FONT>         * Alarm intents are delivered with a data extra of type int called<a name="line.112"></a>
+<FONT color="green">113</FONT>         * {@link Intent#EXTRA_ALARM_COUNT Intent.EXTRA_ALARM_COUNT} that indicates<a name="line.113"></a>
+<FONT color="green">114</FONT>         * how many past alarm events have been accumulated into this intent<a name="line.114"></a>
+<FONT color="green">115</FONT>         * broadcast.  Recurring alarms that have gone undelivered because the<a name="line.115"></a>
+<FONT color="green">116</FONT>         * phone was asleep may have a count greater than one when delivered.  <a name="line.116"></a>
+<FONT color="green">117</FONT>         *  <a name="line.117"></a>
+<FONT color="green">118</FONT>         * @param type One of ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP, RTC or<a name="line.118"></a>
+<FONT color="green">119</FONT>         *             RTC_WAKEUP.<a name="line.119"></a>
+<FONT color="green">120</FONT>         * @param triggerAtTime Time the alarm should go off, using the<a name="line.120"></a>
+<FONT color="green">121</FONT>         *                      appropriate clock (depending on the alarm type).<a name="line.121"></a>
+<FONT color="green">122</FONT>         * @param operation Action to perform when the alarm goes off;<a name="line.122"></a>
+<FONT color="green">123</FONT>         * typically comes from {@link PendingIntent#getBroadcast<a name="line.123"></a>
+<FONT color="green">124</FONT>         * IntentSender.getBroadcast()}.<a name="line.124"></a>
+<FONT color="green">125</FONT>         *<a name="line.125"></a>
+<FONT color="green">126</FONT>         * @see android.os.Handler<a name="line.126"></a>
+<FONT color="green">127</FONT>         * @see #setRepeating<a name="line.127"></a>
+<FONT color="green">128</FONT>         * @see #cancel<a name="line.128"></a>
+<FONT color="green">129</FONT>         * @see android.content.Context#sendBroadcast<a name="line.129"></a>
+<FONT color="green">130</FONT>         * @see android.content.Context#registerReceiver<a name="line.130"></a>
+<FONT color="green">131</FONT>         * @see android.content.Intent#filterEquals<a name="line.131"></a>
+<FONT color="green">132</FONT>         * @see #ELAPSED_REALTIME<a name="line.132"></a>
+<FONT color="green">133</FONT>         * @see #ELAPSED_REALTIME_WAKEUP<a name="line.133"></a>
+<FONT color="green">134</FONT>         * @see #RTC<a name="line.134"></a>
+<FONT color="green">135</FONT>         * @see #RTC_WAKEUP<a name="line.135"></a>
+<FONT color="green">136</FONT>         */<a name="line.136"></a>
+<FONT color="green">137</FONT>        public void set(int type, long triggerAtTime, PendingIntent operation) {<a name="line.137"></a>
+<FONT color="green">138</FONT>            try {<a name="line.138"></a>
+<FONT color="green">139</FONT>                mService.set(type, triggerAtTime, operation);<a name="line.139"></a>
+<FONT color="green">140</FONT>            } catch (RemoteException ex) {<a name="line.140"></a>
+<FONT color="green">141</FONT>            }<a name="line.141"></a>
+<FONT color="green">142</FONT>        }<a name="line.142"></a>
+<FONT color="green">143</FONT>    <a name="line.143"></a>
+<FONT color="green">144</FONT>        /**<a name="line.144"></a>
+<FONT color="green">145</FONT>         * Schedule a repeating alarm.  &lt;b&gt;Note: for timing operations (ticks,<a name="line.145"></a>
+<FONT color="green">146</FONT>         * timeouts, etc) it is easier and much more efficient to use<a name="line.146"></a>
+<FONT color="green">147</FONT>         * {@link android.os.Handler}.&lt;/b&gt;  If there is already an alarm scheduled<a name="line.147"></a>
+<FONT color="green">148</FONT>         * for the same IntentSender, it will first be canceled.<a name="line.148"></a>
+<FONT color="green">149</FONT>         *<a name="line.149"></a>
+<FONT color="green">150</FONT>         * &lt;p&gt;Like {@link #set}, except you can also<a name="line.150"></a>
+<FONT color="green">151</FONT>         * supply a rate at which the alarm will repeat.  This alarm continues<a name="line.151"></a>
+<FONT color="green">152</FONT>         * repeating until explicitly removed with {@link #cancel}.  If the time<a name="line.152"></a>
+<FONT color="green">153</FONT>         * occurs in the past, the alarm will be triggered immediately, with an<a name="line.153"></a>
+<FONT color="green">154</FONT>         * alarm count depending on how far in the past the trigger time is relative<a name="line.154"></a>
+<FONT color="green">155</FONT>         * to the repeat interval.<a name="line.155"></a>
+<FONT color="green">156</FONT>         *<a name="line.156"></a>
+<FONT color="green">157</FONT>         * &lt;p&gt;If an alarm is delayed (by system sleep, for example, for non<a name="line.157"></a>
+<FONT color="green">158</FONT>         * _WAKEUP alarm types), a skipped repeat will be delivered as soon as<a name="line.158"></a>
+<FONT color="green">159</FONT>         * possible.  After that, future alarms will be delivered according to the<a name="line.159"></a>
+<FONT color="green">160</FONT>         * original schedule; they do not drift over time.  For example, if you have<a name="line.160"></a>
+<FONT color="green">161</FONT>         * set a recurring alarm for the top of every hour but the phone was asleep<a name="line.161"></a>
+<FONT color="green">162</FONT>         * from 7:45 until 8:45, an alarm will be sent as soon as the phone awakens,<a name="line.162"></a>
+<FONT color="green">163</FONT>         * then the next alarm will be sent at 9:00.<a name="line.163"></a>
+<FONT color="green">164</FONT>         * <a name="line.164"></a>
+<FONT color="green">165</FONT>         * &lt;p&gt;If your application wants to allow the delivery times to drift in <a name="line.165"></a>
+<FONT color="green">166</FONT>         * order to guarantee that at least a certain time interval always elapses<a name="line.166"></a>
+<FONT color="green">167</FONT>         * between alarms, then the approach to take is to use one-time alarms, <a name="line.167"></a>
+<FONT color="green">168</FONT>         * scheduling the next one yourself when handling each alarm delivery.<a name="line.168"></a>
+<FONT color="green">169</FONT>         *<a name="line.169"></a>
+<FONT color="green">170</FONT>         * @param type One of ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP}, RTC or<a name="line.170"></a>
+<FONT color="green">171</FONT>         *             RTC_WAKEUP.<a name="line.171"></a>
+<FONT color="green">172</FONT>         * @param triggerAtTime Time the alarm should first go off, using the<a name="line.172"></a>
+<FONT color="green">173</FONT>         *                      appropriate clock (depending on the alarm type).<a name="line.173"></a>
+<FONT color="green">174</FONT>         * @param interval Interval between subsequent repeats of the alarm.<a name="line.174"></a>
+<FONT color="green">175</FONT>         * @param operation Action to perform when the alarm goes off;<a name="line.175"></a>
+<FONT color="green">176</FONT>         * typically comes from {@link PendingIntent#getBroadcast<a name="line.176"></a>
+<FONT color="green">177</FONT>         * IntentSender.getBroadcast()}.<a name="line.177"></a>
+<FONT color="green">178</FONT>         *<a name="line.178"></a>
+<FONT color="green">179</FONT>         * @see android.os.Handler<a name="line.179"></a>
+<FONT color="green">180</FONT>         * @see #set<a name="line.180"></a>
+<FONT color="green">181</FONT>         * @see #cancel<a name="line.181"></a>
+<FONT color="green">182</FONT>         * @see android.content.Context#sendBroadcast<a name="line.182"></a>
+<FONT color="green">183</FONT>         * @see android.content.Context#registerReceiver<a name="line.183"></a>
+<FONT color="green">184</FONT>         * @see android.content.Intent#filterEquals<a name="line.184"></a>
+<FONT color="green">185</FONT>         * @see #ELAPSED_REALTIME<a name="line.185"></a>
+<FONT color="green">186</FONT>         * @see #ELAPSED_REALTIME_WAKEUP<a name="line.186"></a>
+<FONT color="green">187</FONT>         * @see #RTC<a name="line.187"></a>
+<FONT color="green">188</FONT>         * @see #RTC_WAKEUP<a name="line.188"></a>
+<FONT color="green">189</FONT>         */<a name="line.189"></a>
+<FONT color="green">190</FONT>        public void setRepeating(int type, long triggerAtTime, long interval,<a name="line.190"></a>
+<FONT color="green">191</FONT>                PendingIntent operation) {<a name="line.191"></a>
+<FONT color="green">192</FONT>            try {<a name="line.192"></a>
+<FONT color="green">193</FONT>                mService.setRepeating(type, triggerAtTime, interval, operation);<a name="line.193"></a>
+<FONT color="green">194</FONT>            } catch (RemoteException ex) {<a name="line.194"></a>
+<FONT color="green">195</FONT>            }<a name="line.195"></a>
+<FONT color="green">196</FONT>        }<a name="line.196"></a>
+<FONT color="green">197</FONT>    <a name="line.197"></a>
+<FONT color="green">198</FONT>        /**<a name="line.198"></a>
+<FONT color="green">199</FONT>         * Available inexact recurrence intervals recognized by<a name="line.199"></a>
+<FONT color="green">200</FONT>         * {@link #setInexactRepeating(int, long, long, PendingIntent)} <a name="line.200"></a>
+<FONT color="green">201</FONT>         */<a name="line.201"></a>
+<FONT color="green">202</FONT>        public static final long INTERVAL_FIFTEEN_MINUTES = 15 * 60 * 1000;<a name="line.202"></a>
+<FONT color="green">203</FONT>        public static final long INTERVAL_HALF_HOUR = 2*INTERVAL_FIFTEEN_MINUTES;<a name="line.203"></a>
+<FONT color="green">204</FONT>        public static final long INTERVAL_HOUR = 2*INTERVAL_HALF_HOUR;<a name="line.204"></a>
+<FONT color="green">205</FONT>        public static final long INTERVAL_HALF_DAY = 12*INTERVAL_HOUR;<a name="line.205"></a>
+<FONT color="green">206</FONT>        public static final long INTERVAL_DAY = 2*INTERVAL_HALF_DAY;<a name="line.206"></a>
+<FONT color="green">207</FONT>        <a name="line.207"></a>
+<FONT color="green">208</FONT>        /**<a name="line.208"></a>
+<FONT color="green">209</FONT>         * Schedule a repeating alarm that has inexact trigger time requirements;<a name="line.209"></a>
+<FONT color="green">210</FONT>         * for example, an alarm that repeats every hour, but not necessarily at<a name="line.210"></a>
+<FONT color="green">211</FONT>         * the top of every hour.  These alarms are more power-efficient than<a name="line.211"></a>
+<FONT color="green">212</FONT>         * the strict recurrences supplied by {@link #setRepeating}, since the<a name="line.212"></a>
+<FONT color="green">213</FONT>         * system can adjust alarms' phase to cause them to fire simultaneously,<a name="line.213"></a>
+<FONT color="green">214</FONT>         * avoiding waking the device from sleep more than necessary.<a name="line.214"></a>
+<FONT color="green">215</FONT>         * <a name="line.215"></a>
+<FONT color="green">216</FONT>         * &lt;p&gt;Your alarm's first trigger will not be before the requested time,<a name="line.216"></a>
+<FONT color="green">217</FONT>         * but it might not occur for almost a full interval after that time.  In<a name="line.217"></a>
+<FONT color="green">218</FONT>         * addition, while the overall period of the repeating alarm will be as<a name="line.218"></a>
+<FONT color="green">219</FONT>         * requested, the time between any two successive firings of the alarm<a name="line.219"></a>
+<FONT color="green">220</FONT>         * may vary.  If your application demands very low jitter, use<a name="line.220"></a>
+<FONT color="green">221</FONT>         * {@link #setRepeating} instead.<a name="line.221"></a>
+<FONT color="green">222</FONT>         * <a name="line.222"></a>
+<FONT color="green">223</FONT>         * @param type One of ELAPSED_REALTIME, ELAPSED_REALTIME_WAKEUP}, RTC or<a name="line.223"></a>
+<FONT color="green">224</FONT>         *             RTC_WAKEUP.<a name="line.224"></a>
+<FONT color="green">225</FONT>         * @param triggerAtTime Time the alarm should first go off, using the<a name="line.225"></a>
+<FONT color="green">226</FONT>         *                      appropriate clock (depending on the alarm type).  This<a name="line.226"></a>
+<FONT color="green">227</FONT>         *                      is inexact: the alarm will not fire before this time,<a name="line.227"></a>
+<FONT color="green">228</FONT>         *                      but there may be a delay of almost an entire alarm<a name="line.228"></a>
+<FONT color="green">229</FONT>         *                      interval before the first invocation of the alarm.<a name="line.229"></a>
+<FONT color="green">230</FONT>         * @param interval Interval between subsequent repeats of the alarm.  If<a name="line.230"></a>
+<FONT color="green">231</FONT>         *                 this is one of INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR,<a name="line.231"></a>
+<FONT color="green">232</FONT>         *                 INTERVAL_HOUR, INTERVAL_HALF_DAY, or INTERVAL_DAY then the<a name="line.232"></a>
+<FONT color="green">233</FONT>         *                 alarm will be phase-aligned with other alarms to reduce<a name="line.233"></a>
+<FONT color="green">234</FONT>         *                 the number of wakeups.  Otherwise, the alarm will be set<a name="line.234"></a>
+<FONT color="green">235</FONT>         *                 as though the application had called {@link #setRepeating}.<a name="line.235"></a>
+<FONT color="green">236</FONT>         * @param operation Action to perform when the alarm goes off;<a name="line.236"></a>
+<FONT color="green">237</FONT>         * typically comes from {@link PendingIntent#getBroadcast<a name="line.237"></a>
+<FONT color="green">238</FONT>         * IntentSender.getBroadcast()}.<a name="line.238"></a>
+<FONT color="green">239</FONT>         *<a name="line.239"></a>
+<FONT color="green">240</FONT>         * @see android.os.Handler<a name="line.240"></a>
+<FONT color="green">241</FONT>         * @see #set<a name="line.241"></a>
+<FONT color="green">242</FONT>         * @see #cancel<a name="line.242"></a>
+<FONT color="green">243</FONT>         * @see android.content.Context#sendBroadcast<a name="line.243"></a>
+<FONT color="green">244</FONT>         * @see android.content.Context#registerReceiver<a name="line.244"></a>
+<FONT color="green">245</FONT>         * @see android.content.Intent#filterEquals<a name="line.245"></a>
+<FONT color="green">246</FONT>         * @see #ELAPSED_REALTIME<a name="line.246"></a>
+<FONT color="green">247</FONT>         * @see #ELAPSED_REALTIME_WAKEUP<a name="line.247"></a>
+<FONT color="green">248</FONT>         * @see #RTC<a name="line.248"></a>
+<FONT color="green">249</FONT>         * @see #RTC_WAKEUP<a name="line.249"></a>
+<FONT color="green">250</FONT>         * @see #INTERVAL_FIFTEEN_MINUTES<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @see #INTERVAL_HALF_HOUR<a name="line.251"></a>
+<FONT color="green">252</FONT>         * @see #INTERVAL_HOUR<a name="line.252"></a>
+<FONT color="green">253</FONT>         * @see #INTERVAL_HALF_DAY<a name="line.253"></a>
+<FONT color="green">254</FONT>         * @see #INTERVAL_DAY<a name="line.254"></a>
+<FONT color="green">255</FONT>         */<a name="line.255"></a>
+<FONT color="green">256</FONT>        public void setInexactRepeating(int type, long triggerAtTime, long interval,<a name="line.256"></a>
+<FONT color="green">257</FONT>                PendingIntent operation) {<a name="line.257"></a>
+<FONT color="green">258</FONT>            try {<a name="line.258"></a>
+<FONT color="green">259</FONT>                mService.setInexactRepeating(type, triggerAtTime, interval, operation);<a name="line.259"></a>
+<FONT color="green">260</FONT>            } catch (RemoteException ex) {<a name="line.260"></a>
+<FONT color="green">261</FONT>            }<a name="line.261"></a>
+<FONT color="green">262</FONT>        }<a name="line.262"></a>
+<FONT color="green">263</FONT>        <a name="line.263"></a>
+<FONT color="green">264</FONT>        /**<a name="line.264"></a>
+<FONT color="green">265</FONT>         * Remove any alarms with a matching {@link Intent}.<a name="line.265"></a>
+<FONT color="green">266</FONT>         * Any alarm, of any type, whose Intent matches this one (as defined by<a name="line.266"></a>
+<FONT color="green">267</FONT>         * {@link Intent#filterEquals}), will be canceled.<a name="line.267"></a>
+<FONT color="green">268</FONT>         *<a name="line.268"></a>
+<FONT color="green">269</FONT>         * @param operation IntentSender which matches a previously added<a name="line.269"></a>
+<FONT color="green">270</FONT>         * IntentSender.<a name="line.270"></a>
+<FONT color="green">271</FONT>         *<a name="line.271"></a>
+<FONT color="green">272</FONT>         * @see #set<a name="line.272"></a>
+<FONT color="green">273</FONT>         */<a name="line.273"></a>
+<FONT color="green">274</FONT>        public void cancel(PendingIntent operation) {<a name="line.274"></a>
+<FONT color="green">275</FONT>            try {<a name="line.275"></a>
+<FONT color="green">276</FONT>                mService.remove(operation);<a name="line.276"></a>
+<FONT color="green">277</FONT>            } catch (RemoteException ex) {<a name="line.277"></a>
+<FONT color="green">278</FONT>            }<a name="line.278"></a>
+<FONT color="green">279</FONT>        }<a name="line.279"></a>
+<FONT color="green">280</FONT>        <a name="line.280"></a>
+<FONT color="green">281</FONT>        public void setTimeZone(String timeZone) {<a name="line.281"></a>
+<FONT color="green">282</FONT>            try {<a name="line.282"></a>
+<FONT color="green">283</FONT>                mService.setTimeZone(timeZone);<a name="line.283"></a>
+<FONT color="green">284</FONT>            } catch (RemoteException ex) {<a name="line.284"></a>
+<FONT color="green">285</FONT>            }<a name="line.285"></a>
+<FONT color="green">286</FONT>        }<a name="line.286"></a>
+<FONT color="green">287</FONT>    }<a name="line.287"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

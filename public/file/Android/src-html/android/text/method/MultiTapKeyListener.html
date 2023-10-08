@@ -1,0 +1,352 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.text.method;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.view.KeyEvent;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.view.View;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.Handler;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.os.SystemClock;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.text.*;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.text.method.TextKeyListener.Capitalize;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.util.SparseArray;<a name="line.25"></a>
+<FONT color="green">026</FONT>    <a name="line.26"></a>
+<FONT color="green">027</FONT>    /**<a name="line.27"></a>
+<FONT color="green">028</FONT>     * This is the standard key listener for alphabetic input on 12-key<a name="line.28"></a>
+<FONT color="green">029</FONT>     * keyboards.  You should generally not need to instantiate this yourself;<a name="line.29"></a>
+<FONT color="green">030</FONT>     * TextKeyListener will do it for you.<a name="line.30"></a>
+<FONT color="green">031</FONT>     */<a name="line.31"></a>
+<FONT color="green">032</FONT>    public class MultiTapKeyListener extends BaseKeyListener<a name="line.32"></a>
+<FONT color="green">033</FONT>            implements SpanWatcher {<a name="line.33"></a>
+<FONT color="green">034</FONT>        private static MultiTapKeyListener[] sInstance =<a name="line.34"></a>
+<FONT color="green">035</FONT>            new MultiTapKeyListener[Capitalize.values().length * 2];<a name="line.35"></a>
+<FONT color="green">036</FONT>    <a name="line.36"></a>
+<FONT color="green">037</FONT>        private static final SparseArray&lt;String&gt; sRecs = new SparseArray&lt;String&gt;();<a name="line.37"></a>
+<FONT color="green">038</FONT>    <a name="line.38"></a>
+<FONT color="green">039</FONT>        private Capitalize mCapitalize;<a name="line.39"></a>
+<FONT color="green">040</FONT>        private boolean mAutoText;<a name="line.40"></a>
+<FONT color="green">041</FONT>    <a name="line.41"></a>
+<FONT color="green">042</FONT>        static {<a name="line.42"></a>
+<FONT color="green">043</FONT>            sRecs.put(KeyEvent.KEYCODE_1,     ".,1!@#$%^&amp;*:/?'=()");<a name="line.43"></a>
+<FONT color="green">044</FONT>            sRecs.put(KeyEvent.KEYCODE_2,     "abc2ABC");<a name="line.44"></a>
+<FONT color="green">045</FONT>            sRecs.put(KeyEvent.KEYCODE_3,     "def3DEF");<a name="line.45"></a>
+<FONT color="green">046</FONT>            sRecs.put(KeyEvent.KEYCODE_4,     "ghi4GHI");<a name="line.46"></a>
+<FONT color="green">047</FONT>            sRecs.put(KeyEvent.KEYCODE_5,     "jkl5JKL");<a name="line.47"></a>
+<FONT color="green">048</FONT>            sRecs.put(KeyEvent.KEYCODE_6,     "mno6MNO");<a name="line.48"></a>
+<FONT color="green">049</FONT>            sRecs.put(KeyEvent.KEYCODE_7,     "pqrs7PQRS");<a name="line.49"></a>
+<FONT color="green">050</FONT>            sRecs.put(KeyEvent.KEYCODE_8,     "tuv8TUV");<a name="line.50"></a>
+<FONT color="green">051</FONT>            sRecs.put(KeyEvent.KEYCODE_9,     "wxyz9WXYZ");<a name="line.51"></a>
+<FONT color="green">052</FONT>            sRecs.put(KeyEvent.KEYCODE_0,     "0+");<a name="line.52"></a>
+<FONT color="green">053</FONT>            sRecs.put(KeyEvent.KEYCODE_POUND, " ");<a name="line.53"></a>
+<FONT color="green">054</FONT>        };<a name="line.54"></a>
+<FONT color="green">055</FONT>    <a name="line.55"></a>
+<FONT color="green">056</FONT>        public MultiTapKeyListener(Capitalize cap,<a name="line.56"></a>
+<FONT color="green">057</FONT>                                   boolean autotext) {<a name="line.57"></a>
+<FONT color="green">058</FONT>            mCapitalize = cap;<a name="line.58"></a>
+<FONT color="green">059</FONT>            mAutoText = autotext;<a name="line.59"></a>
+<FONT color="green">060</FONT>        }<a name="line.60"></a>
+<FONT color="green">061</FONT>    <a name="line.61"></a>
+<FONT color="green">062</FONT>        /**<a name="line.62"></a>
+<FONT color="green">063</FONT>         * Returns a new or existing instance with the specified capitalization<a name="line.63"></a>
+<FONT color="green">064</FONT>         * and correction properties.<a name="line.64"></a>
+<FONT color="green">065</FONT>         */<a name="line.65"></a>
+<FONT color="green">066</FONT>        public static MultiTapKeyListener getInstance(boolean autotext,<a name="line.66"></a>
+<FONT color="green">067</FONT>                                                      Capitalize cap) {<a name="line.67"></a>
+<FONT color="green">068</FONT>            int off = cap.ordinal() * 2 + (autotext ? 1 : 0);<a name="line.68"></a>
+<FONT color="green">069</FONT>    <a name="line.69"></a>
+<FONT color="green">070</FONT>            if (sInstance[off] == null) {<a name="line.70"></a>
+<FONT color="green">071</FONT>                sInstance[off] = new MultiTapKeyListener(cap, autotext);<a name="line.71"></a>
+<FONT color="green">072</FONT>            }<a name="line.72"></a>
+<FONT color="green">073</FONT>    <a name="line.73"></a>
+<FONT color="green">074</FONT>            return sInstance[off];<a name="line.74"></a>
+<FONT color="green">075</FONT>        }<a name="line.75"></a>
+<FONT color="green">076</FONT>    <a name="line.76"></a>
+<FONT color="green">077</FONT>        public int getInputType() {<a name="line.77"></a>
+<FONT color="green">078</FONT>            return makeTextContentType(mCapitalize, mAutoText);<a name="line.78"></a>
+<FONT color="green">079</FONT>        }<a name="line.79"></a>
+<FONT color="green">080</FONT>        <a name="line.80"></a>
+<FONT color="green">081</FONT>        public boolean onKeyDown(View view, Editable content,<a name="line.81"></a>
+<FONT color="green">082</FONT>                                 int keyCode, KeyEvent event) {<a name="line.82"></a>
+<FONT color="green">083</FONT>            int selStart, selEnd;<a name="line.83"></a>
+<FONT color="green">084</FONT>            int pref = 0;<a name="line.84"></a>
+<FONT color="green">085</FONT>    <a name="line.85"></a>
+<FONT color="green">086</FONT>            if (view != null) {<a name="line.86"></a>
+<FONT color="green">087</FONT>                pref = TextKeyListener.getInstance().getPrefs(view.getContext());<a name="line.87"></a>
+<FONT color="green">088</FONT>            }<a name="line.88"></a>
+<FONT color="green">089</FONT>    <a name="line.89"></a>
+<FONT color="green">090</FONT>            {<a name="line.90"></a>
+<FONT color="green">091</FONT>                int a = Selection.getSelectionStart(content);<a name="line.91"></a>
+<FONT color="green">092</FONT>                int b = Selection.getSelectionEnd(content);<a name="line.92"></a>
+<FONT color="green">093</FONT>    <a name="line.93"></a>
+<FONT color="green">094</FONT>                selStart = Math.min(a, b);<a name="line.94"></a>
+<FONT color="green">095</FONT>                selEnd = Math.max(a, b);<a name="line.95"></a>
+<FONT color="green">096</FONT>            }<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>            int activeStart = content.getSpanStart(TextKeyListener.ACTIVE);<a name="line.98"></a>
+<FONT color="green">099</FONT>            int activeEnd = content.getSpanEnd(TextKeyListener.ACTIVE);<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>            // now for the multitap cases...<a name="line.101"></a>
+<FONT color="green">102</FONT>    <a name="line.102"></a>
+<FONT color="green">103</FONT>            // Try to increment the character we were working on before<a name="line.103"></a>
+<FONT color="green">104</FONT>            // if we have one and it's still the same key.<a name="line.104"></a>
+<FONT color="green">105</FONT>    <a name="line.105"></a>
+<FONT color="green">106</FONT>            int rec = (content.getSpanFlags(TextKeyListener.ACTIVE)<a name="line.106"></a>
+<FONT color="green">107</FONT>                        &amp; Spannable.SPAN_USER) &gt;&gt;&gt; Spannable.SPAN_USER_SHIFT;<a name="line.107"></a>
+<FONT color="green">108</FONT>    <a name="line.108"></a>
+<FONT color="green">109</FONT>            if (activeStart == selStart &amp;&amp; activeEnd == selEnd &amp;&amp;<a name="line.109"></a>
+<FONT color="green">110</FONT>                selEnd - selStart == 1 &amp;&amp;<a name="line.110"></a>
+<FONT color="green">111</FONT>                rec &gt;= 0 &amp;&amp; rec &lt; sRecs.size()) {<a name="line.111"></a>
+<FONT color="green">112</FONT>                if (keyCode == KeyEvent.KEYCODE_STAR) {<a name="line.112"></a>
+<FONT color="green">113</FONT>                    char current = content.charAt(selStart);<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>                    if (Character.isLowerCase(current)) {<a name="line.115"></a>
+<FONT color="green">116</FONT>                        content.replace(selStart, selEnd,<a name="line.116"></a>
+<FONT color="green">117</FONT>                                        String.valueOf(current).toUpperCase());<a name="line.117"></a>
+<FONT color="green">118</FONT>                        removeTimeouts(content);<a name="line.118"></a>
+<FONT color="green">119</FONT>                        Timeout t = new Timeout(content);<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>                        return true;<a name="line.121"></a>
+<FONT color="green">122</FONT>                    }<a name="line.122"></a>
+<FONT color="green">123</FONT>                    if (Character.isUpperCase(current)) {<a name="line.123"></a>
+<FONT color="green">124</FONT>                        content.replace(selStart, selEnd,<a name="line.124"></a>
+<FONT color="green">125</FONT>                                        String.valueOf(current).toLowerCase());<a name="line.125"></a>
+<FONT color="green">126</FONT>                        removeTimeouts(content);<a name="line.126"></a>
+<FONT color="green">127</FONT>                        Timeout t = new Timeout(content);<a name="line.127"></a>
+<FONT color="green">128</FONT>    <a name="line.128"></a>
+<FONT color="green">129</FONT>                        return true;<a name="line.129"></a>
+<FONT color="green">130</FONT>                    }<a name="line.130"></a>
+<FONT color="green">131</FONT>                }<a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>                if (sRecs.indexOfKey(keyCode) == rec) {<a name="line.133"></a>
+<FONT color="green">134</FONT>                    String val = sRecs.valueAt(rec);<a name="line.134"></a>
+<FONT color="green">135</FONT>                    char ch = content.charAt(selStart);<a name="line.135"></a>
+<FONT color="green">136</FONT>                    int ix = val.indexOf(ch);<a name="line.136"></a>
+<FONT color="green">137</FONT>    <a name="line.137"></a>
+<FONT color="green">138</FONT>                    if (ix &gt;= 0) {<a name="line.138"></a>
+<FONT color="green">139</FONT>                        ix = (ix + 1) % (val.length());<a name="line.139"></a>
+<FONT color="green">140</FONT>    <a name="line.140"></a>
+<FONT color="green">141</FONT>                        content.replace(selStart, selEnd, val, ix, ix + 1);<a name="line.141"></a>
+<FONT color="green">142</FONT>                        removeTimeouts(content);<a name="line.142"></a>
+<FONT color="green">143</FONT>                        Timeout t = new Timeout(content);<a name="line.143"></a>
+<FONT color="green">144</FONT>    <a name="line.144"></a>
+<FONT color="green">145</FONT>                        return true;<a name="line.145"></a>
+<FONT color="green">146</FONT>                    }<a name="line.146"></a>
+<FONT color="green">147</FONT>                }<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>                // Is this key one we know about at all?  If so, acknowledge<a name="line.149"></a>
+<FONT color="green">150</FONT>                // that the selection is our fault but the key has changed<a name="line.150"></a>
+<FONT color="green">151</FONT>                // or the text no longer matches, so move the selection over<a name="line.151"></a>
+<FONT color="green">152</FONT>                // so that it inserts instead of replaces.<a name="line.152"></a>
+<FONT color="green">153</FONT>    <a name="line.153"></a>
+<FONT color="green">154</FONT>                rec = sRecs.indexOfKey(keyCode);<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>                if (rec &gt;= 0) {<a name="line.156"></a>
+<FONT color="green">157</FONT>                    Selection.setSelection(content, selEnd, selEnd);<a name="line.157"></a>
+<FONT color="green">158</FONT>                    selStart = selEnd;<a name="line.158"></a>
+<FONT color="green">159</FONT>                }<a name="line.159"></a>
+<FONT color="green">160</FONT>            } else {<a name="line.160"></a>
+<FONT color="green">161</FONT>                rec = sRecs.indexOfKey(keyCode);<a name="line.161"></a>
+<FONT color="green">162</FONT>            }<a name="line.162"></a>
+<FONT color="green">163</FONT>    <a name="line.163"></a>
+<FONT color="green">164</FONT>            if (rec &gt;= 0) {<a name="line.164"></a>
+<FONT color="green">165</FONT>                // We have a valid key.  Replace the selection or insertion point<a name="line.165"></a>
+<FONT color="green">166</FONT>                // with the first character for that key, and remember what<a name="line.166"></a>
+<FONT color="green">167</FONT>                // record it came from for next time.<a name="line.167"></a>
+<FONT color="green">168</FONT>    <a name="line.168"></a>
+<FONT color="green">169</FONT>                String val = sRecs.valueAt(rec);<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>                int off = 0;<a name="line.171"></a>
+<FONT color="green">172</FONT>                if ((pref &amp; TextKeyListener.AUTO_CAP) != 0 &amp;&amp;<a name="line.172"></a>
+<FONT color="green">173</FONT>                    TextKeyListener.shouldCap(mCapitalize, content, selStart)) {<a name="line.173"></a>
+<FONT color="green">174</FONT>                    for (int i = 0; i &lt; val.length(); i++) {<a name="line.174"></a>
+<FONT color="green">175</FONT>                        if (Character.isUpperCase(val.charAt(i))) {<a name="line.175"></a>
+<FONT color="green">176</FONT>                            off = i;<a name="line.176"></a>
+<FONT color="green">177</FONT>                            break;<a name="line.177"></a>
+<FONT color="green">178</FONT>                        }<a name="line.178"></a>
+<FONT color="green">179</FONT>                    }<a name="line.179"></a>
+<FONT color="green">180</FONT>                }<a name="line.180"></a>
+<FONT color="green">181</FONT>    <a name="line.181"></a>
+<FONT color="green">182</FONT>                if (selStart != selEnd) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                    Selection.setSelection(content, selEnd);<a name="line.183"></a>
+<FONT color="green">184</FONT>                }<a name="line.184"></a>
+<FONT color="green">185</FONT>    <a name="line.185"></a>
+<FONT color="green">186</FONT>                content.setSpan(OLD_SEL_START, selStart, selStart,<a name="line.186"></a>
+<FONT color="green">187</FONT>                                Spannable.SPAN_MARK_MARK);<a name="line.187"></a>
+<FONT color="green">188</FONT>    <a name="line.188"></a>
+<FONT color="green">189</FONT>                content.replace(selStart, selEnd, val, off, off + 1);<a name="line.189"></a>
+<FONT color="green">190</FONT>    <a name="line.190"></a>
+<FONT color="green">191</FONT>                int oldStart = content.getSpanStart(OLD_SEL_START);<a name="line.191"></a>
+<FONT color="green">192</FONT>                selEnd = Selection.getSelectionEnd(content);<a name="line.192"></a>
+<FONT color="green">193</FONT>    <a name="line.193"></a>
+<FONT color="green">194</FONT>                if (selEnd != oldStart) {<a name="line.194"></a>
+<FONT color="green">195</FONT>                    Selection.setSelection(content, oldStart, selEnd);<a name="line.195"></a>
+<FONT color="green">196</FONT>    <a name="line.196"></a>
+<FONT color="green">197</FONT>                    content.setSpan(TextKeyListener.LAST_TYPED, <a name="line.197"></a>
+<FONT color="green">198</FONT>                                    oldStart, selEnd,<a name="line.198"></a>
+<FONT color="green">199</FONT>                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);<a name="line.199"></a>
+<FONT color="green">200</FONT>    <a name="line.200"></a>
+<FONT color="green">201</FONT>                    content.setSpan(TextKeyListener.ACTIVE,<a name="line.201"></a>
+<FONT color="green">202</FONT>                                oldStart, selEnd,<a name="line.202"></a>
+<FONT color="green">203</FONT>                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE |<a name="line.203"></a>
+<FONT color="green">204</FONT>                                (rec &lt;&lt; Spannable.SPAN_USER_SHIFT));<a name="line.204"></a>
+<FONT color="green">205</FONT>    <a name="line.205"></a>
+<FONT color="green">206</FONT>                }<a name="line.206"></a>
+<FONT color="green">207</FONT>    <a name="line.207"></a>
+<FONT color="green">208</FONT>                removeTimeouts(content);<a name="line.208"></a>
+<FONT color="green">209</FONT>                Timeout t = new Timeout(content);<a name="line.209"></a>
+<FONT color="green">210</FONT>    <a name="line.210"></a>
+<FONT color="green">211</FONT>                // Set up the callback so we can remove the timeout if the<a name="line.211"></a>
+<FONT color="green">212</FONT>                // cursor moves.<a name="line.212"></a>
+<FONT color="green">213</FONT>    <a name="line.213"></a>
+<FONT color="green">214</FONT>                if (content.getSpanStart(this) &lt; 0) {<a name="line.214"></a>
+<FONT color="green">215</FONT>                    KeyListener[] methods = content.getSpans(0, content.length(),<a name="line.215"></a>
+<FONT color="green">216</FONT>                                                        KeyListener.class);<a name="line.216"></a>
+<FONT color="green">217</FONT>                    for (Object method : methods) {<a name="line.217"></a>
+<FONT color="green">218</FONT>                        content.removeSpan(method);<a name="line.218"></a>
+<FONT color="green">219</FONT>                    }<a name="line.219"></a>
+<FONT color="green">220</FONT>                    content.setSpan(this, 0, content.length(),<a name="line.220"></a>
+<FONT color="green">221</FONT>                                    Spannable.SPAN_INCLUSIVE_INCLUSIVE);<a name="line.221"></a>
+<FONT color="green">222</FONT>                }<a name="line.222"></a>
+<FONT color="green">223</FONT>    <a name="line.223"></a>
+<FONT color="green">224</FONT>                return true;<a name="line.224"></a>
+<FONT color="green">225</FONT>            }<a name="line.225"></a>
+<FONT color="green">226</FONT>    <a name="line.226"></a>
+<FONT color="green">227</FONT>            return super.onKeyDown(view, content, keyCode, event);<a name="line.227"></a>
+<FONT color="green">228</FONT>        }<a name="line.228"></a>
+<FONT color="green">229</FONT>    <a name="line.229"></a>
+<FONT color="green">230</FONT>        public void onSpanChanged(Spannable buf,<a name="line.230"></a>
+<FONT color="green">231</FONT>                                  Object what, int s, int e, int start, int stop) {<a name="line.231"></a>
+<FONT color="green">232</FONT>            if (what == Selection.SELECTION_END) {<a name="line.232"></a>
+<FONT color="green">233</FONT>                buf.removeSpan(TextKeyListener.ACTIVE);<a name="line.233"></a>
+<FONT color="green">234</FONT>                removeTimeouts(buf);<a name="line.234"></a>
+<FONT color="green">235</FONT>            }<a name="line.235"></a>
+<FONT color="green">236</FONT>        }<a name="line.236"></a>
+<FONT color="green">237</FONT>    <a name="line.237"></a>
+<FONT color="green">238</FONT>        private static void removeTimeouts(Spannable buf) {<a name="line.238"></a>
+<FONT color="green">239</FONT>            Timeout[] timeout = buf.getSpans(0, buf.length(), Timeout.class);<a name="line.239"></a>
+<FONT color="green">240</FONT>    <a name="line.240"></a>
+<FONT color="green">241</FONT>            for (int i = 0; i &lt; timeout.length; i++) {<a name="line.241"></a>
+<FONT color="green">242</FONT>                Timeout t = timeout[i];<a name="line.242"></a>
+<FONT color="green">243</FONT>    <a name="line.243"></a>
+<FONT color="green">244</FONT>                t.removeCallbacks(t);<a name="line.244"></a>
+<FONT color="green">245</FONT>                t.mBuffer = null;<a name="line.245"></a>
+<FONT color="green">246</FONT>                buf.removeSpan(t);<a name="line.246"></a>
+<FONT color="green">247</FONT>            }<a name="line.247"></a>
+<FONT color="green">248</FONT>        }<a name="line.248"></a>
+<FONT color="green">249</FONT>    <a name="line.249"></a>
+<FONT color="green">250</FONT>        private class Timeout<a name="line.250"></a>
+<FONT color="green">251</FONT>        extends Handler<a name="line.251"></a>
+<FONT color="green">252</FONT>        implements Runnable<a name="line.252"></a>
+<FONT color="green">253</FONT>        {<a name="line.253"></a>
+<FONT color="green">254</FONT>            public Timeout(Editable buffer) {<a name="line.254"></a>
+<FONT color="green">255</FONT>                mBuffer = buffer;<a name="line.255"></a>
+<FONT color="green">256</FONT>                mBuffer.setSpan(Timeout.this, 0, mBuffer.length(),<a name="line.256"></a>
+<FONT color="green">257</FONT>                                Spannable.SPAN_INCLUSIVE_INCLUSIVE);<a name="line.257"></a>
+<FONT color="green">258</FONT>    <a name="line.258"></a>
+<FONT color="green">259</FONT>                postAtTime(this, SystemClock.uptimeMillis() + 2000);<a name="line.259"></a>
+<FONT color="green">260</FONT>            }<a name="line.260"></a>
+<FONT color="green">261</FONT>    <a name="line.261"></a>
+<FONT color="green">262</FONT>            public void run() {<a name="line.262"></a>
+<FONT color="green">263</FONT>                Spannable buf = mBuffer;<a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>                if (buf != null) {<a name="line.265"></a>
+<FONT color="green">266</FONT>                    int st = Selection.getSelectionStart(buf);<a name="line.266"></a>
+<FONT color="green">267</FONT>                    int en = Selection.getSelectionEnd(buf);<a name="line.267"></a>
+<FONT color="green">268</FONT>    <a name="line.268"></a>
+<FONT color="green">269</FONT>                    int start = buf.getSpanStart(TextKeyListener.ACTIVE);<a name="line.269"></a>
+<FONT color="green">270</FONT>                    int end = buf.getSpanEnd(TextKeyListener.ACTIVE);<a name="line.270"></a>
+<FONT color="green">271</FONT>    <a name="line.271"></a>
+<FONT color="green">272</FONT>                    if (st == start &amp;&amp; en == end) {<a name="line.272"></a>
+<FONT color="green">273</FONT>                        Selection.setSelection(buf, Selection.getSelectionEnd(buf));<a name="line.273"></a>
+<FONT color="green">274</FONT>                    }<a name="line.274"></a>
+<FONT color="green">275</FONT>    <a name="line.275"></a>
+<FONT color="green">276</FONT>                    buf.removeSpan(Timeout.this);<a name="line.276"></a>
+<FONT color="green">277</FONT>                }<a name="line.277"></a>
+<FONT color="green">278</FONT>            }<a name="line.278"></a>
+<FONT color="green">279</FONT>    <a name="line.279"></a>
+<FONT color="green">280</FONT>            private Editable mBuffer;<a name="line.280"></a>
+<FONT color="green">281</FONT>        }<a name="line.281"></a>
+<FONT color="green">282</FONT>    <a name="line.282"></a>
+<FONT color="green">283</FONT>        public void onSpanAdded(Spannable s, Object what, int start, int end) { }<a name="line.283"></a>
+<FONT color="green">284</FONT>        public void onSpanRemoved(Spannable s, Object what, int start, int end) { }<a name="line.284"></a>
+<FONT color="green">285</FONT>    }<a name="line.285"></a>
+<FONT color="green">286</FONT>    <a name="line.286"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,348 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.widget;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.database.Cursor;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.database.DataSetObserver;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.util.SparseIntArray;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    /**<a name="line.23"></a>
+<FONT color="green">024</FONT>     * A helper class for adapters that implement the SectionIndexer interface.<a name="line.24"></a>
+<FONT color="green">025</FONT>     * If the items in the adapter are sorted by simple alphabet-based sorting, then<a name="line.25"></a>
+<FONT color="green">026</FONT>     * this class provides a way to do fast indexing of large lists using binary search.<a name="line.26"></a>
+<FONT color="green">027</FONT>     * It caches the indices that have been determined through the binary search and also<a name="line.27"></a>
+<FONT color="green">028</FONT>     * invalidates the cache if changes occur in the cursor.<a name="line.28"></a>
+<FONT color="green">029</FONT>     * &lt;p/&gt;<a name="line.29"></a>
+<FONT color="green">030</FONT>     * Your adapter is responsible for updating the cursor by calling {@link #setCursor} if the<a name="line.30"></a>
+<FONT color="green">031</FONT>     * cursor changes. {@link #getPositionForSection} method does the binary search for the starting <a name="line.31"></a>
+<FONT color="green">032</FONT>     * index of a given section (alphabet).<a name="line.32"></a>
+<FONT color="green">033</FONT>     */<a name="line.33"></a>
+<FONT color="green">034</FONT>    public class AlphabetIndexer extends DataSetObserver implements SectionIndexer {<a name="line.34"></a>
+<FONT color="green">035</FONT>    <a name="line.35"></a>
+<FONT color="green">036</FONT>        /**<a name="line.36"></a>
+<FONT color="green">037</FONT>         * Cursor that is used by the adapter of the list view.<a name="line.37"></a>
+<FONT color="green">038</FONT>         */<a name="line.38"></a>
+<FONT color="green">039</FONT>        protected Cursor mDataCursor;<a name="line.39"></a>
+<FONT color="green">040</FONT>        <a name="line.40"></a>
+<FONT color="green">041</FONT>        /**<a name="line.41"></a>
+<FONT color="green">042</FONT>         * The index of the cursor column that this list is sorted on.<a name="line.42"></a>
+<FONT color="green">043</FONT>         */<a name="line.43"></a>
+<FONT color="green">044</FONT>        protected int mColumnIndex;<a name="line.44"></a>
+<FONT color="green">045</FONT>        <a name="line.45"></a>
+<FONT color="green">046</FONT>        /**<a name="line.46"></a>
+<FONT color="green">047</FONT>         * The string of characters that make up the indexing sections.<a name="line.47"></a>
+<FONT color="green">048</FONT>         */<a name="line.48"></a>
+<FONT color="green">049</FONT>        protected CharSequence mAlphabet;<a name="line.49"></a>
+<FONT color="green">050</FONT>        <a name="line.50"></a>
+<FONT color="green">051</FONT>        /**<a name="line.51"></a>
+<FONT color="green">052</FONT>         * Cached length of the alphabet array.<a name="line.52"></a>
+<FONT color="green">053</FONT>         */<a name="line.53"></a>
+<FONT color="green">054</FONT>        private int mAlphabetLength;<a name="line.54"></a>
+<FONT color="green">055</FONT>        <a name="line.55"></a>
+<FONT color="green">056</FONT>        /**<a name="line.56"></a>
+<FONT color="green">057</FONT>         * This contains a cache of the computed indices so far. It will get reset whenever<a name="line.57"></a>
+<FONT color="green">058</FONT>         * the dataset changes or the cursor changes.<a name="line.58"></a>
+<FONT color="green">059</FONT>         */<a name="line.59"></a>
+<FONT color="green">060</FONT>        private SparseIntArray mAlphaMap;<a name="line.60"></a>
+<FONT color="green">061</FONT>        <a name="line.61"></a>
+<FONT color="green">062</FONT>        /**<a name="line.62"></a>
+<FONT color="green">063</FONT>         * Use a collator to compare strings in a localized manner.<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        private java.text.Collator mCollator;<a name="line.65"></a>
+<FONT color="green">066</FONT>        <a name="line.66"></a>
+<FONT color="green">067</FONT>        /**<a name="line.67"></a>
+<FONT color="green">068</FONT>         * The section array converted from the alphabet string.<a name="line.68"></a>
+<FONT color="green">069</FONT>         */<a name="line.69"></a>
+<FONT color="green">070</FONT>        private String[] mAlphabetArray;<a name="line.70"></a>
+<FONT color="green">071</FONT>    <a name="line.71"></a>
+<FONT color="green">072</FONT>        /**<a name="line.72"></a>
+<FONT color="green">073</FONT>         * Constructs the indexer.<a name="line.73"></a>
+<FONT color="green">074</FONT>         * @param cursor the cursor containing the data set<a name="line.74"></a>
+<FONT color="green">075</FONT>         * @param sortedColumnIndex the column number in the cursor that is sorted <a name="line.75"></a>
+<FONT color="green">076</FONT>         *        alphabetically<a name="line.76"></a>
+<FONT color="green">077</FONT>         * @param alphabet string containing the alphabet, with space as the first character. <a name="line.77"></a>
+<FONT color="green">078</FONT>         *        For example, use the string " ABCDEFGHIJKLMNOPQRSTUVWXYZ" for English indexing.<a name="line.78"></a>
+<FONT color="green">079</FONT>         *        The characters must be uppercase and be sorted in ascii/unicode order. Basically<a name="line.79"></a>
+<FONT color="green">080</FONT>         *        characters in the alphabet will show up as preview letters.<a name="line.80"></a>
+<FONT color="green">081</FONT>         */<a name="line.81"></a>
+<FONT color="green">082</FONT>        public AlphabetIndexer(Cursor cursor, int sortedColumnIndex, CharSequence alphabet) {<a name="line.82"></a>
+<FONT color="green">083</FONT>            mDataCursor = cursor;<a name="line.83"></a>
+<FONT color="green">084</FONT>            mColumnIndex = sortedColumnIndex;<a name="line.84"></a>
+<FONT color="green">085</FONT>            mAlphabet = alphabet;<a name="line.85"></a>
+<FONT color="green">086</FONT>            mAlphabetLength = alphabet.length();<a name="line.86"></a>
+<FONT color="green">087</FONT>            mAlphabetArray = new String[mAlphabetLength];<a name="line.87"></a>
+<FONT color="green">088</FONT>            for (int i = 0; i &lt; mAlphabetLength; i++) {<a name="line.88"></a>
+<FONT color="green">089</FONT>                mAlphabetArray[i] = Character.toString(mAlphabet.charAt(i));<a name="line.89"></a>
+<FONT color="green">090</FONT>            }<a name="line.90"></a>
+<FONT color="green">091</FONT>            mAlphaMap = new SparseIntArray(mAlphabetLength);<a name="line.91"></a>
+<FONT color="green">092</FONT>            if (cursor != null) {<a name="line.92"></a>
+<FONT color="green">093</FONT>                cursor.registerDataSetObserver(this);<a name="line.93"></a>
+<FONT color="green">094</FONT>            }<a name="line.94"></a>
+<FONT color="green">095</FONT>            // Get a Collator for the current locale for string comparisons.<a name="line.95"></a>
+<FONT color="green">096</FONT>            mCollator = java.text.Collator.getInstance();<a name="line.96"></a>
+<FONT color="green">097</FONT>            mCollator.setStrength(java.text.Collator.PRIMARY);<a name="line.97"></a>
+<FONT color="green">098</FONT>        }<a name="line.98"></a>
+<FONT color="green">099</FONT>    <a name="line.99"></a>
+<FONT color="green">100</FONT>        /**<a name="line.100"></a>
+<FONT color="green">101</FONT>         * Returns the section array constructed from the alphabet provided in the constructor.<a name="line.101"></a>
+<FONT color="green">102</FONT>         * @return the section array<a name="line.102"></a>
+<FONT color="green">103</FONT>         */<a name="line.103"></a>
+<FONT color="green">104</FONT>        public Object[] getSections() {<a name="line.104"></a>
+<FONT color="green">105</FONT>            return mAlphabetArray;<a name="line.105"></a>
+<FONT color="green">106</FONT>        }<a name="line.106"></a>
+<FONT color="green">107</FONT>        <a name="line.107"></a>
+<FONT color="green">108</FONT>        /**<a name="line.108"></a>
+<FONT color="green">109</FONT>         * Sets a new cursor as the data set and resets the cache of indices.<a name="line.109"></a>
+<FONT color="green">110</FONT>         * @param cursor the new cursor to use as the data set<a name="line.110"></a>
+<FONT color="green">111</FONT>         */<a name="line.111"></a>
+<FONT color="green">112</FONT>        public void setCursor(Cursor cursor) {<a name="line.112"></a>
+<FONT color="green">113</FONT>            if (mDataCursor != null) {<a name="line.113"></a>
+<FONT color="green">114</FONT>                mDataCursor.unregisterDataSetObserver(this);<a name="line.114"></a>
+<FONT color="green">115</FONT>            }<a name="line.115"></a>
+<FONT color="green">116</FONT>            mDataCursor = cursor;<a name="line.116"></a>
+<FONT color="green">117</FONT>            if (cursor != null) {<a name="line.117"></a>
+<FONT color="green">118</FONT>                mDataCursor.registerDataSetObserver(this);<a name="line.118"></a>
+<FONT color="green">119</FONT>            }<a name="line.119"></a>
+<FONT color="green">120</FONT>            mAlphaMap.clear();<a name="line.120"></a>
+<FONT color="green">121</FONT>        }<a name="line.121"></a>
+<FONT color="green">122</FONT>    <a name="line.122"></a>
+<FONT color="green">123</FONT>        /**<a name="line.123"></a>
+<FONT color="green">124</FONT>         * Default implementation compares the first character of word with letter.<a name="line.124"></a>
+<FONT color="green">125</FONT>         */<a name="line.125"></a>
+<FONT color="green">126</FONT>        protected int compare(String word, String letter) {<a name="line.126"></a>
+<FONT color="green">127</FONT>            return mCollator.compare(word.substring(0, 1), letter);<a name="line.127"></a>
+<FONT color="green">128</FONT>        }<a name="line.128"></a>
+<FONT color="green">129</FONT>        <a name="line.129"></a>
+<FONT color="green">130</FONT>        /**<a name="line.130"></a>
+<FONT color="green">131</FONT>         * Performs a binary search or cache lookup to find the first row that<a name="line.131"></a>
+<FONT color="green">132</FONT>         * matches a given section's starting letter.<a name="line.132"></a>
+<FONT color="green">133</FONT>         * @param sectionIndex the section to search for<a name="line.133"></a>
+<FONT color="green">134</FONT>         * @return the row index of the first occurrence, or the nearest next letter.<a name="line.134"></a>
+<FONT color="green">135</FONT>         * For instance, if searching for "T" and no "T" is found, then the first<a name="line.135"></a>
+<FONT color="green">136</FONT>         * row starting with "U" or any higher letter is returned. If there is no<a name="line.136"></a>
+<FONT color="green">137</FONT>         * data following "T" at all, then the list size is returned.<a name="line.137"></a>
+<FONT color="green">138</FONT>         */<a name="line.138"></a>
+<FONT color="green">139</FONT>        public int getPositionForSection(int sectionIndex) {<a name="line.139"></a>
+<FONT color="green">140</FONT>            final SparseIntArray alphaMap = mAlphaMap;<a name="line.140"></a>
+<FONT color="green">141</FONT>            final Cursor cursor = mDataCursor;<a name="line.141"></a>
+<FONT color="green">142</FONT>    <a name="line.142"></a>
+<FONT color="green">143</FONT>            if (cursor == null || mAlphabet == null) {<a name="line.143"></a>
+<FONT color="green">144</FONT>                return 0;<a name="line.144"></a>
+<FONT color="green">145</FONT>            }<a name="line.145"></a>
+<FONT color="green">146</FONT>            <a name="line.146"></a>
+<FONT color="green">147</FONT>            // Check bounds<a name="line.147"></a>
+<FONT color="green">148</FONT>            if (sectionIndex &lt;= 0) {<a name="line.148"></a>
+<FONT color="green">149</FONT>                return 0;<a name="line.149"></a>
+<FONT color="green">150</FONT>            }<a name="line.150"></a>
+<FONT color="green">151</FONT>            if (sectionIndex &gt;= mAlphabetLength) {<a name="line.151"></a>
+<FONT color="green">152</FONT>                sectionIndex = mAlphabetLength - 1;<a name="line.152"></a>
+<FONT color="green">153</FONT>            }<a name="line.153"></a>
+<FONT color="green">154</FONT>    <a name="line.154"></a>
+<FONT color="green">155</FONT>            int savedCursorPos = cursor.getPosition();<a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>            int count = cursor.getCount();<a name="line.157"></a>
+<FONT color="green">158</FONT>            int start = 0;<a name="line.158"></a>
+<FONT color="green">159</FONT>            int end = count;<a name="line.159"></a>
+<FONT color="green">160</FONT>            int pos;<a name="line.160"></a>
+<FONT color="green">161</FONT>    <a name="line.161"></a>
+<FONT color="green">162</FONT>            char letter = mAlphabet.charAt(sectionIndex);<a name="line.162"></a>
+<FONT color="green">163</FONT>            String targetLetter = Character.toString(letter);<a name="line.163"></a>
+<FONT color="green">164</FONT>            int key = letter;<a name="line.164"></a>
+<FONT color="green">165</FONT>            // Check map<a name="line.165"></a>
+<FONT color="green">166</FONT>            if (Integer.MIN_VALUE != (pos = alphaMap.get(key, Integer.MIN_VALUE))) {<a name="line.166"></a>
+<FONT color="green">167</FONT>                // Is it approximate? Using negative value to indicate that it's <a name="line.167"></a>
+<FONT color="green">168</FONT>                // an approximation and positive value when it is the accurate<a name="line.168"></a>
+<FONT color="green">169</FONT>                // position.<a name="line.169"></a>
+<FONT color="green">170</FONT>                if (pos &lt; 0) {<a name="line.170"></a>
+<FONT color="green">171</FONT>                    pos = -pos;<a name="line.171"></a>
+<FONT color="green">172</FONT>                    end = pos;<a name="line.172"></a>
+<FONT color="green">173</FONT>                } else {<a name="line.173"></a>
+<FONT color="green">174</FONT>                    // Not approximate, this is the confirmed start of section, return it<a name="line.174"></a>
+<FONT color="green">175</FONT>                    return pos;<a name="line.175"></a>
+<FONT color="green">176</FONT>                }<a name="line.176"></a>
+<FONT color="green">177</FONT>            }<a name="line.177"></a>
+<FONT color="green">178</FONT>    <a name="line.178"></a>
+<FONT color="green">179</FONT>            // Do we have the position of the previous section?<a name="line.179"></a>
+<FONT color="green">180</FONT>            if (sectionIndex &gt; 0) {<a name="line.180"></a>
+<FONT color="green">181</FONT>                int prevLetter =<a name="line.181"></a>
+<FONT color="green">182</FONT>                        mAlphabet.charAt(sectionIndex - 1);<a name="line.182"></a>
+<FONT color="green">183</FONT>                int prevLetterPos = alphaMap.get(prevLetter, Integer.MIN_VALUE);<a name="line.183"></a>
+<FONT color="green">184</FONT>                if (prevLetterPos != Integer.MIN_VALUE) {<a name="line.184"></a>
+<FONT color="green">185</FONT>                    start = Math.abs(prevLetterPos);<a name="line.185"></a>
+<FONT color="green">186</FONT>                }<a name="line.186"></a>
+<FONT color="green">187</FONT>            }<a name="line.187"></a>
+<FONT color="green">188</FONT>    <a name="line.188"></a>
+<FONT color="green">189</FONT>            // Now that we have a possibly optimized start and end, let's binary search<a name="line.189"></a>
+<FONT color="green">190</FONT>    <a name="line.190"></a>
+<FONT color="green">191</FONT>            pos = (end + start) / 2;<a name="line.191"></a>
+<FONT color="green">192</FONT>    <a name="line.192"></a>
+<FONT color="green">193</FONT>            while (pos &lt; end) {<a name="line.193"></a>
+<FONT color="green">194</FONT>                // Get letter at pos<a name="line.194"></a>
+<FONT color="green">195</FONT>                cursor.moveToPosition(pos);<a name="line.195"></a>
+<FONT color="green">196</FONT>                String curName = cursor.getString(mColumnIndex);<a name="line.196"></a>
+<FONT color="green">197</FONT>                if (curName == null) {<a name="line.197"></a>
+<FONT color="green">198</FONT>                    if (pos == 0) {<a name="line.198"></a>
+<FONT color="green">199</FONT>                        break;<a name="line.199"></a>
+<FONT color="green">200</FONT>                    } else {<a name="line.200"></a>
+<FONT color="green">201</FONT>                        pos--;<a name="line.201"></a>
+<FONT color="green">202</FONT>                        continue;<a name="line.202"></a>
+<FONT color="green">203</FONT>                    }<a name="line.203"></a>
+<FONT color="green">204</FONT>                }<a name="line.204"></a>
+<FONT color="green">205</FONT>                int diff = compare(curName, targetLetter);<a name="line.205"></a>
+<FONT color="green">206</FONT>                if (diff != 0) {<a name="line.206"></a>
+<FONT color="green">207</FONT>                    // Commenting out approximation code because it doesn't work for certain <a name="line.207"></a>
+<FONT color="green">208</FONT>                    // lists with custom comparators<a name="line.208"></a>
+<FONT color="green">209</FONT>                    // Enter approximation in hash if a better solution doesn't exist<a name="line.209"></a>
+<FONT color="green">210</FONT>                    // String startingLetter = Character.toString(getFirstLetter(curName));<a name="line.210"></a>
+<FONT color="green">211</FONT>                    // int startingLetterKey = startingLetter.charAt(0);<a name="line.211"></a>
+<FONT color="green">212</FONT>                    // int curPos = alphaMap.get(startingLetterKey, Integer.MIN_VALUE);<a name="line.212"></a>
+<FONT color="green">213</FONT>                    // if (curPos == Integer.MIN_VALUE || Math.abs(curPos) &gt; pos) {<a name="line.213"></a>
+<FONT color="green">214</FONT>                    //     Negative pos indicates that it is an approximation<a name="line.214"></a>
+<FONT color="green">215</FONT>                    //     alphaMap.put(startingLetterKey, -pos);<a name="line.215"></a>
+<FONT color="green">216</FONT>                    // }<a name="line.216"></a>
+<FONT color="green">217</FONT>                    // if (mCollator.compare(startingLetter, targetLetter) &lt; 0) {<a name="line.217"></a>
+<FONT color="green">218</FONT>                    if (diff &lt; 0) {<a name="line.218"></a>
+<FONT color="green">219</FONT>                        start = pos + 1;<a name="line.219"></a>
+<FONT color="green">220</FONT>                        if (start &gt;= count) {<a name="line.220"></a>
+<FONT color="green">221</FONT>                            pos = count;<a name="line.221"></a>
+<FONT color="green">222</FONT>                            break;<a name="line.222"></a>
+<FONT color="green">223</FONT>                        }<a name="line.223"></a>
+<FONT color="green">224</FONT>                    } else {<a name="line.224"></a>
+<FONT color="green">225</FONT>                        end = pos;<a name="line.225"></a>
+<FONT color="green">226</FONT>                    }<a name="line.226"></a>
+<FONT color="green">227</FONT>                } else {<a name="line.227"></a>
+<FONT color="green">228</FONT>                    // They're the same, but that doesn't mean it's the start<a name="line.228"></a>
+<FONT color="green">229</FONT>                    if (start == pos) {<a name="line.229"></a>
+<FONT color="green">230</FONT>                        // This is it<a name="line.230"></a>
+<FONT color="green">231</FONT>                        break;<a name="line.231"></a>
+<FONT color="green">232</FONT>                    } else {<a name="line.232"></a>
+<FONT color="green">233</FONT>                        // Need to go further lower to find the starting row<a name="line.233"></a>
+<FONT color="green">234</FONT>                        end = pos;<a name="line.234"></a>
+<FONT color="green">235</FONT>                    }<a name="line.235"></a>
+<FONT color="green">236</FONT>                }<a name="line.236"></a>
+<FONT color="green">237</FONT>                pos = (start + end) / 2;<a name="line.237"></a>
+<FONT color="green">238</FONT>            }<a name="line.238"></a>
+<FONT color="green">239</FONT>            alphaMap.put(key, pos);<a name="line.239"></a>
+<FONT color="green">240</FONT>            cursor.moveToPosition(savedCursorPos);<a name="line.240"></a>
+<FONT color="green">241</FONT>            return pos;<a name="line.241"></a>
+<FONT color="green">242</FONT>        }<a name="line.242"></a>
+<FONT color="green">243</FONT>    <a name="line.243"></a>
+<FONT color="green">244</FONT>        /**<a name="line.244"></a>
+<FONT color="green">245</FONT>         * Returns the section index for a given position in the list by querying the item<a name="line.245"></a>
+<FONT color="green">246</FONT>         * and comparing it with all items in the section array.<a name="line.246"></a>
+<FONT color="green">247</FONT>         */<a name="line.247"></a>
+<FONT color="green">248</FONT>        public int getSectionForPosition(int position) {<a name="line.248"></a>
+<FONT color="green">249</FONT>            int savedCursorPos = mDataCursor.getPosition();<a name="line.249"></a>
+<FONT color="green">250</FONT>            mDataCursor.moveToPosition(position);<a name="line.250"></a>
+<FONT color="green">251</FONT>            mDataCursor.moveToPosition(savedCursorPos);<a name="line.251"></a>
+<FONT color="green">252</FONT>            String curName = mDataCursor.getString(mColumnIndex);<a name="line.252"></a>
+<FONT color="green">253</FONT>            // Linear search, as there are only a few items in the section index<a name="line.253"></a>
+<FONT color="green">254</FONT>            // Could speed this up later if it actually gets used.<a name="line.254"></a>
+<FONT color="green">255</FONT>            for (int i = 0; i &lt; mAlphabetLength; i++) {<a name="line.255"></a>
+<FONT color="green">256</FONT>                char letter = mAlphabet.charAt(i);<a name="line.256"></a>
+<FONT color="green">257</FONT>                String targetLetter = Character.toString(letter);<a name="line.257"></a>
+<FONT color="green">258</FONT>                if (compare(curName, targetLetter) == 0) {<a name="line.258"></a>
+<FONT color="green">259</FONT>                    return i;<a name="line.259"></a>
+<FONT color="green">260</FONT>                }<a name="line.260"></a>
+<FONT color="green">261</FONT>            }<a name="line.261"></a>
+<FONT color="green">262</FONT>            return 0; // Don't recognize the letter - falls under zero'th section    <a name="line.262"></a>
+<FONT color="green">263</FONT>        }<a name="line.263"></a>
+<FONT color="green">264</FONT>        <a name="line.264"></a>
+<FONT color="green">265</FONT>        /*<a name="line.265"></a>
+<FONT color="green">266</FONT>         * @hide<a name="line.266"></a>
+<FONT color="green">267</FONT>         */<a name="line.267"></a>
+<FONT color="green">268</FONT>        @Override<a name="line.268"></a>
+<FONT color="green">269</FONT>        public void onChanged() {<a name="line.269"></a>
+<FONT color="green">270</FONT>            super.onChanged();<a name="line.270"></a>
+<FONT color="green">271</FONT>            mAlphaMap.clear();<a name="line.271"></a>
+<FONT color="green">272</FONT>        }<a name="line.272"></a>
+<FONT color="green">273</FONT>    <a name="line.273"></a>
+<FONT color="green">274</FONT>        /*<a name="line.274"></a>
+<FONT color="green">275</FONT>         * @hide<a name="line.275"></a>
+<FONT color="green">276</FONT>         */<a name="line.276"></a>
+<FONT color="green">277</FONT>        @Override<a name="line.277"></a>
+<FONT color="green">278</FONT>        public void onInvalidated() {<a name="line.278"></a>
+<FONT color="green">279</FONT>            super.onInvalidated();<a name="line.279"></a>
+<FONT color="green">280</FONT>            mAlphaMap.clear();<a name="line.280"></a>
+<FONT color="green">281</FONT>        }<a name="line.281"></a>
+<FONT color="green">282</FONT>    }<a name="line.282"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

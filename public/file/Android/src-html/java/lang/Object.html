@@ -1,0 +1,434 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /* <a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    /*<a name="line.17"></a>
+<FONT color="green">018</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.18"></a>
+<FONT color="green">019</FONT>     *<a name="line.19"></a>
+<FONT color="green">020</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.20"></a>
+<FONT color="green">021</FONT>     * you may not use this file except in compliance with the License.<a name="line.21"></a>
+<FONT color="green">022</FONT>     * You may obtain a copy of the License at<a name="line.22"></a>
+<FONT color="green">023</FONT>     *<a name="line.23"></a>
+<FONT color="green">024</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.24"></a>
+<FONT color="green">025</FONT>     *<a name="line.25"></a>
+<FONT color="green">026</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.26"></a>
+<FONT color="green">027</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.27"></a>
+<FONT color="green">028</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.28"></a>
+<FONT color="green">029</FONT>     * See the License for the specific language governing permissions and<a name="line.29"></a>
+<FONT color="green">030</FONT>     * limitations under the License.<a name="line.30"></a>
+<FONT color="green">031</FONT>     */<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    package java.lang;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    /**<a name="line.35"></a>
+<FONT color="green">036</FONT>     * The root class of the Java class hierarchy. All non-primitive types<a name="line.36"></a>
+<FONT color="green">037</FONT>     * (including arrays) inherit either directly or indirectly from this class.<a name="line.37"></a>
+<FONT color="green">038</FONT>     * &lt;p&gt;<a name="line.38"></a>
+<FONT color="green">039</FONT>     * {@code Object} provides some fundamental methods for accessing the<a name="line.39"></a>
+<FONT color="green">040</FONT>     * {@link Class} of an object, getting its {@link #hashCode()}, or checking<a name="line.40"></a>
+<FONT color="green">041</FONT>     * whether one object {@link #equals(Object)} another. The {@link #toString()}<a name="line.41"></a>
+<FONT color="green">042</FONT>     * method can be used to convert an object reference into a printable string and<a name="line.42"></a>
+<FONT color="green">043</FONT>     * is often overridden in subclasses.<a name="line.43"></a>
+<FONT color="green">044</FONT>     * &lt;p&gt;<a name="line.44"></a>
+<FONT color="green">045</FONT>     * The {@link #wait()} and {@link #notify()} methods provide a foundation for<a name="line.45"></a>
+<FONT color="green">046</FONT>     * synchronization, acquiring and releasing an internal monitor associated with<a name="line.46"></a>
+<FONT color="green">047</FONT>     * each {@code Object}.<a name="line.47"></a>
+<FONT color="green">048</FONT>     * <a name="line.48"></a>
+<FONT color="green">049</FONT>     * @since Android 1.0<a name="line.49"></a>
+<FONT color="green">050</FONT>     */<a name="line.50"></a>
+<FONT color="green">051</FONT>    public class Object {<a name="line.51"></a>
+<FONT color="green">052</FONT>    <a name="line.52"></a>
+<FONT color="green">053</FONT>        /**<a name="line.53"></a>
+<FONT color="green">054</FONT>         * Constructs a new instance of {@code Object}.<a name="line.54"></a>
+<FONT color="green">055</FONT>         * <a name="line.55"></a>
+<FONT color="green">056</FONT>         * @since Android 1.0<a name="line.56"></a>
+<FONT color="green">057</FONT>         */<a name="line.57"></a>
+<FONT color="green">058</FONT>        public Object() {<a name="line.58"></a>
+<FONT color="green">059</FONT>        }<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * Creates and returns a copy of this {@code Object}. The default<a name="line.62"></a>
+<FONT color="green">063</FONT>         * implementation returns a so-called "shallow" copy: It creates a new<a name="line.63"></a>
+<FONT color="green">064</FONT>         * instance of the same class and then copies the field values (including<a name="line.64"></a>
+<FONT color="green">065</FONT>         * object references) from this instance to the new instance. A "deep" copy,<a name="line.65"></a>
+<FONT color="green">066</FONT>         * in contrast, would also recursively clone nested objects. A subclass that<a name="line.66"></a>
+<FONT color="green">067</FONT>         * needs to implement this kind of cloning should call {@code super.clone()}<a name="line.67"></a>
+<FONT color="green">068</FONT>         * to create the new instance and then create deep copies of the nested,<a name="line.68"></a>
+<FONT color="green">069</FONT>         * mutable objects.<a name="line.69"></a>
+<FONT color="green">070</FONT>         * <a name="line.70"></a>
+<FONT color="green">071</FONT>         * @return a copy of this object.<a name="line.71"></a>
+<FONT color="green">072</FONT>         * @throws CloneNotSupportedException<a name="line.72"></a>
+<FONT color="green">073</FONT>         *             if this object's class does not implement the {@code<a name="line.73"></a>
+<FONT color="green">074</FONT>         *             Cloneable} interface.<a name="line.74"></a>
+<FONT color="green">075</FONT>         * @since Android 1.0<a name="line.75"></a>
+<FONT color="green">076</FONT>         */<a name="line.76"></a>
+<FONT color="green">077</FONT>        protected Object clone() throws CloneNotSupportedException {<a name="line.77"></a>
+<FONT color="green">078</FONT>            if (!(this instanceof Cloneable)) {<a name="line.78"></a>
+<FONT color="green">079</FONT>                throw new CloneNotSupportedException("Class doesn't implement Cloneable");<a name="line.79"></a>
+<FONT color="green">080</FONT>            }<a name="line.80"></a>
+<FONT color="green">081</FONT>            <a name="line.81"></a>
+<FONT color="green">082</FONT>            return internalClone((Cloneable) this);<a name="line.82"></a>
+<FONT color="green">083</FONT>        }<a name="line.83"></a>
+<FONT color="green">084</FONT>    <a name="line.84"></a>
+<FONT color="green">085</FONT>        /*<a name="line.85"></a>
+<FONT color="green">086</FONT>         * Native helper method for cloning.<a name="line.86"></a>
+<FONT color="green">087</FONT>         */<a name="line.87"></a>
+<FONT color="green">088</FONT>        private native Object internalClone(Cloneable o);<a name="line.88"></a>
+<FONT color="green">089</FONT>        <a name="line.89"></a>
+<FONT color="green">090</FONT>        /**<a name="line.90"></a>
+<FONT color="green">091</FONT>         * Compares this instance with the specified object and indicates if they<a name="line.91"></a>
+<FONT color="green">092</FONT>         * are equal. In order to be equal, {@code o} must represent the same object<a name="line.92"></a>
+<FONT color="green">093</FONT>         * as this instance using a class-specific comparison. The general contract<a name="line.93"></a>
+<FONT color="green">094</FONT>         * is that this comparison should be both transitive and reflexive.<a name="line.94"></a>
+<FONT color="green">095</FONT>         * &lt;p&gt;<a name="line.95"></a>
+<FONT color="green">096</FONT>         * The implementation in {@code Object} returns {@code true} only if {@code<a name="line.96"></a>
+<FONT color="green">097</FONT>         * o} is the exact same object as the receiver (using the == operator for<a name="line.97"></a>
+<FONT color="green">098</FONT>         * comparison). Subclasses often implement {@code equals(Object)} so that<a name="line.98"></a>
+<FONT color="green">099</FONT>         * it takes into account the two object's types and states.<a name="line.99"></a>
+<FONT color="green">100</FONT>         * &lt;/p&gt;<a name="line.100"></a>
+<FONT color="green">101</FONT>         * &lt;p&gt;<a name="line.101"></a>
+<FONT color="green">102</FONT>         * The general contract for the {@code equals(Object)} and {@link<a name="line.102"></a>
+<FONT color="green">103</FONT>         * #hashCode()} methods is that if {@code equals} returns {@code true} for<a name="line.103"></a>
+<FONT color="green">104</FONT>         * any two objects, then {@code hashCode()} must return the same value for<a name="line.104"></a>
+<FONT color="green">105</FONT>         * these objects. This means that subclasses of {@code Object} usually<a name="line.105"></a>
+<FONT color="green">106</FONT>         * override either both methods or none of them.<a name="line.106"></a>
+<FONT color="green">107</FONT>         * &lt;/p&gt;<a name="line.107"></a>
+<FONT color="green">108</FONT>         * <a name="line.108"></a>
+<FONT color="green">109</FONT>         * @param o<a name="line.109"></a>
+<FONT color="green">110</FONT>         *            the object to compare this instance with.<a name="line.110"></a>
+<FONT color="green">111</FONT>         * @return {@code true} if the specified object is equal to this {@code<a name="line.111"></a>
+<FONT color="green">112</FONT>         *         Object}; {@code false} otherwise.<a name="line.112"></a>
+<FONT color="green">113</FONT>         * @see #hashCode<a name="line.113"></a>
+<FONT color="green">114</FONT>         * @since Android 1.0<a name="line.114"></a>
+<FONT color="green">115</FONT>         */<a name="line.115"></a>
+<FONT color="green">116</FONT>        public boolean equals(Object o) {<a name="line.116"></a>
+<FONT color="green">117</FONT>            return this == o;<a name="line.117"></a>
+<FONT color="green">118</FONT>        }<a name="line.118"></a>
+<FONT color="green">119</FONT>    <a name="line.119"></a>
+<FONT color="green">120</FONT>        /**<a name="line.120"></a>
+<FONT color="green">121</FONT>         * Is called before the object's memory is being reclaimed by the VM. This<a name="line.121"></a>
+<FONT color="green">122</FONT>         * can only happen once the VM has detected, during a run of the garbage<a name="line.122"></a>
+<FONT color="green">123</FONT>         * collector, that the object is no longer reachable by any thread of the<a name="line.123"></a>
+<FONT color="green">124</FONT>         * running application.  <a name="line.124"></a>
+<FONT color="green">125</FONT>         * &lt;p&gt;<a name="line.125"></a>
+<FONT color="green">126</FONT>         * The method can be used to free system resources or perform other cleanup<a name="line.126"></a>
+<FONT color="green">127</FONT>         * before the object is garbage collected. The default implementation of the<a name="line.127"></a>
+<FONT color="green">128</FONT>         * method is empty, which is also expected by the VM, but subclasses can<a name="line.128"></a>
+<FONT color="green">129</FONT>         * override {@code finalize()} as required. Uncaught exceptions which are<a name="line.129"></a>
+<FONT color="green">130</FONT>         * thrown during the execution of this method cause it to terminate<a name="line.130"></a>
+<FONT color="green">131</FONT>         * immediately but are otherwise ignored.<a name="line.131"></a>
+<FONT color="green">132</FONT>         * &lt;p&gt;<a name="line.132"></a>
+<FONT color="green">133</FONT>         * Note that the VM does guarantee that {@code finalize()} is called at most<a name="line.133"></a>
+<FONT color="green">134</FONT>         * once for any object, but it doesn't guarantee when (if at all) {@code<a name="line.134"></a>
+<FONT color="green">135</FONT>         * finalize()} will be called. For example, object B's {@code finalize()}<a name="line.135"></a>
+<FONT color="green">136</FONT>         * can delay the execution of object A's {@code finalize()} method and<a name="line.136"></a>
+<FONT color="green">137</FONT>         * therefore it can delay the reclamation of A's memory. To be safe, use a<a name="line.137"></a>
+<FONT color="green">138</FONT>         * {@link java.lang.ref.ReferenceQueue}, because it provides more control<a name="line.138"></a>
+<FONT color="green">139</FONT>         * over the way the VM deals with references during garbage collection.<a name="line.139"></a>
+<FONT color="green">140</FONT>         * &lt;/p&gt;<a name="line.140"></a>
+<FONT color="green">141</FONT>         * <a name="line.141"></a>
+<FONT color="green">142</FONT>         * @throws Throwable<a name="line.142"></a>
+<FONT color="green">143</FONT>         *             any exception which is raised during finalization; these are<a name="line.143"></a>
+<FONT color="green">144</FONT>         *             ignored by the virtual machine.<a name="line.144"></a>
+<FONT color="green">145</FONT>         * @since Android 1.0<a name="line.145"></a>
+<FONT color="green">146</FONT>         */<a name="line.146"></a>
+<FONT color="green">147</FONT>        protected void finalize() throws Throwable {<a name="line.147"></a>
+<FONT color="green">148</FONT>        }<a name="line.148"></a>
+<FONT color="green">149</FONT>    <a name="line.149"></a>
+<FONT color="green">150</FONT>        /**<a name="line.150"></a>
+<FONT color="green">151</FONT>         * Returns the unique instance of {@link Class} which represents this<a name="line.151"></a>
+<FONT color="green">152</FONT>         * object's class. Note that {@code getClass()} is a special case in that it<a name="line.152"></a>
+<FONT color="green">153</FONT>         * actually returns {@code Class&lt;? extends Foo&gt;} where {@code Foo} is the<a name="line.153"></a>
+<FONT color="green">154</FONT>         * erasure of the type of expression {@code getClass()} was called upon.<a name="line.154"></a>
+<FONT color="green">155</FONT>         * &lt;p&gt;<a name="line.155"></a>
+<FONT color="green">156</FONT>         * As an example, the following code actually compiles, although one might<a name="line.156"></a>
+<FONT color="green">157</FONT>         * think it shouldn't:<a name="line.157"></a>
+<FONT color="green">158</FONT>         * &lt;p&gt;<a name="line.158"></a>
+<FONT color="green">159</FONT>         * &lt;pre&gt;<a name="line.159"></a>
+<FONT color="green">160</FONT>         * List&lt;Integer&gt; l = new ArrayList&lt;Integer&gt;();<a name="line.160"></a>
+<FONT color="green">161</FONT>         * Class&lt;? extends List&gt; c = l.getClass();<a name="line.161"></a>
+<FONT color="green">162</FONT>         * &lt;/pre&gt;<a name="line.162"></a>
+<FONT color="green">163</FONT>         * <a name="line.163"></a>
+<FONT color="green">164</FONT>         * @return this object's {@code Class} instance.<a name="line.164"></a>
+<FONT color="green">165</FONT>         * @since Android 1.0<a name="line.165"></a>
+<FONT color="green">166</FONT>         */<a name="line.166"></a>
+<FONT color="green">167</FONT>        public final native Class&lt;? extends Object&gt; getClass();<a name="line.167"></a>
+<FONT color="green">168</FONT>    <a name="line.168"></a>
+<FONT color="green">169</FONT>        /**<a name="line.169"></a>
+<FONT color="green">170</FONT>         * Returns an integer hash code for this object. By contract, any two<a name="line.170"></a>
+<FONT color="green">171</FONT>         * objects for which {@code equals(Object)} returns {@code true} must return<a name="line.171"></a>
+<FONT color="green">172</FONT>         * the same hash code value. This means that subclasses of {@code Object}<a name="line.172"></a>
+<FONT color="green">173</FONT>         * usually override both methods or neither method.<a name="line.173"></a>
+<FONT color="green">174</FONT>         * <a name="line.174"></a>
+<FONT color="green">175</FONT>         * @return this object's hash code.<a name="line.175"></a>
+<FONT color="green">176</FONT>         * @see #equals<a name="line.176"></a>
+<FONT color="green">177</FONT>         * @since Android 1.0<a name="line.177"></a>
+<FONT color="green">178</FONT>         */<a name="line.178"></a>
+<FONT color="green">179</FONT>        public native int hashCode();<a name="line.179"></a>
+<FONT color="green">180</FONT>    <a name="line.180"></a>
+<FONT color="green">181</FONT>        /**<a name="line.181"></a>
+<FONT color="green">182</FONT>         * Causes a thread which is waiting on this object's monitor (by means of<a name="line.182"></a>
+<FONT color="green">183</FONT>         * calling one of the {@code wait()} methods) to be woken up. If more than<a name="line.183"></a>
+<FONT color="green">184</FONT>         * one thread is waiting, one of them is chosen at the discretion of the<a name="line.184"></a>
+<FONT color="green">185</FONT>         * virtual machine. The chosen thread will not run immediately. The thread<a name="line.185"></a>
+<FONT color="green">186</FONT>         * that called {@code notify()} has to release the object's monitor first.<a name="line.186"></a>
+<FONT color="green">187</FONT>         * Also, the chosen thread still has to compete against other threads that<a name="line.187"></a>
+<FONT color="green">188</FONT>         * try to synchronize on the same object.<a name="line.188"></a>
+<FONT color="green">189</FONT>         * &lt;p&gt;<a name="line.189"></a>
+<FONT color="green">190</FONT>         * This method can only be invoked by a thread which owns this object's<a name="line.190"></a>
+<FONT color="green">191</FONT>         * monitor. A thread becomes owner of an object's monitor<a name="line.191"></a>
+<FONT color="green">192</FONT>         * &lt;/p&gt;<a name="line.192"></a>
+<FONT color="green">193</FONT>         * &lt;ul&gt;<a name="line.193"></a>
+<FONT color="green">194</FONT>         * &lt;li&gt;by executing a synchronized method of that object;&lt;/li&gt;<a name="line.194"></a>
+<FONT color="green">195</FONT>         * &lt;li&gt;by executing the body of a {@code synchronized} statement that<a name="line.195"></a>
+<FONT color="green">196</FONT>         * synchronizes on the object;&lt;/li&gt;<a name="line.196"></a>
+<FONT color="green">197</FONT>         * &lt;li&gt;by executing a synchronized static method if the object is of type<a name="line.197"></a>
+<FONT color="green">198</FONT>         * {@code Class}.&lt;/li&gt;<a name="line.198"></a>
+<FONT color="green">199</FONT>         * &lt;/ul&gt;<a name="line.199"></a>
+<FONT color="green">200</FONT>         * <a name="line.200"></a>
+<FONT color="green">201</FONT>         * @see #notifyAll<a name="line.201"></a>
+<FONT color="green">202</FONT>         * @see #wait()<a name="line.202"></a>
+<FONT color="green">203</FONT>         * @see #wait(long)<a name="line.203"></a>
+<FONT color="green">204</FONT>         * @see #wait(long,int)<a name="line.204"></a>
+<FONT color="green">205</FONT>         * @see java.lang.Thread<a name="line.205"></a>
+<FONT color="green">206</FONT>         * @since Android 1.0<a name="line.206"></a>
+<FONT color="green">207</FONT>         */<a name="line.207"></a>
+<FONT color="green">208</FONT>        public final native void notify();<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>        /**<a name="line.210"></a>
+<FONT color="green">211</FONT>         * Causes all threads which are waiting on this object's monitor (by means<a name="line.211"></a>
+<FONT color="green">212</FONT>         * of calling one of the {@code wait()} methods) to be woken up. The threads<a name="line.212"></a>
+<FONT color="green">213</FONT>         * will not run immediately. The thread that called {@code notify()} has to<a name="line.213"></a>
+<FONT color="green">214</FONT>         * release the object's monitor first. Also, the threads still have to<a name="line.214"></a>
+<FONT color="green">215</FONT>         * compete against other threads that try to synchronize on the same object.<a name="line.215"></a>
+<FONT color="green">216</FONT>         * &lt;p&gt;<a name="line.216"></a>
+<FONT color="green">217</FONT>         * This method can only be invoked by a thread which owns this object's<a name="line.217"></a>
+<FONT color="green">218</FONT>         * monitor. A thread becomes owner of an object's monitor<a name="line.218"></a>
+<FONT color="green">219</FONT>         * &lt;/p&gt;<a name="line.219"></a>
+<FONT color="green">220</FONT>         * &lt;ul&gt;<a name="line.220"></a>
+<FONT color="green">221</FONT>         * &lt;li&gt;by executing a synchronized method of that object;&lt;/li&gt;<a name="line.221"></a>
+<FONT color="green">222</FONT>         * &lt;li&gt;by executing the body of a {@code synchronized} statement that<a name="line.222"></a>
+<FONT color="green">223</FONT>         * synchronizes on the object;&lt;/li&gt;<a name="line.223"></a>
+<FONT color="green">224</FONT>         * &lt;li&gt;by executing a synchronized static method if the object is of type<a name="line.224"></a>
+<FONT color="green">225</FONT>         * {@code Class}.&lt;/li&gt;<a name="line.225"></a>
+<FONT color="green">226</FONT>         * &lt;/ul&gt;<a name="line.226"></a>
+<FONT color="green">227</FONT>         * <a name="line.227"></a>
+<FONT color="green">228</FONT>         * @throws IllegalMonitorStateException<a name="line.228"></a>
+<FONT color="green">229</FONT>         *             if the thread calling this method is not the owner of this<a name="line.229"></a>
+<FONT color="green">230</FONT>         *             object's monitor.<a name="line.230"></a>
+<FONT color="green">231</FONT>         * @see #notify<a name="line.231"></a>
+<FONT color="green">232</FONT>         * @see #wait()<a name="line.232"></a>
+<FONT color="green">233</FONT>         * @see #wait(long)<a name="line.233"></a>
+<FONT color="green">234</FONT>         * @see #wait(long,int)<a name="line.234"></a>
+<FONT color="green">235</FONT>         * @see java.lang.Thread<a name="line.235"></a>
+<FONT color="green">236</FONT>         */<a name="line.236"></a>
+<FONT color="green">237</FONT>        public final native void notifyAll();<a name="line.237"></a>
+<FONT color="green">238</FONT>    <a name="line.238"></a>
+<FONT color="green">239</FONT>        /**<a name="line.239"></a>
+<FONT color="green">240</FONT>         * Returns a string containing a concise, human-readable description of this<a name="line.240"></a>
+<FONT color="green">241</FONT>         * object. Subclasses are encouraged to override this method and provide an<a name="line.241"></a>
+<FONT color="green">242</FONT>         * implementation that takes into account the object's type and data. The<a name="line.242"></a>
+<FONT color="green">243</FONT>         * default implementation simply concatenates the class name, the '@' sign<a name="line.243"></a>
+<FONT color="green">244</FONT>         * and a hexadecimal representation of the object's {@link #hashCode()},<a name="line.244"></a>
+<FONT color="green">245</FONT>         * that is, it is equivalent to the following expression:<a name="line.245"></a>
+<FONT color="green">246</FONT>         * <a name="line.246"></a>
+<FONT color="green">247</FONT>         * &lt;pre&gt;<a name="line.247"></a>
+<FONT color="green">248</FONT>         * getClass().getName() + '@' + Integer.toHexString(hashCode())<a name="line.248"></a>
+<FONT color="green">249</FONT>         * &lt;/pre&gt;<a name="line.249"></a>
+<FONT color="green">250</FONT>         * <a name="line.250"></a>
+<FONT color="green">251</FONT>         * @return a printable representation of this object.<a name="line.251"></a>
+<FONT color="green">252</FONT>         * @since Android 1.0<a name="line.252"></a>
+<FONT color="green">253</FONT>         */<a name="line.253"></a>
+<FONT color="green">254</FONT>        public String toString() {<a name="line.254"></a>
+<FONT color="green">255</FONT>            return getClass().getName() + '@' + Integer.toHexString(hashCode());<a name="line.255"></a>
+<FONT color="green">256</FONT>        }<a name="line.256"></a>
+<FONT color="green">257</FONT>    <a name="line.257"></a>
+<FONT color="green">258</FONT>        /**<a name="line.258"></a>
+<FONT color="green">259</FONT>         * Causes the calling thread to wait until another thread calls the {@code<a name="line.259"></a>
+<FONT color="green">260</FONT>         * notify()} or {@code notifyAll()} method of this object. This method can<a name="line.260"></a>
+<FONT color="green">261</FONT>         * only be invoked by a thread which owns this object's monitor; see<a name="line.261"></a>
+<FONT color="green">262</FONT>         * {@link #notify()} on how a thread can become the owner of a monitor.<a name="line.262"></a>
+<FONT color="green">263</FONT>         * &lt;p&gt;<a name="line.263"></a>
+<FONT color="green">264</FONT>         * A waiting thread can be sent {@code interrupt()} to cause it to<a name="line.264"></a>
+<FONT color="green">265</FONT>         * prematurely stop waiting, so {@code wait} should be called in a loop to<a name="line.265"></a>
+<FONT color="green">266</FONT>         * check that the condition that has been waited for has been met before<a name="line.266"></a>
+<FONT color="green">267</FONT>         * continuing.<a name="line.267"></a>
+<FONT color="green">268</FONT>         * &lt;/p&gt;<a name="line.268"></a>
+<FONT color="green">269</FONT>         * &lt;p&gt;<a name="line.269"></a>
+<FONT color="green">270</FONT>         * While the thread waits, it gives up ownership of this object's monitor.<a name="line.270"></a>
+<FONT color="green">271</FONT>         * When it is notified (or interrupted), it re-acquires the monitor before<a name="line.271"></a>
+<FONT color="green">272</FONT>         * it starts running.<a name="line.272"></a>
+<FONT color="green">273</FONT>         * &lt;/p&gt;<a name="line.273"></a>
+<FONT color="green">274</FONT>         * <a name="line.274"></a>
+<FONT color="green">275</FONT>         * @throws IllegalMonitorStateException<a name="line.275"></a>
+<FONT color="green">276</FONT>         *             if the thread calling this method is not the owner of this<a name="line.276"></a>
+<FONT color="green">277</FONT>         *             object's monitor.<a name="line.277"></a>
+<FONT color="green">278</FONT>         * @throws InterruptedException<a name="line.278"></a>
+<FONT color="green">279</FONT>         *             if another thread interrupts this thread while it is waiting.<a name="line.279"></a>
+<FONT color="green">280</FONT>         * @see #notify<a name="line.280"></a>
+<FONT color="green">281</FONT>         * @see #notifyAll<a name="line.281"></a>
+<FONT color="green">282</FONT>         * @see #wait(long)<a name="line.282"></a>
+<FONT color="green">283</FONT>         * @see #wait(long,int)<a name="line.283"></a>
+<FONT color="green">284</FONT>         * @see java.lang.Thread<a name="line.284"></a>
+<FONT color="green">285</FONT>         * @since Android 1.0<a name="line.285"></a>
+<FONT color="green">286</FONT>         */<a name="line.286"></a>
+<FONT color="green">287</FONT>        public final void wait() throws InterruptedException {<a name="line.287"></a>
+<FONT color="green">288</FONT>            wait(0 ,0);<a name="line.288"></a>
+<FONT color="green">289</FONT>        }<a name="line.289"></a>
+<FONT color="green">290</FONT>    <a name="line.290"></a>
+<FONT color="green">291</FONT>        /**<a name="line.291"></a>
+<FONT color="green">292</FONT>         * Causes the calling thread to wait until another thread calls the {@code<a name="line.292"></a>
+<FONT color="green">293</FONT>         * notify()} or {@code notifyAll()} method of this object or until the<a name="line.293"></a>
+<FONT color="green">294</FONT>         * specified timeout expires. This method can only be invoked by a thread<a name="line.294"></a>
+<FONT color="green">295</FONT>         * which owns this object's monitor; see {@link #notify()} on how a thread<a name="line.295"></a>
+<FONT color="green">296</FONT>         * can become the owner of a monitor.<a name="line.296"></a>
+<FONT color="green">297</FONT>         * &lt;p&gt;<a name="line.297"></a>
+<FONT color="green">298</FONT>         * A waiting thread can be sent {@code interrupt()} to cause it to<a name="line.298"></a>
+<FONT color="green">299</FONT>         * prematurely stop waiting, so {@code wait} should be called in a loop to<a name="line.299"></a>
+<FONT color="green">300</FONT>         * check that the condition that has been waited for has been met before<a name="line.300"></a>
+<FONT color="green">301</FONT>         * continuing.<a name="line.301"></a>
+<FONT color="green">302</FONT>         * &lt;/p&gt;<a name="line.302"></a>
+<FONT color="green">303</FONT>         * &lt;p&gt;<a name="line.303"></a>
+<FONT color="green">304</FONT>         * While the thread waits, it gives up ownership of this object's monitor.<a name="line.304"></a>
+<FONT color="green">305</FONT>         * When it is notified (or interrupted), it re-acquires the monitor before<a name="line.305"></a>
+<FONT color="green">306</FONT>         * it starts running.<a name="line.306"></a>
+<FONT color="green">307</FONT>         * &lt;/p&gt;<a name="line.307"></a>
+<FONT color="green">308</FONT>         * <a name="line.308"></a>
+<FONT color="green">309</FONT>         * @param millis<a name="line.309"></a>
+<FONT color="green">310</FONT>         *            the maximum time to wait in milliseconds.<a name="line.310"></a>
+<FONT color="green">311</FONT>         * @throws IllegalArgumentException<a name="line.311"></a>
+<FONT color="green">312</FONT>         *             if {@code millis &lt; 0}.<a name="line.312"></a>
+<FONT color="green">313</FONT>         * @throws IllegalMonitorStateException<a name="line.313"></a>
+<FONT color="green">314</FONT>         *             if the thread calling this method is not the owner of this<a name="line.314"></a>
+<FONT color="green">315</FONT>         *             object's monitor.<a name="line.315"></a>
+<FONT color="green">316</FONT>         * @throws InterruptedException<a name="line.316"></a>
+<FONT color="green">317</FONT>         *             if another thread interrupts this thread while it is waiting.<a name="line.317"></a>
+<FONT color="green">318</FONT>         * @see #notify<a name="line.318"></a>
+<FONT color="green">319</FONT>         * @see #notifyAll<a name="line.319"></a>
+<FONT color="green">320</FONT>         * @see #wait()<a name="line.320"></a>
+<FONT color="green">321</FONT>         * @see #wait(long,int)<a name="line.321"></a>
+<FONT color="green">322</FONT>         * @see java.lang.Thread<a name="line.322"></a>
+<FONT color="green">323</FONT>         * @since Android 1.0<a name="line.323"></a>
+<FONT color="green">324</FONT>         */<a name="line.324"></a>
+<FONT color="green">325</FONT>        public final void wait(long millis) throws InterruptedException {<a name="line.325"></a>
+<FONT color="green">326</FONT>            wait(millis, 0);<a name="line.326"></a>
+<FONT color="green">327</FONT>        }<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>        /**<a name="line.329"></a>
+<FONT color="green">330</FONT>         * Causes the calling thread to wait until another thread calls the {@code<a name="line.330"></a>
+<FONT color="green">331</FONT>         * notify()} or {@code notifyAll()} method of this object or until the<a name="line.331"></a>
+<FONT color="green">332</FONT>         * specified timeout expires. This method can only be invoked by a thread<a name="line.332"></a>
+<FONT color="green">333</FONT>         * that owns this object's monitor; see {@link #notify()} on how a thread<a name="line.333"></a>
+<FONT color="green">334</FONT>         * can become the owner of a monitor.<a name="line.334"></a>
+<FONT color="green">335</FONT>         * &lt;p&gt;<a name="line.335"></a>
+<FONT color="green">336</FONT>         * A waiting thread can be sent {@code interrupt()} to cause it to<a name="line.336"></a>
+<FONT color="green">337</FONT>         * prematurely stop waiting, so {@code wait} should be called in a loop to<a name="line.337"></a>
+<FONT color="green">338</FONT>         * check that the condition that has been waited for has been met before<a name="line.338"></a>
+<FONT color="green">339</FONT>         * continuing.<a name="line.339"></a>
+<FONT color="green">340</FONT>         * &lt;/p&gt;<a name="line.340"></a>
+<FONT color="green">341</FONT>         * &lt;p&gt;<a name="line.341"></a>
+<FONT color="green">342</FONT>         * While the thread waits, it gives up ownership of this object's monitor.<a name="line.342"></a>
+<FONT color="green">343</FONT>         * When it is notified (or interrupted), it re-acquires the monitor before<a name="line.343"></a>
+<FONT color="green">344</FONT>         * it starts running.<a name="line.344"></a>
+<FONT color="green">345</FONT>         * &lt;/p&gt;<a name="line.345"></a>
+<FONT color="green">346</FONT>         * <a name="line.346"></a>
+<FONT color="green">347</FONT>         * @param millis<a name="line.347"></a>
+<FONT color="green">348</FONT>         *            the maximum time to wait in milliseconds.<a name="line.348"></a>
+<FONT color="green">349</FONT>         * @param nanos<a name="line.349"></a>
+<FONT color="green">350</FONT>         *            the fraction of a millisecond to wait, specified in<a name="line.350"></a>
+<FONT color="green">351</FONT>         *            nanoseconds.<a name="line.351"></a>
+<FONT color="green">352</FONT>         * @throws IllegalArgumentException<a name="line.352"></a>
+<FONT color="green">353</FONT>         *             if {@code millis &lt; 0}, {@code nanos &lt; 0} or {@code nanos &gt;<a name="line.353"></a>
+<FONT color="green">354</FONT>         *             999999}.<a name="line.354"></a>
+<FONT color="green">355</FONT>         * @throws IllegalMonitorStateException<a name="line.355"></a>
+<FONT color="green">356</FONT>         *             if the thread calling this method is not the owner of this<a name="line.356"></a>
+<FONT color="green">357</FONT>         *             object's monitor.<a name="line.357"></a>
+<FONT color="green">358</FONT>         * @throws InterruptedException<a name="line.358"></a>
+<FONT color="green">359</FONT>         *             if another thread interrupts this thread while it is waiting.<a name="line.359"></a>
+<FONT color="green">360</FONT>         * @see #notify<a name="line.360"></a>
+<FONT color="green">361</FONT>         * @see #notifyAll<a name="line.361"></a>
+<FONT color="green">362</FONT>         * @see #wait()<a name="line.362"></a>
+<FONT color="green">363</FONT>         * @see #wait(long,int)<a name="line.363"></a>
+<FONT color="green">364</FONT>         * @see java.lang.Thread<a name="line.364"></a>
+<FONT color="green">365</FONT>         * @since Android 1.0<a name="line.365"></a>
+<FONT color="green">366</FONT>         */<a name="line.366"></a>
+<FONT color="green">367</FONT>        public final native void wait(long millis, int nanos) throws InterruptedException;<a name="line.367"></a>
+<FONT color="green">368</FONT>    }<a name="line.368"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

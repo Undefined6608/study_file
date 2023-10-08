@@ -1,0 +1,527 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     *  Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     *  contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     *  this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     *  The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     *  (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     *  the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     *<a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     *<a name="line.10"></a>
+<FONT color="green">011</FONT>     *  Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     *  distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     *  See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     *  limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    /**<a name="line.18"></a>
+<FONT color="green">019</FONT>    * @author Alexander V. Astapchuk<a name="line.19"></a>
+<FONT color="green">020</FONT>    * @version $Revision$<a name="line.20"></a>
+<FONT color="green">021</FONT>    */<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    // BEGIN android-note<a name="line.23"></a>
+<FONT color="green">024</FONT>    // Added Deprecated annotation.<a name="line.24"></a>
+<FONT color="green">025</FONT>    // END android-note<a name="line.25"></a>
+<FONT color="green">026</FONT>    <a name="line.26"></a>
+<FONT color="green">027</FONT>    package java.security;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.io.Serializable;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Vector;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.Arrays;<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    import org.apache.harmony.security.internal.nls.Messages;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    /**<a name="line.35"></a>
+<FONT color="green">036</FONT>     * {@code Identity} represents an identity like a person or a company.<a name="line.36"></a>
+<FONT color="green">037</FONT>     * <a name="line.37"></a>
+<FONT color="green">038</FONT>     * @deprecated The functionality of this class has been replace by<a name="line.38"></a>
+<FONT color="green">039</FONT>     *             {@link Principal}, {@link KeyStore} and the {@code<a name="line.39"></a>
+<FONT color="green">040</FONT>     *             java.security.cert} package.<a name="line.40"></a>
+<FONT color="green">041</FONT>     * @since Android 1.0<a name="line.41"></a>
+<FONT color="green">042</FONT>     */<a name="line.42"></a>
+<FONT color="green">043</FONT>    @Deprecated<a name="line.43"></a>
+<FONT color="green">044</FONT>    public abstract class Identity implements Principal, Serializable {<a name="line.44"></a>
+<FONT color="green">045</FONT>        private static final long serialVersionUID = 3609922007826600659L;<a name="line.45"></a>
+<FONT color="green">046</FONT>    <a name="line.46"></a>
+<FONT color="green">047</FONT>        private String name;<a name="line.47"></a>
+<FONT color="green">048</FONT>    <a name="line.48"></a>
+<FONT color="green">049</FONT>        private PublicKey publicKey;<a name="line.49"></a>
+<FONT color="green">050</FONT>    <a name="line.50"></a>
+<FONT color="green">051</FONT>        private String info = "no additional info"; //$NON-NLS-1$<a name="line.51"></a>
+<FONT color="green">052</FONT>    <a name="line.52"></a>
+<FONT color="green">053</FONT>        private IdentityScope scope;<a name="line.53"></a>
+<FONT color="green">054</FONT>    <a name="line.54"></a>
+<FONT color="green">055</FONT>        private Vector&lt;Certificate&gt; certificates;<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>        /**<a name="line.57"></a>
+<FONT color="green">058</FONT>         * Constructs a new instance of {@code Identity}.<a name="line.58"></a>
+<FONT color="green">059</FONT>         * <a name="line.59"></a>
+<FONT color="green">060</FONT>         * @since Android 1.0<a name="line.60"></a>
+<FONT color="green">061</FONT>         */<a name="line.61"></a>
+<FONT color="green">062</FONT>        protected Identity() {<a name="line.62"></a>
+<FONT color="green">063</FONT>        }<a name="line.63"></a>
+<FONT color="green">064</FONT>    <a name="line.64"></a>
+<FONT color="green">065</FONT>        /**<a name="line.65"></a>
+<FONT color="green">066</FONT>         * Creates a new instance of {@code Identity} with the specified name.<a name="line.66"></a>
+<FONT color="green">067</FONT>         * <a name="line.67"></a>
+<FONT color="green">068</FONT>         * @param name<a name="line.68"></a>
+<FONT color="green">069</FONT>         *            the name of this {@code Identity}.<a name="line.69"></a>
+<FONT color="green">070</FONT>         * @since Android 1.0<a name="line.70"></a>
+<FONT color="green">071</FONT>         */<a name="line.71"></a>
+<FONT color="green">072</FONT>        public Identity(String name) {<a name="line.72"></a>
+<FONT color="green">073</FONT>            this.name = name;<a name="line.73"></a>
+<FONT color="green">074</FONT>        }<a name="line.74"></a>
+<FONT color="green">075</FONT>    <a name="line.75"></a>
+<FONT color="green">076</FONT>        /**<a name="line.76"></a>
+<FONT color="green">077</FONT>         * Creates a new instance of {@code Identity} with the specified name and<a name="line.77"></a>
+<FONT color="green">078</FONT>         * the scope of this {@code Identity}.<a name="line.78"></a>
+<FONT color="green">079</FONT>         * <a name="line.79"></a>
+<FONT color="green">080</FONT>         * @param name<a name="line.80"></a>
+<FONT color="green">081</FONT>         *            the name of this {@code Identity}.<a name="line.81"></a>
+<FONT color="green">082</FONT>         * @param scope<a name="line.82"></a>
+<FONT color="green">083</FONT>         *            the {@code IdentityScope} of this {@code Identity}.<a name="line.83"></a>
+<FONT color="green">084</FONT>         * @throws KeyManagementException<a name="line.84"></a>
+<FONT color="green">085</FONT>         *             if an {@code Identity} with the same name is already present<a name="line.85"></a>
+<FONT color="green">086</FONT>         *             in the specified scope.<a name="line.86"></a>
+<FONT color="green">087</FONT>         * @since Android 1.0<a name="line.87"></a>
+<FONT color="green">088</FONT>         */<a name="line.88"></a>
+<FONT color="green">089</FONT>        public Identity(String name, IdentityScope scope)<a name="line.89"></a>
+<FONT color="green">090</FONT>                throws KeyManagementException {<a name="line.90"></a>
+<FONT color="green">091</FONT>            this(name);<a name="line.91"></a>
+<FONT color="green">092</FONT>            if (scope != null) {<a name="line.92"></a>
+<FONT color="green">093</FONT>                scope.addIdentity(this);<a name="line.93"></a>
+<FONT color="green">094</FONT>                this.scope = scope;<a name="line.94"></a>
+<FONT color="green">095</FONT>            }<a name="line.95"></a>
+<FONT color="green">096</FONT>        }<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>        /**<a name="line.98"></a>
+<FONT color="green">099</FONT>         * Adds a {@code Certificate} to this {@code Identity}.<a name="line.99"></a>
+<FONT color="green">100</FONT>         * &lt;p&gt;<a name="line.100"></a>
+<FONT color="green">101</FONT>         * If a {@code SecurityManager} is installed, code calling this method needs<a name="line.101"></a>
+<FONT color="green">102</FONT>         * the {@code SecurityPermission} {@code addIdentityCertificate} to be<a name="line.102"></a>
+<FONT color="green">103</FONT>         * granted, otherwise a {@code SecurityException} will be thrown.<a name="line.103"></a>
+<FONT color="green">104</FONT>         * &lt;/p&gt;<a name="line.104"></a>
+<FONT color="green">105</FONT>         * <a name="line.105"></a>
+<FONT color="green">106</FONT>         * @param certificate<a name="line.106"></a>
+<FONT color="green">107</FONT>         *            the {@code Certificate} to be added to this {@code Identity}.<a name="line.107"></a>
+<FONT color="green">108</FONT>         * @throws KeyManagementException<a name="line.108"></a>
+<FONT color="green">109</FONT>         *             if the certificate is not valid.<a name="line.109"></a>
+<FONT color="green">110</FONT>         * @throws SecurityException<a name="line.110"></a>
+<FONT color="green">111</FONT>         *             if a {@code SecurityManager} is installed and the caller does<a name="line.111"></a>
+<FONT color="green">112</FONT>         *             not have permission to invoke this method.<a name="line.112"></a>
+<FONT color="green">113</FONT>         * @since Android 1.0<a name="line.113"></a>
+<FONT color="green">114</FONT>         */<a name="line.114"></a>
+<FONT color="green">115</FONT>        public void addCertificate(Certificate certificate)<a name="line.115"></a>
+<FONT color="green">116</FONT>                throws KeyManagementException {<a name="line.116"></a>
+<FONT color="green">117</FONT>            SecurityManager sm = System.getSecurityManager();<a name="line.117"></a>
+<FONT color="green">118</FONT>            if (sm != null) {<a name="line.118"></a>
+<FONT color="green">119</FONT>                sm.checkSecurityAccess("addIdentityCertificate"); //$NON-NLS-1$<a name="line.119"></a>
+<FONT color="green">120</FONT>            }<a name="line.120"></a>
+<FONT color="green">121</FONT>            PublicKey certPK = certificate.getPublicKey();<a name="line.121"></a>
+<FONT color="green">122</FONT>            if (publicKey != null) {<a name="line.122"></a>
+<FONT color="green">123</FONT>                if (!checkKeysEqual(publicKey, certPK)) {<a name="line.123"></a>
+<FONT color="green">124</FONT>                    throw new KeyManagementException(Messages.getString("security.13")); //$NON-NLS-1$<a name="line.124"></a>
+<FONT color="green">125</FONT>                }<a name="line.125"></a>
+<FONT color="green">126</FONT>            } else {<a name="line.126"></a>
+<FONT color="green">127</FONT>                publicKey = certPK;<a name="line.127"></a>
+<FONT color="green">128</FONT>            }<a name="line.128"></a>
+<FONT color="green">129</FONT>            if (certificates == null) {<a name="line.129"></a>
+<FONT color="green">130</FONT>                certificates = new Vector&lt;Certificate&gt;();<a name="line.130"></a>
+<FONT color="green">131</FONT>            }<a name="line.131"></a>
+<FONT color="green">132</FONT>            certificates.add(certificate);<a name="line.132"></a>
+<FONT color="green">133</FONT>        }<a name="line.133"></a>
+<FONT color="green">134</FONT>    <a name="line.134"></a>
+<FONT color="green">135</FONT>    <a name="line.135"></a>
+<FONT color="green">136</FONT>          <a name="line.136"></a>
+<FONT color="green">137</FONT>    <a name="line.137"></a>
+<FONT color="green">138</FONT>        private static boolean checkKeysEqual(PublicKey pk1, PublicKey pk2) {<a name="line.138"></a>
+<FONT color="green">139</FONT>            // first, they should have the same format<a name="line.139"></a>
+<FONT color="green">140</FONT>            // second, their encoded form must be the same<a name="line.140"></a>
+<FONT color="green">141</FONT>    <a name="line.141"></a>
+<FONT color="green">142</FONT>            // assert(pk1 != null);<a name="line.142"></a>
+<FONT color="green">143</FONT>            // assert(pk2 != null);<a name="line.143"></a>
+<FONT color="green">144</FONT>    <a name="line.144"></a>
+<FONT color="green">145</FONT>            String format1 = pk1.getFormat();<a name="line.145"></a>
+<FONT color="green">146</FONT>            String format2;<a name="line.146"></a>
+<FONT color="green">147</FONT>            if ((pk2 == null)<a name="line.147"></a>
+<FONT color="green">148</FONT>                    || (((format2 = pk2.getFormat()) != null) ^ (format1 != null))<a name="line.148"></a>
+<FONT color="green">149</FONT>                    || ((format1 != null) &amp;&amp; !format1.equals(format2))) {<a name="line.149"></a>
+<FONT color="green">150</FONT>                return false;<a name="line.150"></a>
+<FONT color="green">151</FONT>            }<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>            return Arrays.equals(pk1.getEncoded(), pk2.getEncoded());<a name="line.153"></a>
+<FONT color="green">154</FONT>        }<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>          <a name="line.157"></a>
+<FONT color="green">158</FONT>    <a name="line.158"></a>
+<FONT color="green">159</FONT>        /**<a name="line.159"></a>
+<FONT color="green">160</FONT>         * Removes the specified {@code Certificate} from this {@code Identity}.<a name="line.160"></a>
+<FONT color="green">161</FONT>         * &lt;p&gt;<a name="line.161"></a>
+<FONT color="green">162</FONT>         * If a {@code SecurityManager} is installed, code calling this method needs<a name="line.162"></a>
+<FONT color="green">163</FONT>         * the {@code SecurityPermission} {@code "removeIdentityCertificate"} to be<a name="line.163"></a>
+<FONT color="green">164</FONT>         * granted, otherwise a {@code SecurityException} will be thrown.<a name="line.164"></a>
+<FONT color="green">165</FONT>         * &lt;p&gt;<a name="line.165"></a>
+<FONT color="green">166</FONT>         * <a name="line.166"></a>
+<FONT color="green">167</FONT>         * @param certificate<a name="line.167"></a>
+<FONT color="green">168</FONT>         *            the {@code Certificate} to be removed.<a name="line.168"></a>
+<FONT color="green">169</FONT>         * @throws KeyManagementException<a name="line.169"></a>
+<FONT color="green">170</FONT>         *             if the certificate is not found.<a name="line.170"></a>
+<FONT color="green">171</FONT>         * @throws SecurityException<a name="line.171"></a>
+<FONT color="green">172</FONT>         *             if a {@code SecurityManager} is installed and the caller does<a name="line.172"></a>
+<FONT color="green">173</FONT>         *             not have permission to invoke this method.<a name="line.173"></a>
+<FONT color="green">174</FONT>         * @since Android 1.0<a name="line.174"></a>
+<FONT color="green">175</FONT>         */<a name="line.175"></a>
+<FONT color="green">176</FONT>        public void removeCertificate(Certificate certificate)<a name="line.176"></a>
+<FONT color="green">177</FONT>                throws KeyManagementException {<a name="line.177"></a>
+<FONT color="green">178</FONT>            SecurityManager sm = System.getSecurityManager();<a name="line.178"></a>
+<FONT color="green">179</FONT>            if (sm != null) {<a name="line.179"></a>
+<FONT color="green">180</FONT>                sm.checkSecurityAccess("removeIdentityCertificate"); //$NON-NLS-1$<a name="line.180"></a>
+<FONT color="green">181</FONT>            }<a name="line.181"></a>
+<FONT color="green">182</FONT>            if (certificates != null) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                // BEGIN android-added<a name="line.183"></a>
+<FONT color="green">184</FONT>                if (!certificates.contains(certificate)) {<a name="line.184"></a>
+<FONT color="green">185</FONT>                    throw new KeyManagementException("Certificate not found");<a name="line.185"></a>
+<FONT color="green">186</FONT>                }<a name="line.186"></a>
+<FONT color="green">187</FONT>                // END android-added<a name="line.187"></a>
+<FONT color="green">188</FONT>                certificates.removeElement(certificate);<a name="line.188"></a>
+<FONT color="green">189</FONT>            }<a name="line.189"></a>
+<FONT color="green">190</FONT>        }<a name="line.190"></a>
+<FONT color="green">191</FONT>    <a name="line.191"></a>
+<FONT color="green">192</FONT>    <a name="line.192"></a>
+<FONT color="green">193</FONT>          <a name="line.193"></a>
+<FONT color="green">194</FONT>    <a name="line.194"></a>
+<FONT color="green">195</FONT>        /**<a name="line.195"></a>
+<FONT color="green">196</FONT>         * Returns the certificates for this {@code Identity}. External<a name="line.196"></a>
+<FONT color="green">197</FONT>         * modifications of the returned array has no impact on this {@code<a name="line.197"></a>
+<FONT color="green">198</FONT>         * Identity}.<a name="line.198"></a>
+<FONT color="green">199</FONT>         * <a name="line.199"></a>
+<FONT color="green">200</FONT>         * @return the {@code Certificates} for this {@code Identity}<a name="line.200"></a>
+<FONT color="green">201</FONT>         * @since Android 1.0<a name="line.201"></a>
+<FONT color="green">202</FONT>         */<a name="line.202"></a>
+<FONT color="green">203</FONT>        public Certificate[] certificates() {<a name="line.203"></a>
+<FONT color="green">204</FONT>            if (certificates == null) {<a name="line.204"></a>
+<FONT color="green">205</FONT>                return new Certificate[0];<a name="line.205"></a>
+<FONT color="green">206</FONT>            }<a name="line.206"></a>
+<FONT color="green">207</FONT>            Certificate[] ret = new Certificate[certificates.size()];<a name="line.207"></a>
+<FONT color="green">208</FONT>            certificates.copyInto(ret);<a name="line.208"></a>
+<FONT color="green">209</FONT>            return ret;<a name="line.209"></a>
+<FONT color="green">210</FONT>        }<a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>    <a name="line.212"></a>
+<FONT color="green">213</FONT>          <a name="line.213"></a>
+<FONT color="green">214</FONT>    <a name="line.214"></a>
+<FONT color="green">215</FONT>        /**<a name="line.215"></a>
+<FONT color="green">216</FONT>         * Compares the specified {@code Identity} with this {@code Identity} for<a name="line.216"></a>
+<FONT color="green">217</FONT>         * equality and returns {@code true} if the specified object is equal,<a name="line.217"></a>
+<FONT color="green">218</FONT>         * {@code false} otherwise.<a name="line.218"></a>
+<FONT color="green">219</FONT>         * &lt;p&gt;<a name="line.219"></a>
+<FONT color="green">220</FONT>         * To be equal, two {@code Identity} objects need to have the same name and<a name="line.220"></a>
+<FONT color="green">221</FONT>         * the same public keys.<a name="line.221"></a>
+<FONT color="green">222</FONT>         * &lt;/p&gt;<a name="line.222"></a>
+<FONT color="green">223</FONT>         * <a name="line.223"></a>
+<FONT color="green">224</FONT>         * @param identity<a name="line.224"></a>
+<FONT color="green">225</FONT>         *            the identity to check for equality.<a name="line.225"></a>
+<FONT color="green">226</FONT>         * @return {@code true} if the {@code Identity} objects are equal, {@code<a name="line.226"></a>
+<FONT color="green">227</FONT>         *         false} otherwise.<a name="line.227"></a>
+<FONT color="green">228</FONT>         * @since Android 1.0<a name="line.228"></a>
+<FONT color="green">229</FONT>         */<a name="line.229"></a>
+<FONT color="green">230</FONT>        protected boolean identityEquals(Identity identity) {<a name="line.230"></a>
+<FONT color="green">231</FONT>            if (!name.equals(identity.name)) {<a name="line.231"></a>
+<FONT color="green">232</FONT>                return false;<a name="line.232"></a>
+<FONT color="green">233</FONT>            }<a name="line.233"></a>
+<FONT color="green">234</FONT>    <a name="line.234"></a>
+<FONT color="green">235</FONT>            if (publicKey == null) {<a name="line.235"></a>
+<FONT color="green">236</FONT>                return (identity.publicKey == null);<a name="line.236"></a>
+<FONT color="green">237</FONT>            }<a name="line.237"></a>
+<FONT color="green">238</FONT>    <a name="line.238"></a>
+<FONT color="green">239</FONT>            return checkKeysEqual(publicKey, identity.publicKey);<a name="line.239"></a>
+<FONT color="green">240</FONT>        }<a name="line.240"></a>
+<FONT color="green">241</FONT>    <a name="line.241"></a>
+<FONT color="green">242</FONT>    <a name="line.242"></a>
+<FONT color="green">243</FONT>          <a name="line.243"></a>
+<FONT color="green">244</FONT>    <a name="line.244"></a>
+<FONT color="green">245</FONT>        /**<a name="line.245"></a>
+<FONT color="green">246</FONT>         * Returns a string containing a concise, human-readable description of the<a name="line.246"></a>
+<FONT color="green">247</FONT>         * this {@code Identity}.<a name="line.247"></a>
+<FONT color="green">248</FONT>         * <a name="line.248"></a>
+<FONT color="green">249</FONT>         * @param detailed<a name="line.249"></a>
+<FONT color="green">250</FONT>         *            whether or not this method should return detailed information.<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @return a printable representation for this {@code Permission}.<a name="line.251"></a>
+<FONT color="green">252</FONT>         * @since Android 1.0<a name="line.252"></a>
+<FONT color="green">253</FONT>         */  <a name="line.253"></a>
+<FONT color="green">254</FONT>        public String toString(boolean detailed) {<a name="line.254"></a>
+<FONT color="green">255</FONT>            String s = toString();<a name="line.255"></a>
+<FONT color="green">256</FONT>            if (detailed) {<a name="line.256"></a>
+<FONT color="green">257</FONT>                s += " " + info; //$NON-NLS-1$<a name="line.257"></a>
+<FONT color="green">258</FONT>            }<a name="line.258"></a>
+<FONT color="green">259</FONT>            return s;<a name="line.259"></a>
+<FONT color="green">260</FONT>        }<a name="line.260"></a>
+<FONT color="green">261</FONT>    <a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>          <a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>        /**<a name="line.265"></a>
+<FONT color="green">266</FONT>         * Returns the {@code IdentityScope} of this {@code Identity}.<a name="line.266"></a>
+<FONT color="green">267</FONT>         * <a name="line.267"></a>
+<FONT color="green">268</FONT>         * @return the {@code IdentityScope} of this {@code Identity}.<a name="line.268"></a>
+<FONT color="green">269</FONT>         * @since Android 1.0<a name="line.269"></a>
+<FONT color="green">270</FONT>         */<a name="line.270"></a>
+<FONT color="green">271</FONT>        public final IdentityScope getScope() {<a name="line.271"></a>
+<FONT color="green">272</FONT>            return scope;<a name="line.272"></a>
+<FONT color="green">273</FONT>        }<a name="line.273"></a>
+<FONT color="green">274</FONT>    <a name="line.274"></a>
+<FONT color="green">275</FONT>    <a name="line.275"></a>
+<FONT color="green">276</FONT>          <a name="line.276"></a>
+<FONT color="green">277</FONT>    <a name="line.277"></a>
+<FONT color="green">278</FONT>        /**<a name="line.278"></a>
+<FONT color="green">279</FONT>         * Sets the specified {@code PublicKey} to this {@code Identity}.<a name="line.279"></a>
+<FONT color="green">280</FONT>         * &lt;p&gt;<a name="line.280"></a>
+<FONT color="green">281</FONT>         * If a {@code SecurityManager} is installed, code calling this method needs<a name="line.281"></a>
+<FONT color="green">282</FONT>         * the {@code SecurityPermission} {@code setIdentityPublicKey} to be<a name="line.282"></a>
+<FONT color="green">283</FONT>         * granted, otherwise a {@code SecurityException} will be thrown.<a name="line.283"></a>
+<FONT color="green">284</FONT>         * &lt;/p&gt;<a name="line.284"></a>
+<FONT color="green">285</FONT>         * <a name="line.285"></a>
+<FONT color="green">286</FONT>         * @param key<a name="line.286"></a>
+<FONT color="green">287</FONT>         *            the {@code PublicKey} to be set.<a name="line.287"></a>
+<FONT color="green">288</FONT>         * @throws KeyManagementException<a name="line.288"></a>
+<FONT color="green">289</FONT>         *             if another {@code Identity} in the same scope as this {@code<a name="line.289"></a>
+<FONT color="green">290</FONT>         *             Identity} already has the same {@code PublicKey}.<a name="line.290"></a>
+<FONT color="green">291</FONT>         * @throws SecurityException<a name="line.291"></a>
+<FONT color="green">292</FONT>         *             if a {@code SecurityManager} is installed and the caller does<a name="line.292"></a>
+<FONT color="green">293</FONT>         *             not have permission to invoke this method.<a name="line.293"></a>
+<FONT color="green">294</FONT>         * @since Android 1.0<a name="line.294"></a>
+<FONT color="green">295</FONT>         */<a name="line.295"></a>
+<FONT color="green">296</FONT>        public void setPublicKey(PublicKey key) throws KeyManagementException {<a name="line.296"></a>
+<FONT color="green">297</FONT>            SecurityManager sm = System.getSecurityManager();<a name="line.297"></a>
+<FONT color="green">298</FONT>            if (sm != null) {<a name="line.298"></a>
+<FONT color="green">299</FONT>                sm.checkSecurityAccess("setIdentityPublicKey"); //$NON-NLS-1$<a name="line.299"></a>
+<FONT color="green">300</FONT>            }<a name="line.300"></a>
+<FONT color="green">301</FONT>            // this check does not always work  <a name="line.301"></a>
+<FONT color="green">302</FONT>            if ((scope != null) &amp;&amp; (key != null)) {<a name="line.302"></a>
+<FONT color="green">303</FONT>                Identity i = scope.getIdentity(key);<a name="line.303"></a>
+<FONT color="green">304</FONT>                //System.out.println("###DEBUG## Identity: "+i);<a name="line.304"></a>
+<FONT color="green">305</FONT>                if ((i != null) &amp;&amp; (i != this)) {<a name="line.305"></a>
+<FONT color="green">306</FONT>                    throw new KeyManagementException(Messages.getString("security.14")); //$NON-NLS-1$<a name="line.306"></a>
+<FONT color="green">307</FONT>                }<a name="line.307"></a>
+<FONT color="green">308</FONT>            }<a name="line.308"></a>
+<FONT color="green">309</FONT>            this.publicKey = key;<a name="line.309"></a>
+<FONT color="green">310</FONT>            certificates = null;<a name="line.310"></a>
+<FONT color="green">311</FONT>        }<a name="line.311"></a>
+<FONT color="green">312</FONT>    <a name="line.312"></a>
+<FONT color="green">313</FONT>    <a name="line.313"></a>
+<FONT color="green">314</FONT>          <a name="line.314"></a>
+<FONT color="green">315</FONT>    <a name="line.315"></a>
+<FONT color="green">316</FONT>        /**<a name="line.316"></a>
+<FONT color="green">317</FONT>         * Returns the {@code PublicKey} associated with this {@code Identity}.<a name="line.317"></a>
+<FONT color="green">318</FONT>         * <a name="line.318"></a>
+<FONT color="green">319</FONT>         * @return the {@code PublicKey} associated with this {@code Identity}.<a name="line.319"></a>
+<FONT color="green">320</FONT>         * @since Android 1.0<a name="line.320"></a>
+<FONT color="green">321</FONT>         */<a name="line.321"></a>
+<FONT color="green">322</FONT>        public PublicKey getPublicKey() {<a name="line.322"></a>
+<FONT color="green">323</FONT>            return publicKey;<a name="line.323"></a>
+<FONT color="green">324</FONT>        }<a name="line.324"></a>
+<FONT color="green">325</FONT>    <a name="line.325"></a>
+<FONT color="green">326</FONT>    <a name="line.326"></a>
+<FONT color="green">327</FONT>          <a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>        /**<a name="line.329"></a>
+<FONT color="green">330</FONT>         * Sets an information string for this {@code Identity}.<a name="line.330"></a>
+<FONT color="green">331</FONT>         * &lt;p&gt;<a name="line.331"></a>
+<FONT color="green">332</FONT>         * If a {@code SecurityManager} is installed, code calling this method needs<a name="line.332"></a>
+<FONT color="green">333</FONT>         * the {@code SecurityPermission} {@code setIdentityInfo} to be granted,<a name="line.333"></a>
+<FONT color="green">334</FONT>         * otherwise a {@code SecurityException} will be thrown.<a name="line.334"></a>
+<FONT color="green">335</FONT>         * <a name="line.335"></a>
+<FONT color="green">336</FONT>         * @param info<a name="line.336"></a>
+<FONT color="green">337</FONT>         *            the information to be set.<a name="line.337"></a>
+<FONT color="green">338</FONT>         * @throws SecurityException<a name="line.338"></a>
+<FONT color="green">339</FONT>         *             if a {@code SecurityManager} is installed and the caller does<a name="line.339"></a>
+<FONT color="green">340</FONT>         *             not have permission to invoke this method.<a name="line.340"></a>
+<FONT color="green">341</FONT>         * @since Android 1.0<a name="line.341"></a>
+<FONT color="green">342</FONT>         */<a name="line.342"></a>
+<FONT color="green">343</FONT>        public void setInfo(String info) {<a name="line.343"></a>
+<FONT color="green">344</FONT>            SecurityManager sm = System.getSecurityManager();<a name="line.344"></a>
+<FONT color="green">345</FONT>            if (sm != null) {<a name="line.345"></a>
+<FONT color="green">346</FONT>                sm.checkSecurityAccess("setIdentityInfo"); //$NON-NLS-1$<a name="line.346"></a>
+<FONT color="green">347</FONT>            }<a name="line.347"></a>
+<FONT color="green">348</FONT>            this.info = info;<a name="line.348"></a>
+<FONT color="green">349</FONT>        }<a name="line.349"></a>
+<FONT color="green">350</FONT>    <a name="line.350"></a>
+<FONT color="green">351</FONT>    <a name="line.351"></a>
+<FONT color="green">352</FONT>          <a name="line.352"></a>
+<FONT color="green">353</FONT>    <a name="line.353"></a>
+<FONT color="green">354</FONT>        /**<a name="line.354"></a>
+<FONT color="green">355</FONT>         * Returns the information string of this {@code Identity}.<a name="line.355"></a>
+<FONT color="green">356</FONT>         * <a name="line.356"></a>
+<FONT color="green">357</FONT>         * @return the information string of this {@code Identity}.<a name="line.357"></a>
+<FONT color="green">358</FONT>         * @since Android 1.0<a name="line.358"></a>
+<FONT color="green">359</FONT>         */<a name="line.359"></a>
+<FONT color="green">360</FONT>        public String getInfo() {<a name="line.360"></a>
+<FONT color="green">361</FONT>            return info;<a name="line.361"></a>
+<FONT color="green">362</FONT>        }<a name="line.362"></a>
+<FONT color="green">363</FONT>    <a name="line.363"></a>
+<FONT color="green">364</FONT>    <a name="line.364"></a>
+<FONT color="green">365</FONT>          <a name="line.365"></a>
+<FONT color="green">366</FONT>    <a name="line.366"></a>
+<FONT color="green">367</FONT>        /**<a name="line.367"></a>
+<FONT color="green">368</FONT>         * Compares the specified object with this {@code Identity} for equality and<a name="line.368"></a>
+<FONT color="green">369</FONT>         * returns {@code true} if the specified object is equal, {@code false}<a name="line.369"></a>
+<FONT color="green">370</FONT>         * otherwise. {@code Identity} objects are considered equal, if they have<a name="line.370"></a>
+<FONT color="green">371</FONT>         * the same name and are in the same scope.<a name="line.371"></a>
+<FONT color="green">372</FONT>         * <a name="line.372"></a>
+<FONT color="green">373</FONT>         * @param obj<a name="line.373"></a>
+<FONT color="green">374</FONT>         *            object to be compared for equality with this {@code<a name="line.374"></a>
+<FONT color="green">375</FONT>         *            Identity}.<a name="line.375"></a>
+<FONT color="green">376</FONT>         * @return {@code true} if the specified object is equal to this {@code<a name="line.376"></a>
+<FONT color="green">377</FONT>         *         Identity}, otherwise {@code false}.<a name="line.377"></a>
+<FONT color="green">378</FONT>         * @since Android 1.0<a name="line.378"></a>
+<FONT color="green">379</FONT>         */<a name="line.379"></a>
+<FONT color="green">380</FONT>        public final boolean equals(Object obj) {<a name="line.380"></a>
+<FONT color="green">381</FONT>            if (this == obj) {<a name="line.381"></a>
+<FONT color="green">382</FONT>                return true;<a name="line.382"></a>
+<FONT color="green">383</FONT>            }<a name="line.383"></a>
+<FONT color="green">384</FONT>            if (!(obj instanceof Identity)) {<a name="line.384"></a>
+<FONT color="green">385</FONT>                return false;<a name="line.385"></a>
+<FONT color="green">386</FONT>            }<a name="line.386"></a>
+<FONT color="green">387</FONT>            Identity i = (Identity) obj;<a name="line.387"></a>
+<FONT color="green">388</FONT>            if ((name == i.name || (name != null &amp;&amp; name.equals(i.name)))<a name="line.388"></a>
+<FONT color="green">389</FONT>                    &amp;&amp; (scope == i.scope || (scope != null &amp;&amp; scope.equals(i.scope)))) {<a name="line.389"></a>
+<FONT color="green">390</FONT>                return true;<a name="line.390"></a>
+<FONT color="green">391</FONT>            }<a name="line.391"></a>
+<FONT color="green">392</FONT>            return identityEquals(i);<a name="line.392"></a>
+<FONT color="green">393</FONT>        }<a name="line.393"></a>
+<FONT color="green">394</FONT>    <a name="line.394"></a>
+<FONT color="green">395</FONT>    <a name="line.395"></a>
+<FONT color="green">396</FONT>          <a name="line.396"></a>
+<FONT color="green">397</FONT>    <a name="line.397"></a>
+<FONT color="green">398</FONT>        /**<a name="line.398"></a>
+<FONT color="green">399</FONT>         * Returns the name of this {@code Identity}.<a name="line.399"></a>
+<FONT color="green">400</FONT>         * <a name="line.400"></a>
+<FONT color="green">401</FONT>         * @return the name of this {@code Identity}.<a name="line.401"></a>
+<FONT color="green">402</FONT>         * @since Android 1.0<a name="line.402"></a>
+<FONT color="green">403</FONT>         */<a name="line.403"></a>
+<FONT color="green">404</FONT>        public final String getName() {<a name="line.404"></a>
+<FONT color="green">405</FONT>            return name;<a name="line.405"></a>
+<FONT color="green">406</FONT>        }<a name="line.406"></a>
+<FONT color="green">407</FONT>    <a name="line.407"></a>
+<FONT color="green">408</FONT>    <a name="line.408"></a>
+<FONT color="green">409</FONT>          <a name="line.409"></a>
+<FONT color="green">410</FONT>    <a name="line.410"></a>
+<FONT color="green">411</FONT>        /**<a name="line.411"></a>
+<FONT color="green">412</FONT>         * Returns the hash code value for this {@code Identity}. Returns the same<a name="line.412"></a>
+<FONT color="green">413</FONT>         * hash code for {@code Identity}s that are equal to each other as required<a name="line.413"></a>
+<FONT color="green">414</FONT>         * by the general contract of {@link Object#hashCode}.<a name="line.414"></a>
+<FONT color="green">415</FONT>         * <a name="line.415"></a>
+<FONT color="green">416</FONT>         * @return the hash code value for this {@code Identity}.<a name="line.416"></a>
+<FONT color="green">417</FONT>         * @see Object#equals(Object)<a name="line.417"></a>
+<FONT color="green">418</FONT>         * @see Identity#equals(Object)<a name="line.418"></a>
+<FONT color="green">419</FONT>         * @since Android 1.0<a name="line.419"></a>
+<FONT color="green">420</FONT>         */<a name="line.420"></a>
+<FONT color="green">421</FONT>        public int hashCode() {<a name="line.421"></a>
+<FONT color="green">422</FONT>            int hash = 0;<a name="line.422"></a>
+<FONT color="green">423</FONT>            if (name != null) {<a name="line.423"></a>
+<FONT color="green">424</FONT>                hash += name.hashCode();<a name="line.424"></a>
+<FONT color="green">425</FONT>            }<a name="line.425"></a>
+<FONT color="green">426</FONT>            if (scope != null) {<a name="line.426"></a>
+<FONT color="green">427</FONT>                hash += scope.hashCode();<a name="line.427"></a>
+<FONT color="green">428</FONT>            }<a name="line.428"></a>
+<FONT color="green">429</FONT>            return hash;<a name="line.429"></a>
+<FONT color="green">430</FONT>        }<a name="line.430"></a>
+<FONT color="green">431</FONT>    <a name="line.431"></a>
+<FONT color="green">432</FONT>    <a name="line.432"></a>
+<FONT color="green">433</FONT>          <a name="line.433"></a>
+<FONT color="green">434</FONT>    <a name="line.434"></a>
+<FONT color="green">435</FONT>        /**<a name="line.435"></a>
+<FONT color="green">436</FONT>         * Returns a string containing a concise, human-readable description of the<a name="line.436"></a>
+<FONT color="green">437</FONT>         * this {@code Identity} including its name and its scope.<a name="line.437"></a>
+<FONT color="green">438</FONT>         * &lt;p&gt;<a name="line.438"></a>
+<FONT color="green">439</FONT>         * If a {@code SecurityManager} is installed, code calling this method<a name="line.439"></a>
+<FONT color="green">440</FONT>         * needs the {@code SecurityPermission} {@code printIdentity} to be granted,<a name="line.440"></a>
+<FONT color="green">441</FONT>         * otherwise a {@code SecurityException} will be thrown.<a name="line.441"></a>
+<FONT color="green">442</FONT>         * &lt;/p&gt;<a name="line.442"></a>
+<FONT color="green">443</FONT>         * <a name="line.443"></a>
+<FONT color="green">444</FONT>         * @return a printable representation for this {@code Identity}.<a name="line.444"></a>
+<FONT color="green">445</FONT>         * @throws SecurityException<a name="line.445"></a>
+<FONT color="green">446</FONT>         *             if a {@code SecurityManager} is installed and the caller does<a name="line.446"></a>
+<FONT color="green">447</FONT>         *             not have permission to invoke this method.<a name="line.447"></a>
+<FONT color="green">448</FONT>         * @since Android 1.0<a name="line.448"></a>
+<FONT color="green">449</FONT>         */<a name="line.449"></a>
+<FONT color="green">450</FONT>        public String toString() {<a name="line.450"></a>
+<FONT color="green">451</FONT>            SecurityManager sm = System.getSecurityManager();<a name="line.451"></a>
+<FONT color="green">452</FONT>            if (sm != null) {<a name="line.452"></a>
+<FONT color="green">453</FONT>                sm.checkSecurityAccess("printIdentity"); //$NON-NLS-1$<a name="line.453"></a>
+<FONT color="green">454</FONT>            }<a name="line.454"></a>
+<FONT color="green">455</FONT>            String s = (this.name == null? "" : this.name);<a name="line.455"></a>
+<FONT color="green">456</FONT>            if (scope != null) {<a name="line.456"></a>
+<FONT color="green">457</FONT>                s += " [" + scope.getName() + "]"; //$NON-NLS-1$ //$NON-NLS-2$<a name="line.457"></a>
+<FONT color="green">458</FONT>            }<a name="line.458"></a>
+<FONT color="green">459</FONT>            return s;<a name="line.459"></a>
+<FONT color="green">460</FONT>        }<a name="line.460"></a>
+<FONT color="green">461</FONT>    }<a name="line.461"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

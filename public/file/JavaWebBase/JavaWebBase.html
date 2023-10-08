@@ -1,0 +1,115 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<title>i5ting_ztree_toc:JavaWebBase</title>
+		<link href="toc/style/github-bf51422f4bb36427d391e4b75a1daa083c2d840e.css" media="all" rel="stylesheet"
+			type="text/css" />
+		<link href="toc/style/github2-d731afd4f624c99a4b19ad69f3083cd6d02b81d5.css" media="all" rel="stylesheet"
+			type="text/css" />
+		<link href="toc/css/zTreeStyle/zTreeStyle.css" media="all" rel="stylesheet" type="text/css" />
+		<style>
+			pre {
+				counter-reset: line-numbering;
+				border: solid 1px #d9d9d9;
+				border-radius: 0;
+				background: #fff;
+				padding: 0;
+				line-height: 23px;
+				margin-bottom: 30px;
+				white-space: pre;
+				overflow-x: auto;
+				word-break: inherit;
+				word-wrap: inherit;
+			}
+
+			pre a::before {
+				content: counter(line-numbering);
+				counter-increment: line-numbering;
+				padding-right: 1em;
+				/* space after numbers */
+				width: 25px;
+				text-align: right;
+				opacity: 0.7;
+				display: inline-block;
+				color: #aaa;
+				background: #eee;
+				margin-right: 16px;
+				padding: 2px 10px;
+				font-size: 13px;
+				-webkit-touch-callout: none;
+				-webkit-user-select: none;
+				-khtml-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
+			pre a:first-of-type::before {
+				padding-top: 10px;
+			}
+
+			pre a:last-of-type::before {
+				padding-bottom: 10px;
+			}
+
+			pre a:only-of-type::before {
+				padding: 10px;
+			}
+
+			.highlight {
+				background-color: #ffffcc
+			}
+
+			/* RIGHT */
+		</style>
+	</head>
+	<body style="overflow-x: hidden;">
+		<div style="width: 100vw; margin:0">
+			<div id='readme' style='width:100%;'>
+				<article class='markdown-body'>
+					<h1 id="javaweb-">JavaWeb基础</h1>
+					<h2 id="1-javaweb-">1、JavaWeb的概念</h2>
+					<h3 id="1-javaweb">1&gt; 什么是JavaWeb</h3>
+					<p>JavaWeb是指，所有通过Java语言编写可以通过浏览器访问的程序的总称，叫JavaWeb。</p>
+					<p>JavaWeb是基于请求和响应来开发的。</p>
+					<h3 id="2-">2&gt;什么是请求</h3>
+					<p>请求是指客户端给服务器发送数据，叫请求Request。</p>
+					<h3 id="3-">3&gt;什么是响应</h3>
+					<p>响应是指服务器给客户端回传数据，叫响应Response。</p>
+					<h3 id="4-">4&gt;请求和响应的关系</h3>
+					<p>请求和响应是成对出现的，有请求就有响应。</p>
+					<p><img src="../image/屏幕截图_20221109_162056.png"
+							alt="屏幕截图_20221109_162056"></p>
+					<h2 id="2-web-">2、Web资源分类</h2>
+					<p>web资源按实现的技和呈现的效果的不同，又分为静态资源和动态资源两种。</p>
+					<p>静态资源：html、css、js、txt、mp4、jpg</p>
+					<p>动态资源：jsp，Servlet</p>
+					<h2 id="3-web-">3、常用的Web服务器</h2>
+					<p>Tomcat:由Apache组织提供的一种web服务器，提供对jsp和Servlet的支持。它是一种轻量级的javaWeb容器（服务器)，也是当前应用最广的JavaWeb服务器（免费）。</p>
+					<p>Jboss:是一个遵从JavaEE规范的、开放源代码的、纯Java的EJB服务器，它支持所有的lavaEE规范（免费）。</p>
+					<p>GlassFish:由Oracle公司开发的一款JavaWeb服务器，是一款强健的商业服务器，达到产品级质量（应用很少）。</p>
+					<p>Resin:是CAUCHO公司的产品，是一个非常流行的服务器，对servlet和Jsp提供了良好的支持，性能也比较优良，resin自身采用AVA语言开发（收费，应用比较多）。</p>
+					<p>WebLogic:是Oracle公司的产品，是目前应用最广泛的web服务器，支持avaEE规范，而且不断的完善以适应新的开发要求，适合大型项目（收费，用的不多，适合大公司）。</p>
+
+				</article>
+			</div>
+		</div>
+	</body>
+</html>
+<script type="text/javascript" src="toc/js/jquery-1.4.4.min.js"></script>
+<script type="text/javascript" src="toc/js/jquery.ztree.all-3.5.min.js"></script>
+<script type="text/javascript" src="toc/js/ztree_toc.js"></script>
+<script type="text/javascript" src="toc_conf.js"></script>
+
+<SCRIPT type="text/javascript">
+	<!--
+	$(document).ready(function() {
+		var css_conf = eval(markdown_panel_style);
+		$('#readme').css(css_conf)
+
+		var conf = eval(jquery_ztree_toc_opts);
+		$('#tree').ztree_toc(conf);
+	});
+	//
+	-->
+</SCRIPT>

@@ -1,0 +1,222 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.content.pm;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.os.Parcel;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.os.Parcelable;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.text.TextUtils;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    /**<a name="line.23"></a>
+<FONT color="green">024</FONT>     * Information you can retrieve about a particular security permission<a name="line.24"></a>
+<FONT color="green">025</FONT>     * known to the system.  This corresponds to information collected from the<a name="line.25"></a>
+<FONT color="green">026</FONT>     * AndroidManifest.xml's &amp;lt;permission&amp;gt; tags.<a name="line.26"></a>
+<FONT color="green">027</FONT>     */<a name="line.27"></a>
+<FONT color="green">028</FONT>    public class PermissionInfo extends PackageItemInfo implements Parcelable {<a name="line.28"></a>
+<FONT color="green">029</FONT>        /**<a name="line.29"></a>
+<FONT color="green">030</FONT>         * A normal application value for {@link #protectionLevel}, corresponding<a name="line.30"></a>
+<FONT color="green">031</FONT>         * to the &lt;code&gt;normal&lt;/code&gt; value of<a name="line.31"></a>
+<FONT color="green">032</FONT>         * {@link android.R.attr#protectionLevel}.<a name="line.32"></a>
+<FONT color="green">033</FONT>         */<a name="line.33"></a>
+<FONT color="green">034</FONT>        public static final int PROTECTION_NORMAL = 0;<a name="line.34"></a>
+<FONT color="green">035</FONT>    <a name="line.35"></a>
+<FONT color="green">036</FONT>        /**<a name="line.36"></a>
+<FONT color="green">037</FONT>         * Dangerous value for {@link #protectionLevel}, corresponding<a name="line.37"></a>
+<FONT color="green">038</FONT>         * to the &lt;code&gt;dangerous&lt;/code&gt; value of<a name="line.38"></a>
+<FONT color="green">039</FONT>         * {@link android.R.attr#protectionLevel}.<a name="line.39"></a>
+<FONT color="green">040</FONT>         */<a name="line.40"></a>
+<FONT color="green">041</FONT>        public static final int PROTECTION_DANGEROUS = 1;<a name="line.41"></a>
+<FONT color="green">042</FONT>    <a name="line.42"></a>
+<FONT color="green">043</FONT>        /**<a name="line.43"></a>
+<FONT color="green">044</FONT>         * System-level value for {@link #protectionLevel}, corresponding<a name="line.44"></a>
+<FONT color="green">045</FONT>         * to the &lt;code&gt;signature&lt;/code&gt; value of<a name="line.45"></a>
+<FONT color="green">046</FONT>         * {@link android.R.attr#protectionLevel}.<a name="line.46"></a>
+<FONT color="green">047</FONT>         */<a name="line.47"></a>
+<FONT color="green">048</FONT>        public static final int PROTECTION_SIGNATURE = 2;<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>        /**<a name="line.50"></a>
+<FONT color="green">051</FONT>         * System-level value for {@link #protectionLevel}, corresponding<a name="line.51"></a>
+<FONT color="green">052</FONT>         * to the &lt;code&gt;signatureOrSystem&lt;/code&gt; value of<a name="line.52"></a>
+<FONT color="green">053</FONT>         * {@link android.R.attr#protectionLevel}.<a name="line.53"></a>
+<FONT color="green">054</FONT>         */<a name="line.54"></a>
+<FONT color="green">055</FONT>        public static final int PROTECTION_SIGNATURE_OR_SYSTEM = 3;<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>        /**<a name="line.57"></a>
+<FONT color="green">058</FONT>         * The group this permission is a part of, as per<a name="line.58"></a>
+<FONT color="green">059</FONT>         * {@link android.R.attr#permissionGroup}.<a name="line.59"></a>
+<FONT color="green">060</FONT>         */<a name="line.60"></a>
+<FONT color="green">061</FONT>        public String group;<a name="line.61"></a>
+<FONT color="green">062</FONT>        <a name="line.62"></a>
+<FONT color="green">063</FONT>        /**<a name="line.63"></a>
+<FONT color="green">064</FONT>         * A string resource identifier (in the package's resources) of this<a name="line.64"></a>
+<FONT color="green">065</FONT>         * permission's description.  From the "description" attribute or,<a name="line.65"></a>
+<FONT color="green">066</FONT>         * if not set, 0.<a name="line.66"></a>
+<FONT color="green">067</FONT>         */<a name="line.67"></a>
+<FONT color="green">068</FONT>        public int descriptionRes;<a name="line.68"></a>
+<FONT color="green">069</FONT>    <a name="line.69"></a>
+<FONT color="green">070</FONT>        /**<a name="line.70"></a>
+<FONT color="green">071</FONT>         * The description string provided in the AndroidManifest file, if any.  You<a name="line.71"></a>
+<FONT color="green">072</FONT>         * probably don't want to use this, since it will be null if the description<a name="line.72"></a>
+<FONT color="green">073</FONT>         * is in a resource.  You probably want<a name="line.73"></a>
+<FONT color="green">074</FONT>         * {@link PermissionInfo#loadDescription} instead.<a name="line.74"></a>
+<FONT color="green">075</FONT>         */<a name="line.75"></a>
+<FONT color="green">076</FONT>        public CharSequence nonLocalizedDescription;<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>        /**<a name="line.78"></a>
+<FONT color="green">079</FONT>         * The level of access this permission is protecting, as per<a name="line.79"></a>
+<FONT color="green">080</FONT>         * {@link android.R.attr#protectionLevel}.  Values may be<a name="line.80"></a>
+<FONT color="green">081</FONT>         * {@link #PROTECTION_NORMAL}, {@link #PROTECTION_DANGEROUS}, or<a name="line.81"></a>
+<FONT color="green">082</FONT>         * {@link #PROTECTION_SIGNATURE}.<a name="line.82"></a>
+<FONT color="green">083</FONT>         */<a name="line.83"></a>
+<FONT color="green">084</FONT>        public int protectionLevel;<a name="line.84"></a>
+<FONT color="green">085</FONT>    <a name="line.85"></a>
+<FONT color="green">086</FONT>        public PermissionInfo() {<a name="line.86"></a>
+<FONT color="green">087</FONT>        }<a name="line.87"></a>
+<FONT color="green">088</FONT>    <a name="line.88"></a>
+<FONT color="green">089</FONT>        public PermissionInfo(PermissionInfo orig) {<a name="line.89"></a>
+<FONT color="green">090</FONT>            super(orig);<a name="line.90"></a>
+<FONT color="green">091</FONT>            group = orig.group;<a name="line.91"></a>
+<FONT color="green">092</FONT>            descriptionRes = orig.descriptionRes;<a name="line.92"></a>
+<FONT color="green">093</FONT>            protectionLevel = orig.protectionLevel;<a name="line.93"></a>
+<FONT color="green">094</FONT>            nonLocalizedDescription = orig.nonLocalizedDescription;<a name="line.94"></a>
+<FONT color="green">095</FONT>        }<a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>        /**<a name="line.97"></a>
+<FONT color="green">098</FONT>         * Retrieve the textual description of this permission.  This<a name="line.98"></a>
+<FONT color="green">099</FONT>         * will call back on the given PackageManager to load the description from<a name="line.99"></a>
+<FONT color="green">100</FONT>         * the application.<a name="line.100"></a>
+<FONT color="green">101</FONT>         *<a name="line.101"></a>
+<FONT color="green">102</FONT>         * @param pm A PackageManager from which the label can be loaded; usually<a name="line.102"></a>
+<FONT color="green">103</FONT>         * the PackageManager from which you originally retrieved this item.<a name="line.103"></a>
+<FONT color="green">104</FONT>         *<a name="line.104"></a>
+<FONT color="green">105</FONT>         * @return Returns a CharSequence containing the permission's description.<a name="line.105"></a>
+<FONT color="green">106</FONT>         * If there is no description, null is returned.<a name="line.106"></a>
+<FONT color="green">107</FONT>         */<a name="line.107"></a>
+<FONT color="green">108</FONT>        public CharSequence loadDescription(PackageManager pm) {<a name="line.108"></a>
+<FONT color="green">109</FONT>            if (nonLocalizedDescription != null) {<a name="line.109"></a>
+<FONT color="green">110</FONT>                return nonLocalizedDescription;<a name="line.110"></a>
+<FONT color="green">111</FONT>            }<a name="line.111"></a>
+<FONT color="green">112</FONT>            if (descriptionRes != 0) {<a name="line.112"></a>
+<FONT color="green">113</FONT>                CharSequence label = pm.getText(packageName, descriptionRes, null);<a name="line.113"></a>
+<FONT color="green">114</FONT>                if (label != null) {<a name="line.114"></a>
+<FONT color="green">115</FONT>                    return label;<a name="line.115"></a>
+<FONT color="green">116</FONT>                }<a name="line.116"></a>
+<FONT color="green">117</FONT>            }<a name="line.117"></a>
+<FONT color="green">118</FONT>            return null;<a name="line.118"></a>
+<FONT color="green">119</FONT>        }<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>        public String toString() {<a name="line.121"></a>
+<FONT color="green">122</FONT>            return "PermissionInfo{"<a name="line.122"></a>
+<FONT color="green">123</FONT>                + Integer.toHexString(System.identityHashCode(this))<a name="line.123"></a>
+<FONT color="green">124</FONT>                + " " + name + "}";<a name="line.124"></a>
+<FONT color="green">125</FONT>        }<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>        public int describeContents() {<a name="line.127"></a>
+<FONT color="green">128</FONT>            return 0;<a name="line.128"></a>
+<FONT color="green">129</FONT>        }<a name="line.129"></a>
+<FONT color="green">130</FONT>    <a name="line.130"></a>
+<FONT color="green">131</FONT>        public void writeToParcel(Parcel dest, int parcelableFlags) {<a name="line.131"></a>
+<FONT color="green">132</FONT>            super.writeToParcel(dest, parcelableFlags);<a name="line.132"></a>
+<FONT color="green">133</FONT>            dest.writeString(group);<a name="line.133"></a>
+<FONT color="green">134</FONT>            dest.writeInt(descriptionRes);<a name="line.134"></a>
+<FONT color="green">135</FONT>            dest.writeInt(protectionLevel);<a name="line.135"></a>
+<FONT color="green">136</FONT>            TextUtils.writeToParcel(nonLocalizedDescription, dest, parcelableFlags);<a name="line.136"></a>
+<FONT color="green">137</FONT>        }<a name="line.137"></a>
+<FONT color="green">138</FONT>    <a name="line.138"></a>
+<FONT color="green">139</FONT>        public static final Creator&lt;PermissionInfo&gt; CREATOR =<a name="line.139"></a>
+<FONT color="green">140</FONT>            new Creator&lt;PermissionInfo&gt;() {<a name="line.140"></a>
+<FONT color="green">141</FONT>            public PermissionInfo createFromParcel(Parcel source) {<a name="line.141"></a>
+<FONT color="green">142</FONT>                return new PermissionInfo(source);<a name="line.142"></a>
+<FONT color="green">143</FONT>            }<a name="line.143"></a>
+<FONT color="green">144</FONT>            public PermissionInfo[] newArray(int size) {<a name="line.144"></a>
+<FONT color="green">145</FONT>                return new PermissionInfo[size];<a name="line.145"></a>
+<FONT color="green">146</FONT>            }<a name="line.146"></a>
+<FONT color="green">147</FONT>        };<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>        private PermissionInfo(Parcel source) {<a name="line.149"></a>
+<FONT color="green">150</FONT>            super(source);<a name="line.150"></a>
+<FONT color="green">151</FONT>            group = source.readString();<a name="line.151"></a>
+<FONT color="green">152</FONT>            descriptionRes = source.readInt();<a name="line.152"></a>
+<FONT color="green">153</FONT>            protectionLevel = source.readInt();<a name="line.153"></a>
+<FONT color="green">154</FONT>            nonLocalizedDescription = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(source);<a name="line.154"></a>
+<FONT color="green">155</FONT>        }<a name="line.155"></a>
+<FONT color="green">156</FONT>    }<a name="line.156"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,781 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    // XMLFilterImpl.java - base SAX2 filter implementation.<a name="line.1"></a>
+<FONT color="green">002</FONT>    // http://www.saxproject.org<a name="line.2"></a>
+<FONT color="green">003</FONT>    // Written by David Megginson<a name="line.3"></a>
+<FONT color="green">004</FONT>    // NO WARRANTY!  This class is in the Public Domain.<a name="line.4"></a>
+<FONT color="green">005</FONT>    // $Id: XMLFilterImpl.java,v 1.9 2004/04/26 17:34:35 dmegginson Exp $<a name="line.5"></a>
+<FONT color="green">006</FONT>    <a name="line.6"></a>
+<FONT color="green">007</FONT>    package org.xml.sax.helpers;<a name="line.7"></a>
+<FONT color="green">008</FONT>    <a name="line.8"></a>
+<FONT color="green">009</FONT>    import java.io.IOException;<a name="line.9"></a>
+<FONT color="green">010</FONT>    <a name="line.10"></a>
+<FONT color="green">011</FONT>    import org.xml.sax.XMLReader;<a name="line.11"></a>
+<FONT color="green">012</FONT>    import org.xml.sax.XMLFilter;<a name="line.12"></a>
+<FONT color="green">013</FONT>    import org.xml.sax.InputSource;<a name="line.13"></a>
+<FONT color="green">014</FONT>    import org.xml.sax.Locator;<a name="line.14"></a>
+<FONT color="green">015</FONT>    import org.xml.sax.Attributes;<a name="line.15"></a>
+<FONT color="green">016</FONT>    import org.xml.sax.EntityResolver;<a name="line.16"></a>
+<FONT color="green">017</FONT>    import org.xml.sax.DTDHandler;<a name="line.17"></a>
+<FONT color="green">018</FONT>    import org.xml.sax.ContentHandler;<a name="line.18"></a>
+<FONT color="green">019</FONT>    import org.xml.sax.ErrorHandler;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import org.xml.sax.SAXException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import org.xml.sax.SAXParseException;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import org.xml.sax.SAXNotSupportedException;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import org.xml.sax.SAXNotRecognizedException;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    <a name="line.25"></a>
+<FONT color="green">026</FONT>    /**<a name="line.26"></a>
+<FONT color="green">027</FONT>     * Base class for deriving an XML filter.<a name="line.27"></a>
+<FONT color="green">028</FONT>     *<a name="line.28"></a>
+<FONT color="green">029</FONT>     * &lt;blockquote&gt;<a name="line.29"></a>
+<FONT color="green">030</FONT>     * &lt;em&gt;This module, both source code and documentation, is in the<a name="line.30"></a>
+<FONT color="green">031</FONT>     * Public Domain, and comes with &lt;strong&gt;NO WARRANTY&lt;/strong&gt;.&lt;/em&gt;<a name="line.31"></a>
+<FONT color="green">032</FONT>     * See &lt;a href='http://www.saxproject.org'&gt;http://www.saxproject.org&lt;/a&gt;<a name="line.32"></a>
+<FONT color="green">033</FONT>     * for further information.<a name="line.33"></a>
+<FONT color="green">034</FONT>     * &lt;/blockquote&gt;<a name="line.34"></a>
+<FONT color="green">035</FONT>     *<a name="line.35"></a>
+<FONT color="green">036</FONT>     * &lt;p&gt;This class is designed to sit between an {@link org.xml.sax.XMLReader<a name="line.36"></a>
+<FONT color="green">037</FONT>     * XMLReader} and the client application's event handlers.  By default, it<a name="line.37"></a>
+<FONT color="green">038</FONT>     * does nothing but pass requests up to the reader and events<a name="line.38"></a>
+<FONT color="green">039</FONT>     * on to the handlers unmodified, but subclasses can override<a name="line.39"></a>
+<FONT color="green">040</FONT>     * specific methods to modify the event stream or the configuration<a name="line.40"></a>
+<FONT color="green">041</FONT>     * requests as they pass through.&lt;/p&gt;<a name="line.41"></a>
+<FONT color="green">042</FONT>     *<a name="line.42"></a>
+<FONT color="green">043</FONT>     * @since SAX 2.0<a name="line.43"></a>
+<FONT color="green">044</FONT>     * @author David Megginson<a name="line.44"></a>
+<FONT color="green">045</FONT>     * @version 2.0.1 (sax2r2)<a name="line.45"></a>
+<FONT color="green">046</FONT>     * @see org.xml.sax.XMLFilter<a name="line.46"></a>
+<FONT color="green">047</FONT>     * @see org.xml.sax.XMLReader<a name="line.47"></a>
+<FONT color="green">048</FONT>     * @see org.xml.sax.EntityResolver<a name="line.48"></a>
+<FONT color="green">049</FONT>     * @see org.xml.sax.DTDHandler<a name="line.49"></a>
+<FONT color="green">050</FONT>     * @see org.xml.sax.ContentHandler<a name="line.50"></a>
+<FONT color="green">051</FONT>     * @see org.xml.sax.ErrorHandler<a name="line.51"></a>
+<FONT color="green">052</FONT>     */<a name="line.52"></a>
+<FONT color="green">053</FONT>    public class XMLFilterImpl<a name="line.53"></a>
+<FONT color="green">054</FONT>        implements XMLFilter, EntityResolver, DTDHandler, ContentHandler, ErrorHandler<a name="line.54"></a>
+<FONT color="green">055</FONT>    {<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>    <a name="line.57"></a>
+<FONT color="green">058</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.58"></a>
+<FONT color="green">059</FONT>        // Constructors.<a name="line.59"></a>
+<FONT color="green">060</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.60"></a>
+<FONT color="green">061</FONT>    <a name="line.61"></a>
+<FONT color="green">062</FONT>    <a name="line.62"></a>
+<FONT color="green">063</FONT>        /**<a name="line.63"></a>
+<FONT color="green">064</FONT>         * Construct an empty XML filter, with no parent.<a name="line.64"></a>
+<FONT color="green">065</FONT>         *<a name="line.65"></a>
+<FONT color="green">066</FONT>         * &lt;p&gt;This filter will have no parent: you must assign a parent<a name="line.66"></a>
+<FONT color="green">067</FONT>         * before you start a parse or do any configuration with<a name="line.67"></a>
+<FONT color="green">068</FONT>         * setFeature or setProperty, unless you use this as a pure event<a name="line.68"></a>
+<FONT color="green">069</FONT>         * consumer rather than as an {@link XMLReader}.&lt;/p&gt;<a name="line.69"></a>
+<FONT color="green">070</FONT>         *<a name="line.70"></a>
+<FONT color="green">071</FONT>         * @see org.xml.sax.XMLReader#setFeature<a name="line.71"></a>
+<FONT color="green">072</FONT>         * @see org.xml.sax.XMLReader#setProperty<a name="line.72"></a>
+<FONT color="green">073</FONT>         * @see #setParent<a name="line.73"></a>
+<FONT color="green">074</FONT>         */<a name="line.74"></a>
+<FONT color="green">075</FONT>        public XMLFilterImpl ()<a name="line.75"></a>
+<FONT color="green">076</FONT>        {<a name="line.76"></a>
+<FONT color="green">077</FONT>        super();<a name="line.77"></a>
+<FONT color="green">078</FONT>        }<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>    <a name="line.80"></a>
+<FONT color="green">081</FONT>        /**<a name="line.81"></a>
+<FONT color="green">082</FONT>         * Construct an XML filter with the specified parent.<a name="line.82"></a>
+<FONT color="green">083</FONT>         * <a name="line.83"></a>
+<FONT color="green">084</FONT>         * @param parent the XML reader from which this filter receives its events. <a name="line.84"></a>
+<FONT color="green">085</FONT>         *<a name="line.85"></a>
+<FONT color="green">086</FONT>         * @see #setParent<a name="line.86"></a>
+<FONT color="green">087</FONT>         * @see #getParent<a name="line.87"></a>
+<FONT color="green">088</FONT>         */<a name="line.88"></a>
+<FONT color="green">089</FONT>        public XMLFilterImpl (XMLReader parent)<a name="line.89"></a>
+<FONT color="green">090</FONT>        {<a name="line.90"></a>
+<FONT color="green">091</FONT>            super();<a name="line.91"></a>
+<FONT color="green">092</FONT>        setParent(parent);<a name="line.92"></a>
+<FONT color="green">093</FONT>        }<a name="line.93"></a>
+<FONT color="green">094</FONT>    <a name="line.94"></a>
+<FONT color="green">095</FONT>    <a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.97"></a>
+<FONT color="green">098</FONT>        // Implementation of org.xml.sax.XMLFilter.<a name="line.98"></a>
+<FONT color="green">099</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>    <a name="line.101"></a>
+<FONT color="green">102</FONT>        /**<a name="line.102"></a>
+<FONT color="green">103</FONT>         * Set the parent reader.<a name="line.103"></a>
+<FONT color="green">104</FONT>         *<a name="line.104"></a>
+<FONT color="green">105</FONT>         * &lt;p&gt;This is the {@link org.xml.sax.XMLReader XMLReader} from which <a name="line.105"></a>
+<FONT color="green">106</FONT>         * this filter will obtain its events and to which it will pass its <a name="line.106"></a>
+<FONT color="green">107</FONT>         * configuration requests.  The parent may itself be another filter.&lt;/p&gt;<a name="line.107"></a>
+<FONT color="green">108</FONT>         *<a name="line.108"></a>
+<FONT color="green">109</FONT>         * &lt;p&gt;If there is no parent reader set, any attempt to parse<a name="line.109"></a>
+<FONT color="green">110</FONT>         * or to set or get a feature or property will fail.&lt;/p&gt;<a name="line.110"></a>
+<FONT color="green">111</FONT>         *<a name="line.111"></a>
+<FONT color="green">112</FONT>         * @param parent The parent XML reader.<a name="line.112"></a>
+<FONT color="green">113</FONT>         * @see #getParent<a name="line.113"></a>
+<FONT color="green">114</FONT>         */<a name="line.114"></a>
+<FONT color="green">115</FONT>        public void setParent (XMLReader parent)<a name="line.115"></a>
+<FONT color="green">116</FONT>        {<a name="line.116"></a>
+<FONT color="green">117</FONT>        this.parent = parent;<a name="line.117"></a>
+<FONT color="green">118</FONT>        }<a name="line.118"></a>
+<FONT color="green">119</FONT>    <a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>        /**<a name="line.121"></a>
+<FONT color="green">122</FONT>         * Get the parent reader.<a name="line.122"></a>
+<FONT color="green">123</FONT>         *<a name="line.123"></a>
+<FONT color="green">124</FONT>         * @return The parent XML reader, or null if none is set.<a name="line.124"></a>
+<FONT color="green">125</FONT>         * @see #setParent<a name="line.125"></a>
+<FONT color="green">126</FONT>         */<a name="line.126"></a>
+<FONT color="green">127</FONT>        public XMLReader getParent ()<a name="line.127"></a>
+<FONT color="green">128</FONT>        {<a name="line.128"></a>
+<FONT color="green">129</FONT>        return parent;<a name="line.129"></a>
+<FONT color="green">130</FONT>        }<a name="line.130"></a>
+<FONT color="green">131</FONT>    <a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>    <a name="line.133"></a>
+<FONT color="green">134</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.134"></a>
+<FONT color="green">135</FONT>        // Implementation of org.xml.sax.XMLReader.<a name="line.135"></a>
+<FONT color="green">136</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.136"></a>
+<FONT color="green">137</FONT>    <a name="line.137"></a>
+<FONT color="green">138</FONT>    <a name="line.138"></a>
+<FONT color="green">139</FONT>        /**<a name="line.139"></a>
+<FONT color="green">140</FONT>         * Set the value of a feature.<a name="line.140"></a>
+<FONT color="green">141</FONT>         *<a name="line.141"></a>
+<FONT color="green">142</FONT>         * &lt;p&gt;This will always fail if the parent is null.&lt;/p&gt;<a name="line.142"></a>
+<FONT color="green">143</FONT>         *<a name="line.143"></a>
+<FONT color="green">144</FONT>         * @param name The feature name.<a name="line.144"></a>
+<FONT color="green">145</FONT>         * @param value The requested feature value.<a name="line.145"></a>
+<FONT color="green">146</FONT>         * @exception org.xml.sax.SAXNotRecognizedException If the feature<a name="line.146"></a>
+<FONT color="green">147</FONT>         *            value can't be assigned or retrieved from the parent.<a name="line.147"></a>
+<FONT color="green">148</FONT>         * @exception org.xml.sax.SAXNotSupportedException When the<a name="line.148"></a>
+<FONT color="green">149</FONT>         *            parent recognizes the feature name but <a name="line.149"></a>
+<FONT color="green">150</FONT>         *            cannot set the requested value.<a name="line.150"></a>
+<FONT color="green">151</FONT>         */<a name="line.151"></a>
+<FONT color="green">152</FONT>        public void setFeature (String name, boolean value)<a name="line.152"></a>
+<FONT color="green">153</FONT>        throws SAXNotRecognizedException, SAXNotSupportedException<a name="line.153"></a>
+<FONT color="green">154</FONT>        {<a name="line.154"></a>
+<FONT color="green">155</FONT>        if (parent != null) {<a name="line.155"></a>
+<FONT color="green">156</FONT>            parent.setFeature(name, value);<a name="line.156"></a>
+<FONT color="green">157</FONT>        } else {<a name="line.157"></a>
+<FONT color="green">158</FONT>            throw new SAXNotRecognizedException("Feature: " + name);<a name="line.158"></a>
+<FONT color="green">159</FONT>        }<a name="line.159"></a>
+<FONT color="green">160</FONT>        }<a name="line.160"></a>
+<FONT color="green">161</FONT>    <a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>        /**<a name="line.163"></a>
+<FONT color="green">164</FONT>         * Look up the value of a feature.<a name="line.164"></a>
+<FONT color="green">165</FONT>         *<a name="line.165"></a>
+<FONT color="green">166</FONT>         * &lt;p&gt;This will always fail if the parent is null.&lt;/p&gt;<a name="line.166"></a>
+<FONT color="green">167</FONT>         *<a name="line.167"></a>
+<FONT color="green">168</FONT>         * @param name The feature name.<a name="line.168"></a>
+<FONT color="green">169</FONT>         * @return The current value of the feature.<a name="line.169"></a>
+<FONT color="green">170</FONT>         * @exception org.xml.sax.SAXNotRecognizedException If the feature<a name="line.170"></a>
+<FONT color="green">171</FONT>         *            value can't be assigned or retrieved from the parent.<a name="line.171"></a>
+<FONT color="green">172</FONT>         * @exception org.xml.sax.SAXNotSupportedException When the<a name="line.172"></a>
+<FONT color="green">173</FONT>         *            parent recognizes the feature name but <a name="line.173"></a>
+<FONT color="green">174</FONT>         *            cannot determine its value at this time.<a name="line.174"></a>
+<FONT color="green">175</FONT>         */<a name="line.175"></a>
+<FONT color="green">176</FONT>        public boolean getFeature (String name)<a name="line.176"></a>
+<FONT color="green">177</FONT>        throws SAXNotRecognizedException, SAXNotSupportedException<a name="line.177"></a>
+<FONT color="green">178</FONT>        {<a name="line.178"></a>
+<FONT color="green">179</FONT>        if (parent != null) {<a name="line.179"></a>
+<FONT color="green">180</FONT>            return parent.getFeature(name);<a name="line.180"></a>
+<FONT color="green">181</FONT>        } else {<a name="line.181"></a>
+<FONT color="green">182</FONT>            throw new SAXNotRecognizedException("Feature: " + name);<a name="line.182"></a>
+<FONT color="green">183</FONT>        }<a name="line.183"></a>
+<FONT color="green">184</FONT>        }<a name="line.184"></a>
+<FONT color="green">185</FONT>    <a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        /**<a name="line.187"></a>
+<FONT color="green">188</FONT>         * Set the value of a property.<a name="line.188"></a>
+<FONT color="green">189</FONT>         *<a name="line.189"></a>
+<FONT color="green">190</FONT>         * &lt;p&gt;This will always fail if the parent is null.&lt;/p&gt;<a name="line.190"></a>
+<FONT color="green">191</FONT>         *<a name="line.191"></a>
+<FONT color="green">192</FONT>         * @param name The property name.<a name="line.192"></a>
+<FONT color="green">193</FONT>         * @param value The requested property value.<a name="line.193"></a>
+<FONT color="green">194</FONT>         * @exception org.xml.sax.SAXNotRecognizedException If the property<a name="line.194"></a>
+<FONT color="green">195</FONT>         *            value can't be assigned or retrieved from the parent.<a name="line.195"></a>
+<FONT color="green">196</FONT>         * @exception org.xml.sax.SAXNotSupportedException When the<a name="line.196"></a>
+<FONT color="green">197</FONT>         *            parent recognizes the property name but <a name="line.197"></a>
+<FONT color="green">198</FONT>         *            cannot set the requested value.<a name="line.198"></a>
+<FONT color="green">199</FONT>         */<a name="line.199"></a>
+<FONT color="green">200</FONT>        public void setProperty (String name, Object value)<a name="line.200"></a>
+<FONT color="green">201</FONT>        throws SAXNotRecognizedException, SAXNotSupportedException<a name="line.201"></a>
+<FONT color="green">202</FONT>        {<a name="line.202"></a>
+<FONT color="green">203</FONT>        if (parent != null) {<a name="line.203"></a>
+<FONT color="green">204</FONT>            parent.setProperty(name, value);<a name="line.204"></a>
+<FONT color="green">205</FONT>        } else {<a name="line.205"></a>
+<FONT color="green">206</FONT>            throw new SAXNotRecognizedException("Property: " + name);<a name="line.206"></a>
+<FONT color="green">207</FONT>        }<a name="line.207"></a>
+<FONT color="green">208</FONT>        }<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>    <a name="line.210"></a>
+<FONT color="green">211</FONT>        /**<a name="line.211"></a>
+<FONT color="green">212</FONT>         * Look up the value of a property.<a name="line.212"></a>
+<FONT color="green">213</FONT>         *<a name="line.213"></a>
+<FONT color="green">214</FONT>         * @param name The property name.<a name="line.214"></a>
+<FONT color="green">215</FONT>         * @return The current value of the property.<a name="line.215"></a>
+<FONT color="green">216</FONT>         * @exception org.xml.sax.SAXNotRecognizedException If the property<a name="line.216"></a>
+<FONT color="green">217</FONT>         *            value can't be assigned or retrieved from the parent.<a name="line.217"></a>
+<FONT color="green">218</FONT>         * @exception org.xml.sax.SAXNotSupportedException When the<a name="line.218"></a>
+<FONT color="green">219</FONT>         *            parent recognizes the property name but <a name="line.219"></a>
+<FONT color="green">220</FONT>         *            cannot determine its value at this time.<a name="line.220"></a>
+<FONT color="green">221</FONT>         */<a name="line.221"></a>
+<FONT color="green">222</FONT>        public Object getProperty (String name)<a name="line.222"></a>
+<FONT color="green">223</FONT>        throws SAXNotRecognizedException, SAXNotSupportedException<a name="line.223"></a>
+<FONT color="green">224</FONT>        {<a name="line.224"></a>
+<FONT color="green">225</FONT>        if (parent != null) {<a name="line.225"></a>
+<FONT color="green">226</FONT>            return parent.getProperty(name);<a name="line.226"></a>
+<FONT color="green">227</FONT>        } else {<a name="line.227"></a>
+<FONT color="green">228</FONT>            throw new SAXNotRecognizedException("Property: " + name);<a name="line.228"></a>
+<FONT color="green">229</FONT>        }<a name="line.229"></a>
+<FONT color="green">230</FONT>        }<a name="line.230"></a>
+<FONT color="green">231</FONT>    <a name="line.231"></a>
+<FONT color="green">232</FONT>    <a name="line.232"></a>
+<FONT color="green">233</FONT>        /**<a name="line.233"></a>
+<FONT color="green">234</FONT>         * Set the entity resolver.<a name="line.234"></a>
+<FONT color="green">235</FONT>         *<a name="line.235"></a>
+<FONT color="green">236</FONT>         * @param resolver The new entity resolver.<a name="line.236"></a>
+<FONT color="green">237</FONT>         */<a name="line.237"></a>
+<FONT color="green">238</FONT>        public void setEntityResolver (EntityResolver resolver)<a name="line.238"></a>
+<FONT color="green">239</FONT>        {<a name="line.239"></a>
+<FONT color="green">240</FONT>        entityResolver = resolver;<a name="line.240"></a>
+<FONT color="green">241</FONT>        }<a name="line.241"></a>
+<FONT color="green">242</FONT>    <a name="line.242"></a>
+<FONT color="green">243</FONT>    <a name="line.243"></a>
+<FONT color="green">244</FONT>        /**<a name="line.244"></a>
+<FONT color="green">245</FONT>         * Get the current entity resolver.<a name="line.245"></a>
+<FONT color="green">246</FONT>         *<a name="line.246"></a>
+<FONT color="green">247</FONT>         * @return The current entity resolver, or null if none was set.<a name="line.247"></a>
+<FONT color="green">248</FONT>         */<a name="line.248"></a>
+<FONT color="green">249</FONT>        public EntityResolver getEntityResolver ()<a name="line.249"></a>
+<FONT color="green">250</FONT>        {<a name="line.250"></a>
+<FONT color="green">251</FONT>        return entityResolver;<a name="line.251"></a>
+<FONT color="green">252</FONT>        }<a name="line.252"></a>
+<FONT color="green">253</FONT>    <a name="line.253"></a>
+<FONT color="green">254</FONT>    <a name="line.254"></a>
+<FONT color="green">255</FONT>        /**<a name="line.255"></a>
+<FONT color="green">256</FONT>         * Set the DTD event handler.<a name="line.256"></a>
+<FONT color="green">257</FONT>         *<a name="line.257"></a>
+<FONT color="green">258</FONT>         * @param handler the new DTD handler<a name="line.258"></a>
+<FONT color="green">259</FONT>         */<a name="line.259"></a>
+<FONT color="green">260</FONT>        public void setDTDHandler (DTDHandler handler)<a name="line.260"></a>
+<FONT color="green">261</FONT>        {<a name="line.261"></a>
+<FONT color="green">262</FONT>        dtdHandler = handler;<a name="line.262"></a>
+<FONT color="green">263</FONT>        }<a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>    <a name="line.265"></a>
+<FONT color="green">266</FONT>        /**<a name="line.266"></a>
+<FONT color="green">267</FONT>         * Get the current DTD event handler.<a name="line.267"></a>
+<FONT color="green">268</FONT>         *<a name="line.268"></a>
+<FONT color="green">269</FONT>         * @return The current DTD handler, or null if none was set.<a name="line.269"></a>
+<FONT color="green">270</FONT>         */<a name="line.270"></a>
+<FONT color="green">271</FONT>        public DTDHandler getDTDHandler ()<a name="line.271"></a>
+<FONT color="green">272</FONT>        {<a name="line.272"></a>
+<FONT color="green">273</FONT>        return dtdHandler;<a name="line.273"></a>
+<FONT color="green">274</FONT>        }<a name="line.274"></a>
+<FONT color="green">275</FONT>    <a name="line.275"></a>
+<FONT color="green">276</FONT>    <a name="line.276"></a>
+<FONT color="green">277</FONT>        /**<a name="line.277"></a>
+<FONT color="green">278</FONT>         * Set the content event handler.<a name="line.278"></a>
+<FONT color="green">279</FONT>         *<a name="line.279"></a>
+<FONT color="green">280</FONT>         * @param handler the new content handler<a name="line.280"></a>
+<FONT color="green">281</FONT>         */<a name="line.281"></a>
+<FONT color="green">282</FONT>        public void setContentHandler (ContentHandler handler)<a name="line.282"></a>
+<FONT color="green">283</FONT>        {<a name="line.283"></a>
+<FONT color="green">284</FONT>        contentHandler = handler;<a name="line.284"></a>
+<FONT color="green">285</FONT>        }<a name="line.285"></a>
+<FONT color="green">286</FONT>    <a name="line.286"></a>
+<FONT color="green">287</FONT>    <a name="line.287"></a>
+<FONT color="green">288</FONT>        /**<a name="line.288"></a>
+<FONT color="green">289</FONT>         * Get the content event handler.<a name="line.289"></a>
+<FONT color="green">290</FONT>         *<a name="line.290"></a>
+<FONT color="green">291</FONT>         * @return The current content handler, or null if none was set.<a name="line.291"></a>
+<FONT color="green">292</FONT>         */<a name="line.292"></a>
+<FONT color="green">293</FONT>        public ContentHandler getContentHandler ()<a name="line.293"></a>
+<FONT color="green">294</FONT>        {<a name="line.294"></a>
+<FONT color="green">295</FONT>        return contentHandler;<a name="line.295"></a>
+<FONT color="green">296</FONT>        }<a name="line.296"></a>
+<FONT color="green">297</FONT>    <a name="line.297"></a>
+<FONT color="green">298</FONT>    <a name="line.298"></a>
+<FONT color="green">299</FONT>        /**<a name="line.299"></a>
+<FONT color="green">300</FONT>         * Set the error event handler.<a name="line.300"></a>
+<FONT color="green">301</FONT>         *<a name="line.301"></a>
+<FONT color="green">302</FONT>         * @param handler the new error handler<a name="line.302"></a>
+<FONT color="green">303</FONT>         */<a name="line.303"></a>
+<FONT color="green">304</FONT>        public void setErrorHandler (ErrorHandler handler)<a name="line.304"></a>
+<FONT color="green">305</FONT>        {<a name="line.305"></a>
+<FONT color="green">306</FONT>        errorHandler = handler;<a name="line.306"></a>
+<FONT color="green">307</FONT>        }<a name="line.307"></a>
+<FONT color="green">308</FONT>    <a name="line.308"></a>
+<FONT color="green">309</FONT>    <a name="line.309"></a>
+<FONT color="green">310</FONT>        /**<a name="line.310"></a>
+<FONT color="green">311</FONT>         * Get the current error event handler.<a name="line.311"></a>
+<FONT color="green">312</FONT>         *<a name="line.312"></a>
+<FONT color="green">313</FONT>         * @return The current error handler, or null if none was set.<a name="line.313"></a>
+<FONT color="green">314</FONT>         */<a name="line.314"></a>
+<FONT color="green">315</FONT>        public ErrorHandler getErrorHandler ()<a name="line.315"></a>
+<FONT color="green">316</FONT>        {<a name="line.316"></a>
+<FONT color="green">317</FONT>        return errorHandler;<a name="line.317"></a>
+<FONT color="green">318</FONT>        }<a name="line.318"></a>
+<FONT color="green">319</FONT>    <a name="line.319"></a>
+<FONT color="green">320</FONT>    <a name="line.320"></a>
+<FONT color="green">321</FONT>        /**<a name="line.321"></a>
+<FONT color="green">322</FONT>         * Parse a document.<a name="line.322"></a>
+<FONT color="green">323</FONT>         *<a name="line.323"></a>
+<FONT color="green">324</FONT>         * @param input The input source for the document entity.<a name="line.324"></a>
+<FONT color="green">325</FONT>         * @exception org.xml.sax.SAXException Any SAX exception, possibly<a name="line.325"></a>
+<FONT color="green">326</FONT>         *            wrapping another exception.<a name="line.326"></a>
+<FONT color="green">327</FONT>         * @exception java.io.IOException An IO exception from the parser,<a name="line.327"></a>
+<FONT color="green">328</FONT>         *            possibly from a byte stream or character stream<a name="line.328"></a>
+<FONT color="green">329</FONT>         *            supplied by the application.<a name="line.329"></a>
+<FONT color="green">330</FONT>         */<a name="line.330"></a>
+<FONT color="green">331</FONT>        public void parse (InputSource input)<a name="line.331"></a>
+<FONT color="green">332</FONT>        throws SAXException, IOException<a name="line.332"></a>
+<FONT color="green">333</FONT>        {<a name="line.333"></a>
+<FONT color="green">334</FONT>        setupParse();<a name="line.334"></a>
+<FONT color="green">335</FONT>        parent.parse(input);<a name="line.335"></a>
+<FONT color="green">336</FONT>        }<a name="line.336"></a>
+<FONT color="green">337</FONT>    <a name="line.337"></a>
+<FONT color="green">338</FONT>    <a name="line.338"></a>
+<FONT color="green">339</FONT>        /**<a name="line.339"></a>
+<FONT color="green">340</FONT>         * Parse a document.<a name="line.340"></a>
+<FONT color="green">341</FONT>         *<a name="line.341"></a>
+<FONT color="green">342</FONT>         * @param systemId The system identifier as a fully-qualified URI.<a name="line.342"></a>
+<FONT color="green">343</FONT>         * @exception org.xml.sax.SAXException Any SAX exception, possibly<a name="line.343"></a>
+<FONT color="green">344</FONT>         *            wrapping another exception.<a name="line.344"></a>
+<FONT color="green">345</FONT>         * @exception java.io.IOException An IO exception from the parser,<a name="line.345"></a>
+<FONT color="green">346</FONT>         *            possibly from a byte stream or character stream<a name="line.346"></a>
+<FONT color="green">347</FONT>         *            supplied by the application.<a name="line.347"></a>
+<FONT color="green">348</FONT>         */<a name="line.348"></a>
+<FONT color="green">349</FONT>        public void parse (String systemId)<a name="line.349"></a>
+<FONT color="green">350</FONT>        throws SAXException, IOException<a name="line.350"></a>
+<FONT color="green">351</FONT>        {<a name="line.351"></a>
+<FONT color="green">352</FONT>        parse(new InputSource(systemId));<a name="line.352"></a>
+<FONT color="green">353</FONT>        }<a name="line.353"></a>
+<FONT color="green">354</FONT>    <a name="line.354"></a>
+<FONT color="green">355</FONT>    <a name="line.355"></a>
+<FONT color="green">356</FONT>    <a name="line.356"></a>
+<FONT color="green">357</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.357"></a>
+<FONT color="green">358</FONT>        // Implementation of org.xml.sax.EntityResolver.<a name="line.358"></a>
+<FONT color="green">359</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.359"></a>
+<FONT color="green">360</FONT>    <a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>        /**<a name="line.362"></a>
+<FONT color="green">363</FONT>         * Filter an external entity resolution.<a name="line.363"></a>
+<FONT color="green">364</FONT>         *<a name="line.364"></a>
+<FONT color="green">365</FONT>         * @param publicId The entity's public identifier, or null.<a name="line.365"></a>
+<FONT color="green">366</FONT>         * @param systemId The entity's system identifier.<a name="line.366"></a>
+<FONT color="green">367</FONT>         * @return A new InputSource or null for the default.<a name="line.367"></a>
+<FONT color="green">368</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.368"></a>
+<FONT color="green">369</FONT>         *            an exception during processing.<a name="line.369"></a>
+<FONT color="green">370</FONT>         * @exception java.io.IOException The client may throw an<a name="line.370"></a>
+<FONT color="green">371</FONT>         *            I/O-related exception while obtaining the<a name="line.371"></a>
+<FONT color="green">372</FONT>         *            new InputSource.<a name="line.372"></a>
+<FONT color="green">373</FONT>         */<a name="line.373"></a>
+<FONT color="green">374</FONT>        public InputSource resolveEntity (String publicId, String systemId)<a name="line.374"></a>
+<FONT color="green">375</FONT>        throws SAXException, IOException<a name="line.375"></a>
+<FONT color="green">376</FONT>        {<a name="line.376"></a>
+<FONT color="green">377</FONT>        if (entityResolver != null) {<a name="line.377"></a>
+<FONT color="green">378</FONT>            return entityResolver.resolveEntity(publicId, systemId);<a name="line.378"></a>
+<FONT color="green">379</FONT>        } else {<a name="line.379"></a>
+<FONT color="green">380</FONT>            return null;<a name="line.380"></a>
+<FONT color="green">381</FONT>        }<a name="line.381"></a>
+<FONT color="green">382</FONT>        }<a name="line.382"></a>
+<FONT color="green">383</FONT>    <a name="line.383"></a>
+<FONT color="green">384</FONT>    <a name="line.384"></a>
+<FONT color="green">385</FONT>    <a name="line.385"></a>
+<FONT color="green">386</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.386"></a>
+<FONT color="green">387</FONT>        // Implementation of org.xml.sax.DTDHandler.<a name="line.387"></a>
+<FONT color="green">388</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.388"></a>
+<FONT color="green">389</FONT>    <a name="line.389"></a>
+<FONT color="green">390</FONT>        <a name="line.390"></a>
+<FONT color="green">391</FONT>        /**<a name="line.391"></a>
+<FONT color="green">392</FONT>         * Filter a notation declaration event.<a name="line.392"></a>
+<FONT color="green">393</FONT>         *<a name="line.393"></a>
+<FONT color="green">394</FONT>         * @param name The notation name.<a name="line.394"></a>
+<FONT color="green">395</FONT>         * @param publicId The notation's public identifier, or null.<a name="line.395"></a>
+<FONT color="green">396</FONT>         * @param systemId The notation's system identifier, or null.<a name="line.396"></a>
+<FONT color="green">397</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.397"></a>
+<FONT color="green">398</FONT>         *            an exception during processing.<a name="line.398"></a>
+<FONT color="green">399</FONT>         */<a name="line.399"></a>
+<FONT color="green">400</FONT>        public void notationDecl (String name, String publicId, String systemId)<a name="line.400"></a>
+<FONT color="green">401</FONT>        throws SAXException<a name="line.401"></a>
+<FONT color="green">402</FONT>        {<a name="line.402"></a>
+<FONT color="green">403</FONT>        if (dtdHandler != null) {<a name="line.403"></a>
+<FONT color="green">404</FONT>            dtdHandler.notationDecl(name, publicId, systemId);<a name="line.404"></a>
+<FONT color="green">405</FONT>        }<a name="line.405"></a>
+<FONT color="green">406</FONT>        }<a name="line.406"></a>
+<FONT color="green">407</FONT>    <a name="line.407"></a>
+<FONT color="green">408</FONT>        <a name="line.408"></a>
+<FONT color="green">409</FONT>        /**<a name="line.409"></a>
+<FONT color="green">410</FONT>         * Filter an unparsed entity declaration event.<a name="line.410"></a>
+<FONT color="green">411</FONT>         *<a name="line.411"></a>
+<FONT color="green">412</FONT>         * @param name The entity name.<a name="line.412"></a>
+<FONT color="green">413</FONT>         * @param publicId The entity's public identifier, or null.<a name="line.413"></a>
+<FONT color="green">414</FONT>         * @param systemId The entity's system identifier, or null.<a name="line.414"></a>
+<FONT color="green">415</FONT>         * @param notationName The name of the associated notation.<a name="line.415"></a>
+<FONT color="green">416</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.416"></a>
+<FONT color="green">417</FONT>         *            an exception during processing.<a name="line.417"></a>
+<FONT color="green">418</FONT>         */<a name="line.418"></a>
+<FONT color="green">419</FONT>        public void unparsedEntityDecl (String name, String publicId,<a name="line.419"></a>
+<FONT color="green">420</FONT>                        String systemId, String notationName)<a name="line.420"></a>
+<FONT color="green">421</FONT>        throws SAXException<a name="line.421"></a>
+<FONT color="green">422</FONT>        {<a name="line.422"></a>
+<FONT color="green">423</FONT>        if (dtdHandler != null) {<a name="line.423"></a>
+<FONT color="green">424</FONT>            dtdHandler.unparsedEntityDecl(name, publicId, systemId,<a name="line.424"></a>
+<FONT color="green">425</FONT>                          notationName);<a name="line.425"></a>
+<FONT color="green">426</FONT>        }<a name="line.426"></a>
+<FONT color="green">427</FONT>        }<a name="line.427"></a>
+<FONT color="green">428</FONT>    <a name="line.428"></a>
+<FONT color="green">429</FONT>    <a name="line.429"></a>
+<FONT color="green">430</FONT>    <a name="line.430"></a>
+<FONT color="green">431</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.431"></a>
+<FONT color="green">432</FONT>        // Implementation of org.xml.sax.ContentHandler.<a name="line.432"></a>
+<FONT color="green">433</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.433"></a>
+<FONT color="green">434</FONT>    <a name="line.434"></a>
+<FONT color="green">435</FONT>    <a name="line.435"></a>
+<FONT color="green">436</FONT>        /**<a name="line.436"></a>
+<FONT color="green">437</FONT>         * Filter a new document locator event.<a name="line.437"></a>
+<FONT color="green">438</FONT>         *<a name="line.438"></a>
+<FONT color="green">439</FONT>         * @param locator The document locator.<a name="line.439"></a>
+<FONT color="green">440</FONT>         */<a name="line.440"></a>
+<FONT color="green">441</FONT>        public void setDocumentLocator (Locator locator)<a name="line.441"></a>
+<FONT color="green">442</FONT>        {<a name="line.442"></a>
+<FONT color="green">443</FONT>        this.locator = locator;<a name="line.443"></a>
+<FONT color="green">444</FONT>        if (contentHandler != null) {<a name="line.444"></a>
+<FONT color="green">445</FONT>            contentHandler.setDocumentLocator(locator);<a name="line.445"></a>
+<FONT color="green">446</FONT>        }<a name="line.446"></a>
+<FONT color="green">447</FONT>        }<a name="line.447"></a>
+<FONT color="green">448</FONT>    <a name="line.448"></a>
+<FONT color="green">449</FONT>    <a name="line.449"></a>
+<FONT color="green">450</FONT>        /**<a name="line.450"></a>
+<FONT color="green">451</FONT>         * Filter a start document event.<a name="line.451"></a>
+<FONT color="green">452</FONT>         *<a name="line.452"></a>
+<FONT color="green">453</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.453"></a>
+<FONT color="green">454</FONT>         *            an exception during processing.<a name="line.454"></a>
+<FONT color="green">455</FONT>         */<a name="line.455"></a>
+<FONT color="green">456</FONT>        public void startDocument ()<a name="line.456"></a>
+<FONT color="green">457</FONT>        throws SAXException<a name="line.457"></a>
+<FONT color="green">458</FONT>        {<a name="line.458"></a>
+<FONT color="green">459</FONT>        if (contentHandler != null) {<a name="line.459"></a>
+<FONT color="green">460</FONT>            contentHandler.startDocument();<a name="line.460"></a>
+<FONT color="green">461</FONT>        }<a name="line.461"></a>
+<FONT color="green">462</FONT>        }<a name="line.462"></a>
+<FONT color="green">463</FONT>    <a name="line.463"></a>
+<FONT color="green">464</FONT>    <a name="line.464"></a>
+<FONT color="green">465</FONT>        /**<a name="line.465"></a>
+<FONT color="green">466</FONT>         * Filter an end document event.<a name="line.466"></a>
+<FONT color="green">467</FONT>         *<a name="line.467"></a>
+<FONT color="green">468</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.468"></a>
+<FONT color="green">469</FONT>         *            an exception during processing.<a name="line.469"></a>
+<FONT color="green">470</FONT>         */<a name="line.470"></a>
+<FONT color="green">471</FONT>        public void endDocument ()<a name="line.471"></a>
+<FONT color="green">472</FONT>        throws SAXException<a name="line.472"></a>
+<FONT color="green">473</FONT>        {<a name="line.473"></a>
+<FONT color="green">474</FONT>        if (contentHandler != null) {<a name="line.474"></a>
+<FONT color="green">475</FONT>            contentHandler.endDocument();<a name="line.475"></a>
+<FONT color="green">476</FONT>        }<a name="line.476"></a>
+<FONT color="green">477</FONT>        }<a name="line.477"></a>
+<FONT color="green">478</FONT>    <a name="line.478"></a>
+<FONT color="green">479</FONT>    <a name="line.479"></a>
+<FONT color="green">480</FONT>        /**<a name="line.480"></a>
+<FONT color="green">481</FONT>         * Filter a start Namespace prefix mapping event.<a name="line.481"></a>
+<FONT color="green">482</FONT>         *<a name="line.482"></a>
+<FONT color="green">483</FONT>         * @param prefix The Namespace prefix.<a name="line.483"></a>
+<FONT color="green">484</FONT>         * @param uri The Namespace URI.<a name="line.484"></a>
+<FONT color="green">485</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.485"></a>
+<FONT color="green">486</FONT>         *            an exception during processing.<a name="line.486"></a>
+<FONT color="green">487</FONT>         */<a name="line.487"></a>
+<FONT color="green">488</FONT>        public void startPrefixMapping (String prefix, String uri)<a name="line.488"></a>
+<FONT color="green">489</FONT>        throws SAXException<a name="line.489"></a>
+<FONT color="green">490</FONT>        {<a name="line.490"></a>
+<FONT color="green">491</FONT>        if (contentHandler != null) {<a name="line.491"></a>
+<FONT color="green">492</FONT>            contentHandler.startPrefixMapping(prefix, uri);<a name="line.492"></a>
+<FONT color="green">493</FONT>        }<a name="line.493"></a>
+<FONT color="green">494</FONT>        }<a name="line.494"></a>
+<FONT color="green">495</FONT>    <a name="line.495"></a>
+<FONT color="green">496</FONT>    <a name="line.496"></a>
+<FONT color="green">497</FONT>        /**<a name="line.497"></a>
+<FONT color="green">498</FONT>         * Filter an end Namespace prefix mapping event.<a name="line.498"></a>
+<FONT color="green">499</FONT>         *<a name="line.499"></a>
+<FONT color="green">500</FONT>         * @param prefix The Namespace prefix.<a name="line.500"></a>
+<FONT color="green">501</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.501"></a>
+<FONT color="green">502</FONT>         *            an exception during processing.<a name="line.502"></a>
+<FONT color="green">503</FONT>         */<a name="line.503"></a>
+<FONT color="green">504</FONT>        public void endPrefixMapping (String prefix)<a name="line.504"></a>
+<FONT color="green">505</FONT>        throws SAXException<a name="line.505"></a>
+<FONT color="green">506</FONT>        {<a name="line.506"></a>
+<FONT color="green">507</FONT>        if (contentHandler != null) {<a name="line.507"></a>
+<FONT color="green">508</FONT>            contentHandler.endPrefixMapping(prefix);<a name="line.508"></a>
+<FONT color="green">509</FONT>        }<a name="line.509"></a>
+<FONT color="green">510</FONT>        }<a name="line.510"></a>
+<FONT color="green">511</FONT>    <a name="line.511"></a>
+<FONT color="green">512</FONT>    <a name="line.512"></a>
+<FONT color="green">513</FONT>        /**<a name="line.513"></a>
+<FONT color="green">514</FONT>         * Filter a start element event.<a name="line.514"></a>
+<FONT color="green">515</FONT>         *<a name="line.515"></a>
+<FONT color="green">516</FONT>         * @param uri The element's Namespace URI, or the empty string.<a name="line.516"></a>
+<FONT color="green">517</FONT>         * @param localName The element's local name, or the empty string.<a name="line.517"></a>
+<FONT color="green">518</FONT>         * @param qName The element's qualified (prefixed) name, or the empty<a name="line.518"></a>
+<FONT color="green">519</FONT>         *        string.<a name="line.519"></a>
+<FONT color="green">520</FONT>         * @param atts The element's attributes.<a name="line.520"></a>
+<FONT color="green">521</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.521"></a>
+<FONT color="green">522</FONT>         *            an exception during processing.<a name="line.522"></a>
+<FONT color="green">523</FONT>         */<a name="line.523"></a>
+<FONT color="green">524</FONT>        public void startElement (String uri, String localName, String qName,<a name="line.524"></a>
+<FONT color="green">525</FONT>                      Attributes atts)<a name="line.525"></a>
+<FONT color="green">526</FONT>        throws SAXException<a name="line.526"></a>
+<FONT color="green">527</FONT>        {<a name="line.527"></a>
+<FONT color="green">528</FONT>        if (contentHandler != null) {<a name="line.528"></a>
+<FONT color="green">529</FONT>            contentHandler.startElement(uri, localName, qName, atts);<a name="line.529"></a>
+<FONT color="green">530</FONT>        }<a name="line.530"></a>
+<FONT color="green">531</FONT>        }<a name="line.531"></a>
+<FONT color="green">532</FONT>    <a name="line.532"></a>
+<FONT color="green">533</FONT>    <a name="line.533"></a>
+<FONT color="green">534</FONT>        /**<a name="line.534"></a>
+<FONT color="green">535</FONT>         * Filter an end element event.<a name="line.535"></a>
+<FONT color="green">536</FONT>         *<a name="line.536"></a>
+<FONT color="green">537</FONT>         * @param uri The element's Namespace URI, or the empty string.<a name="line.537"></a>
+<FONT color="green">538</FONT>         * @param localName The element's local name, or the empty string.<a name="line.538"></a>
+<FONT color="green">539</FONT>         * @param qName The element's qualified (prefixed) name, or the empty<a name="line.539"></a>
+<FONT color="green">540</FONT>         *        string.<a name="line.540"></a>
+<FONT color="green">541</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.541"></a>
+<FONT color="green">542</FONT>         *            an exception during processing.<a name="line.542"></a>
+<FONT color="green">543</FONT>         */<a name="line.543"></a>
+<FONT color="green">544</FONT>        public void endElement (String uri, String localName, String qName)<a name="line.544"></a>
+<FONT color="green">545</FONT>        throws SAXException<a name="line.545"></a>
+<FONT color="green">546</FONT>        {<a name="line.546"></a>
+<FONT color="green">547</FONT>        if (contentHandler != null) {<a name="line.547"></a>
+<FONT color="green">548</FONT>            contentHandler.endElement(uri, localName, qName);<a name="line.548"></a>
+<FONT color="green">549</FONT>        }<a name="line.549"></a>
+<FONT color="green">550</FONT>        }<a name="line.550"></a>
+<FONT color="green">551</FONT>    <a name="line.551"></a>
+<FONT color="green">552</FONT>    <a name="line.552"></a>
+<FONT color="green">553</FONT>        /**<a name="line.553"></a>
+<FONT color="green">554</FONT>         * Filter a character data event.<a name="line.554"></a>
+<FONT color="green">555</FONT>         *<a name="line.555"></a>
+<FONT color="green">556</FONT>         * @param ch An array of characters.<a name="line.556"></a>
+<FONT color="green">557</FONT>         * @param start The starting position in the array.<a name="line.557"></a>
+<FONT color="green">558</FONT>         * @param length The number of characters to use from the array.<a name="line.558"></a>
+<FONT color="green">559</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.559"></a>
+<FONT color="green">560</FONT>         *            an exception during processing.<a name="line.560"></a>
+<FONT color="green">561</FONT>         */<a name="line.561"></a>
+<FONT color="green">562</FONT>        public void characters (char ch[], int start, int length)<a name="line.562"></a>
+<FONT color="green">563</FONT>        throws SAXException<a name="line.563"></a>
+<FONT color="green">564</FONT>        {<a name="line.564"></a>
+<FONT color="green">565</FONT>        if (contentHandler != null) {<a name="line.565"></a>
+<FONT color="green">566</FONT>            contentHandler.characters(ch, start, length);<a name="line.566"></a>
+<FONT color="green">567</FONT>        }<a name="line.567"></a>
+<FONT color="green">568</FONT>        }<a name="line.568"></a>
+<FONT color="green">569</FONT>    <a name="line.569"></a>
+<FONT color="green">570</FONT>    <a name="line.570"></a>
+<FONT color="green">571</FONT>        /**<a name="line.571"></a>
+<FONT color="green">572</FONT>         * Filter an ignorable whitespace event.<a name="line.572"></a>
+<FONT color="green">573</FONT>         *<a name="line.573"></a>
+<FONT color="green">574</FONT>         * @param ch An array of characters.<a name="line.574"></a>
+<FONT color="green">575</FONT>         * @param start The starting position in the array.<a name="line.575"></a>
+<FONT color="green">576</FONT>         * @param length The number of characters to use from the array.<a name="line.576"></a>
+<FONT color="green">577</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.577"></a>
+<FONT color="green">578</FONT>         *            an exception during processing.<a name="line.578"></a>
+<FONT color="green">579</FONT>         */<a name="line.579"></a>
+<FONT color="green">580</FONT>        public void ignorableWhitespace (char ch[], int start, int length)<a name="line.580"></a>
+<FONT color="green">581</FONT>        throws SAXException<a name="line.581"></a>
+<FONT color="green">582</FONT>        {<a name="line.582"></a>
+<FONT color="green">583</FONT>        if (contentHandler != null) {<a name="line.583"></a>
+<FONT color="green">584</FONT>            contentHandler.ignorableWhitespace(ch, start, length);<a name="line.584"></a>
+<FONT color="green">585</FONT>        }<a name="line.585"></a>
+<FONT color="green">586</FONT>        }<a name="line.586"></a>
+<FONT color="green">587</FONT>    <a name="line.587"></a>
+<FONT color="green">588</FONT>    <a name="line.588"></a>
+<FONT color="green">589</FONT>        /**<a name="line.589"></a>
+<FONT color="green">590</FONT>         * Filter a processing instruction event.<a name="line.590"></a>
+<FONT color="green">591</FONT>         *<a name="line.591"></a>
+<FONT color="green">592</FONT>         * @param target The processing instruction target.<a name="line.592"></a>
+<FONT color="green">593</FONT>         * @param data The text following the target.<a name="line.593"></a>
+<FONT color="green">594</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.594"></a>
+<FONT color="green">595</FONT>         *            an exception during processing.<a name="line.595"></a>
+<FONT color="green">596</FONT>         */<a name="line.596"></a>
+<FONT color="green">597</FONT>        public void processingInstruction (String target, String data)<a name="line.597"></a>
+<FONT color="green">598</FONT>        throws SAXException<a name="line.598"></a>
+<FONT color="green">599</FONT>        {<a name="line.599"></a>
+<FONT color="green">600</FONT>        if (contentHandler != null) {<a name="line.600"></a>
+<FONT color="green">601</FONT>            contentHandler.processingInstruction(target, data);<a name="line.601"></a>
+<FONT color="green">602</FONT>        }<a name="line.602"></a>
+<FONT color="green">603</FONT>        }<a name="line.603"></a>
+<FONT color="green">604</FONT>    <a name="line.604"></a>
+<FONT color="green">605</FONT>    <a name="line.605"></a>
+<FONT color="green">606</FONT>        /**<a name="line.606"></a>
+<FONT color="green">607</FONT>         * Filter a skipped entity event.<a name="line.607"></a>
+<FONT color="green">608</FONT>         *<a name="line.608"></a>
+<FONT color="green">609</FONT>         * @param name The name of the skipped entity.<a name="line.609"></a>
+<FONT color="green">610</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.610"></a>
+<FONT color="green">611</FONT>         *            an exception during processing.<a name="line.611"></a>
+<FONT color="green">612</FONT>         */<a name="line.612"></a>
+<FONT color="green">613</FONT>        public void skippedEntity (String name)<a name="line.613"></a>
+<FONT color="green">614</FONT>        throws SAXException<a name="line.614"></a>
+<FONT color="green">615</FONT>        {<a name="line.615"></a>
+<FONT color="green">616</FONT>        if (contentHandler != null) {<a name="line.616"></a>
+<FONT color="green">617</FONT>            contentHandler.skippedEntity(name);<a name="line.617"></a>
+<FONT color="green">618</FONT>        }<a name="line.618"></a>
+<FONT color="green">619</FONT>        }<a name="line.619"></a>
+<FONT color="green">620</FONT>    <a name="line.620"></a>
+<FONT color="green">621</FONT>    <a name="line.621"></a>
+<FONT color="green">622</FONT>    <a name="line.622"></a>
+<FONT color="green">623</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.623"></a>
+<FONT color="green">624</FONT>        // Implementation of org.xml.sax.ErrorHandler.<a name="line.624"></a>
+<FONT color="green">625</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.625"></a>
+<FONT color="green">626</FONT>    <a name="line.626"></a>
+<FONT color="green">627</FONT>    <a name="line.627"></a>
+<FONT color="green">628</FONT>        /**<a name="line.628"></a>
+<FONT color="green">629</FONT>         * Filter a warning event.<a name="line.629"></a>
+<FONT color="green">630</FONT>         *<a name="line.630"></a>
+<FONT color="green">631</FONT>         * @param e The warning as an exception.<a name="line.631"></a>
+<FONT color="green">632</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.632"></a>
+<FONT color="green">633</FONT>         *            an exception during processing.<a name="line.633"></a>
+<FONT color="green">634</FONT>         */<a name="line.634"></a>
+<FONT color="green">635</FONT>        public void warning (SAXParseException e)<a name="line.635"></a>
+<FONT color="green">636</FONT>        throws SAXException<a name="line.636"></a>
+<FONT color="green">637</FONT>        {<a name="line.637"></a>
+<FONT color="green">638</FONT>        if (errorHandler != null) {<a name="line.638"></a>
+<FONT color="green">639</FONT>            errorHandler.warning(e);<a name="line.639"></a>
+<FONT color="green">640</FONT>        }<a name="line.640"></a>
+<FONT color="green">641</FONT>        }<a name="line.641"></a>
+<FONT color="green">642</FONT>    <a name="line.642"></a>
+<FONT color="green">643</FONT>    <a name="line.643"></a>
+<FONT color="green">644</FONT>        /**<a name="line.644"></a>
+<FONT color="green">645</FONT>         * Filter an error event.<a name="line.645"></a>
+<FONT color="green">646</FONT>         *<a name="line.646"></a>
+<FONT color="green">647</FONT>         * @param e The error as an exception.<a name="line.647"></a>
+<FONT color="green">648</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.648"></a>
+<FONT color="green">649</FONT>         *            an exception during processing.<a name="line.649"></a>
+<FONT color="green">650</FONT>         */<a name="line.650"></a>
+<FONT color="green">651</FONT>        public void error (SAXParseException e)<a name="line.651"></a>
+<FONT color="green">652</FONT>        throws SAXException<a name="line.652"></a>
+<FONT color="green">653</FONT>        {<a name="line.653"></a>
+<FONT color="green">654</FONT>        if (errorHandler != null) {<a name="line.654"></a>
+<FONT color="green">655</FONT>            errorHandler.error(e);<a name="line.655"></a>
+<FONT color="green">656</FONT>        }<a name="line.656"></a>
+<FONT color="green">657</FONT>        }<a name="line.657"></a>
+<FONT color="green">658</FONT>    <a name="line.658"></a>
+<FONT color="green">659</FONT>    <a name="line.659"></a>
+<FONT color="green">660</FONT>        /**<a name="line.660"></a>
+<FONT color="green">661</FONT>         * Filter a fatal error event.<a name="line.661"></a>
+<FONT color="green">662</FONT>         *<a name="line.662"></a>
+<FONT color="green">663</FONT>         * @param e The error as an exception.<a name="line.663"></a>
+<FONT color="green">664</FONT>         * @exception org.xml.sax.SAXException The client may throw<a name="line.664"></a>
+<FONT color="green">665</FONT>         *            an exception during processing.<a name="line.665"></a>
+<FONT color="green">666</FONT>         */<a name="line.666"></a>
+<FONT color="green">667</FONT>        public void fatalError (SAXParseException e)<a name="line.667"></a>
+<FONT color="green">668</FONT>        throws SAXException<a name="line.668"></a>
+<FONT color="green">669</FONT>        {<a name="line.669"></a>
+<FONT color="green">670</FONT>        if (errorHandler != null) {<a name="line.670"></a>
+<FONT color="green">671</FONT>            errorHandler.fatalError(e);<a name="line.671"></a>
+<FONT color="green">672</FONT>        }<a name="line.672"></a>
+<FONT color="green">673</FONT>        }<a name="line.673"></a>
+<FONT color="green">674</FONT>    <a name="line.674"></a>
+<FONT color="green">675</FONT>    <a name="line.675"></a>
+<FONT color="green">676</FONT>    <a name="line.676"></a>
+<FONT color="green">677</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.677"></a>
+<FONT color="green">678</FONT>        // Internal methods.<a name="line.678"></a>
+<FONT color="green">679</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.679"></a>
+<FONT color="green">680</FONT>    <a name="line.680"></a>
+<FONT color="green">681</FONT>    <a name="line.681"></a>
+<FONT color="green">682</FONT>        /**<a name="line.682"></a>
+<FONT color="green">683</FONT>         * Set up before a parse.<a name="line.683"></a>
+<FONT color="green">684</FONT>         *<a name="line.684"></a>
+<FONT color="green">685</FONT>         * &lt;p&gt;Before every parse, check whether the parent is<a name="line.685"></a>
+<FONT color="green">686</FONT>         * non-null, and re-register the filter for all of the <a name="line.686"></a>
+<FONT color="green">687</FONT>         * events.&lt;/p&gt;<a name="line.687"></a>
+<FONT color="green">688</FONT>         */<a name="line.688"></a>
+<FONT color="green">689</FONT>        private void setupParse ()<a name="line.689"></a>
+<FONT color="green">690</FONT>        {<a name="line.690"></a>
+<FONT color="green">691</FONT>        if (parent == null) {<a name="line.691"></a>
+<FONT color="green">692</FONT>            throw new NullPointerException("No parent for filter");<a name="line.692"></a>
+<FONT color="green">693</FONT>        }<a name="line.693"></a>
+<FONT color="green">694</FONT>        parent.setEntityResolver(this);<a name="line.694"></a>
+<FONT color="green">695</FONT>        parent.setDTDHandler(this);<a name="line.695"></a>
+<FONT color="green">696</FONT>        parent.setContentHandler(this);<a name="line.696"></a>
+<FONT color="green">697</FONT>        parent.setErrorHandler(this);<a name="line.697"></a>
+<FONT color="green">698</FONT>        }<a name="line.698"></a>
+<FONT color="green">699</FONT>    <a name="line.699"></a>
+<FONT color="green">700</FONT>    <a name="line.700"></a>
+<FONT color="green">701</FONT>    <a name="line.701"></a>
+<FONT color="green">702</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.702"></a>
+<FONT color="green">703</FONT>        // Internal state.<a name="line.703"></a>
+<FONT color="green">704</FONT>        ////////////////////////////////////////////////////////////////////<a name="line.704"></a>
+<FONT color="green">705</FONT>    <a name="line.705"></a>
+<FONT color="green">706</FONT>        private XMLReader parent = null;<a name="line.706"></a>
+<FONT color="green">707</FONT>        private Locator locator = null;<a name="line.707"></a>
+<FONT color="green">708</FONT>        private EntityResolver entityResolver = null;<a name="line.708"></a>
+<FONT color="green">709</FONT>        private DTDHandler dtdHandler = null;<a name="line.709"></a>
+<FONT color="green">710</FONT>        private ContentHandler contentHandler = null;<a name="line.710"></a>
+<FONT color="green">711</FONT>        private ErrorHandler errorHandler = null;<a name="line.711"></a>
+<FONT color="green">712</FONT>    <a name="line.712"></a>
+<FONT color="green">713</FONT>    }<a name="line.713"></a>
+<FONT color="green">714</FONT>    <a name="line.714"></a>
+<FONT color="green">715</FONT>    // end of XMLFilterImpl.java<a name="line.715"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

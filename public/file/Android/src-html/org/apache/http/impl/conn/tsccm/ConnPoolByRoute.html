@@ -1,0 +1,764 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * $HeadURL: http://svn.apache.org/repos/asf/httpcomponents/httpclient/trunk/module-client/src/main/java/org/apache/http/impl/conn/tsccm/ConnPoolByRoute.java $<a name="line.2"></a>
+<FONT color="green">003</FONT>     * $Revision: 677240 $<a name="line.3"></a>
+<FONT color="green">004</FONT>     * $Date: 2008-07-16 04:25:47 -0700 (Wed, 16 Jul 2008) $<a name="line.4"></a>
+<FONT color="green">005</FONT>     *<a name="line.5"></a>
+<FONT color="green">006</FONT>     * ====================================================================<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *  Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.8"></a>
+<FONT color="green">009</FONT>     *  contributor license agreements.  See the NOTICE file distributed with<a name="line.9"></a>
+<FONT color="green">010</FONT>     *  this work for additional information regarding copyright ownership.<a name="line.10"></a>
+<FONT color="green">011</FONT>     *  The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.11"></a>
+<FONT color="green">012</FONT>     *  (the "License"); you may not use this file except in compliance with<a name="line.12"></a>
+<FONT color="green">013</FONT>     *  the License.  You may obtain a copy of the License at<a name="line.13"></a>
+<FONT color="green">014</FONT>     *<a name="line.14"></a>
+<FONT color="green">015</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.15"></a>
+<FONT color="green">016</FONT>     *<a name="line.16"></a>
+<FONT color="green">017</FONT>     *  Unless required by applicable law or agreed to in writing, software<a name="line.17"></a>
+<FONT color="green">018</FONT>     *  distributed under the License is distributed on an "AS IS" BASIS,<a name="line.18"></a>
+<FONT color="green">019</FONT>     *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.19"></a>
+<FONT color="green">020</FONT>     *  See the License for the specific language governing permissions and<a name="line.20"></a>
+<FONT color="green">021</FONT>     *  limitations under the License.<a name="line.21"></a>
+<FONT color="green">022</FONT>     * ====================================================================<a name="line.22"></a>
+<FONT color="green">023</FONT>     *<a name="line.23"></a>
+<FONT color="green">024</FONT>     * This software consists of voluntary contributions made by many<a name="line.24"></a>
+<FONT color="green">025</FONT>     * individuals on behalf of the Apache Software Foundation.  For more<a name="line.25"></a>
+<FONT color="green">026</FONT>     * information on the Apache Software Foundation, please see<a name="line.26"></a>
+<FONT color="green">027</FONT>     * &lt;http://www.apache.org/&gt;.<a name="line.27"></a>
+<FONT color="green">028</FONT>     *<a name="line.28"></a>
+<FONT color="green">029</FONT>     */<a name="line.29"></a>
+<FONT color="green">030</FONT>    <a name="line.30"></a>
+<FONT color="green">031</FONT>    package org.apache.http.impl.conn.tsccm;<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.Date;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.util.HashMap;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.util.Iterator;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.util.Queue;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import java.util.LinkedList;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import java.util.Map;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import java.util.concurrent.locks.Condition;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import java.util.concurrent.TimeUnit;<a name="line.40"></a>
+<FONT color="green">041</FONT>    <a name="line.41"></a>
+<FONT color="green">042</FONT>    import org.apache.commons.logging.Log;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import org.apache.commons.logging.LogFactory;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import org.apache.http.conn.routing.HttpRoute;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import org.apache.http.conn.ClientConnectionOperator;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import org.apache.http.conn.ConnectionPoolTimeoutException;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import org.apache.http.conn.params.ConnPerRoute;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import org.apache.http.conn.params.ConnManagerParams;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import org.apache.http.params.HttpParams;<a name="line.49"></a>
+<FONT color="green">050</FONT>    <a name="line.50"></a>
+<FONT color="green">051</FONT>    <a name="line.51"></a>
+<FONT color="green">052</FONT>    /**<a name="line.52"></a>
+<FONT color="green">053</FONT>     * A connection pool that maintains connections by route.<a name="line.53"></a>
+<FONT color="green">054</FONT>     * This class is derived from &lt;code&gt;MultiThreadedHttpConnectionManager&lt;/code&gt;<a name="line.54"></a>
+<FONT color="green">055</FONT>     * in HttpClient 3.x, see there for original authors. It implements the same<a name="line.55"></a>
+<FONT color="green">056</FONT>     * algorithm for connection re-use and connection-per-host enforcement:<a name="line.56"></a>
+<FONT color="green">057</FONT>     * &lt;ul&gt;<a name="line.57"></a>
+<FONT color="green">058</FONT>     * &lt;li&gt;connections are re-used only for the exact same route&lt;/li&gt;<a name="line.58"></a>
+<FONT color="green">059</FONT>     * &lt;li&gt;connection limits are enforced per route rather than per host&lt;/li&gt;<a name="line.59"></a>
+<FONT color="green">060</FONT>     * &lt;/ul&gt;<a name="line.60"></a>
+<FONT color="green">061</FONT>     * Note that access to the pool datastructures is synchronized via the<a name="line.61"></a>
+<FONT color="green">062</FONT>     * {@link AbstractConnPool#poolLock poolLock} in the base class,<a name="line.62"></a>
+<FONT color="green">063</FONT>     * not via &lt;code&gt;synchronized&lt;/code&gt; methods.<a name="line.63"></a>
+<FONT color="green">064</FONT>     *<a name="line.64"></a>
+<FONT color="green">065</FONT>     * @author &lt;a href="mailto:rolandw at apache.org"&gt;Roland Weber&lt;/a&gt;<a name="line.65"></a>
+<FONT color="green">066</FONT>     * @author &lt;a href="mailto:becke@u.washington.edu"&gt;Michael Becke&lt;/a&gt;<a name="line.66"></a>
+<FONT color="green">067</FONT>     * @author and others<a name="line.67"></a>
+<FONT color="green">068</FONT>     */<a name="line.68"></a>
+<FONT color="green">069</FONT>    public class ConnPoolByRoute extends AbstractConnPool {<a name="line.69"></a>
+<FONT color="green">070</FONT>            <a name="line.70"></a>
+<FONT color="green">071</FONT>        private final Log log = LogFactory.getLog(getClass());<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        /** Connection operator for this pool */<a name="line.73"></a>
+<FONT color="green">074</FONT>        protected final ClientConnectionOperator operator;<a name="line.74"></a>
+<FONT color="green">075</FONT>        <a name="line.75"></a>
+<FONT color="green">076</FONT>        /** The list of free connections */<a name="line.76"></a>
+<FONT color="green">077</FONT>        protected Queue&lt;BasicPoolEntry&gt; freeConnections;<a name="line.77"></a>
+<FONT color="green">078</FONT>    <a name="line.78"></a>
+<FONT color="green">079</FONT>        /** The list of WaitingThreads waiting for a connection */<a name="line.79"></a>
+<FONT color="green">080</FONT>        protected Queue&lt;WaitingThread&gt; waitingThreads;<a name="line.80"></a>
+<FONT color="green">081</FONT>    <a name="line.81"></a>
+<FONT color="green">082</FONT>        /**<a name="line.82"></a>
+<FONT color="green">083</FONT>         * A map of route-specific pools.<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Keys are of class {@link HttpRoute},<a name="line.84"></a>
+<FONT color="green">085</FONT>         * values of class {@link RouteSpecificPool}.<a name="line.85"></a>
+<FONT color="green">086</FONT>         */<a name="line.86"></a>
+<FONT color="green">087</FONT>        protected final Map&lt;HttpRoute, RouteSpecificPool&gt; routeToPool;<a name="line.87"></a>
+<FONT color="green">088</FONT>    <a name="line.88"></a>
+<FONT color="green">089</FONT>        protected final int maxTotalConnections;<a name="line.89"></a>
+<FONT color="green">090</FONT>        <a name="line.90"></a>
+<FONT color="green">091</FONT>        private final ConnPerRoute connPerRoute;<a name="line.91"></a>
+<FONT color="green">092</FONT>        <a name="line.92"></a>
+<FONT color="green">093</FONT>        /**<a name="line.93"></a>
+<FONT color="green">094</FONT>         * Creates a new connection pool, managed by route.<a name="line.94"></a>
+<FONT color="green">095</FONT>         */<a name="line.95"></a>
+<FONT color="green">096</FONT>        public ConnPoolByRoute(final ClientConnectionOperator operator, final HttpParams params) {<a name="line.96"></a>
+<FONT color="green">097</FONT>            super();<a name="line.97"></a>
+<FONT color="green">098</FONT>            if (operator == null) {<a name="line.98"></a>
+<FONT color="green">099</FONT>                throw new IllegalArgumentException("Connection operator may not be null");<a name="line.99"></a>
+<FONT color="green">100</FONT>            }<a name="line.100"></a>
+<FONT color="green">101</FONT>            this.operator = operator;<a name="line.101"></a>
+<FONT color="green">102</FONT>            <a name="line.102"></a>
+<FONT color="green">103</FONT>            freeConnections = createFreeConnQueue();<a name="line.103"></a>
+<FONT color="green">104</FONT>            waitingThreads  = createWaitingThreadQueue();<a name="line.104"></a>
+<FONT color="green">105</FONT>            routeToPool     = createRouteToPoolMap();<a name="line.105"></a>
+<FONT color="green">106</FONT>            maxTotalConnections = ConnManagerParams<a name="line.106"></a>
+<FONT color="green">107</FONT>                .getMaxTotalConnections(params);<a name="line.107"></a>
+<FONT color="green">108</FONT>            connPerRoute = ConnManagerParams<a name="line.108"></a>
+<FONT color="green">109</FONT>                .getMaxConnectionsPerRoute(params);<a name="line.109"></a>
+<FONT color="green">110</FONT>        }<a name="line.110"></a>
+<FONT color="green">111</FONT>    <a name="line.111"></a>
+<FONT color="green">112</FONT>    <a name="line.112"></a>
+<FONT color="green">113</FONT>        /**<a name="line.113"></a>
+<FONT color="green">114</FONT>         * Creates the queue for {@link #freeConnections}.<a name="line.114"></a>
+<FONT color="green">115</FONT>         * Called once by the constructor.<a name="line.115"></a>
+<FONT color="green">116</FONT>         *<a name="line.116"></a>
+<FONT color="green">117</FONT>         * @return  a queue<a name="line.117"></a>
+<FONT color="green">118</FONT>         */<a name="line.118"></a>
+<FONT color="green">119</FONT>        protected Queue&lt;BasicPoolEntry&gt; createFreeConnQueue() {<a name="line.119"></a>
+<FONT color="green">120</FONT>            return new LinkedList&lt;BasicPoolEntry&gt;();<a name="line.120"></a>
+<FONT color="green">121</FONT>        }<a name="line.121"></a>
+<FONT color="green">122</FONT>    <a name="line.122"></a>
+<FONT color="green">123</FONT>        /**<a name="line.123"></a>
+<FONT color="green">124</FONT>         * Creates the queue for {@link #waitingThreads}.<a name="line.124"></a>
+<FONT color="green">125</FONT>         * Called once by the constructor.<a name="line.125"></a>
+<FONT color="green">126</FONT>         *<a name="line.126"></a>
+<FONT color="green">127</FONT>         * @return  a queue<a name="line.127"></a>
+<FONT color="green">128</FONT>         */<a name="line.128"></a>
+<FONT color="green">129</FONT>        protected Queue&lt;WaitingThread&gt; createWaitingThreadQueue() {<a name="line.129"></a>
+<FONT color="green">130</FONT>            return new LinkedList&lt;WaitingThread&gt;();<a name="line.130"></a>
+<FONT color="green">131</FONT>        }<a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>        /**<a name="line.133"></a>
+<FONT color="green">134</FONT>         * Creates the map for {@link #routeToPool}.<a name="line.134"></a>
+<FONT color="green">135</FONT>         * Called once by the constructor.<a name="line.135"></a>
+<FONT color="green">136</FONT>         *<a name="line.136"></a>
+<FONT color="green">137</FONT>         * @return  a map<a name="line.137"></a>
+<FONT color="green">138</FONT>         */<a name="line.138"></a>
+<FONT color="green">139</FONT>        protected Map&lt;HttpRoute, RouteSpecificPool&gt; createRouteToPoolMap() {<a name="line.139"></a>
+<FONT color="green">140</FONT>            return new HashMap&lt;HttpRoute, RouteSpecificPool&gt;();<a name="line.140"></a>
+<FONT color="green">141</FONT>        }<a name="line.141"></a>
+<FONT color="green">142</FONT>    <a name="line.142"></a>
+<FONT color="green">143</FONT>    <a name="line.143"></a>
+<FONT color="green">144</FONT>        /**<a name="line.144"></a>
+<FONT color="green">145</FONT>         * Creates a new route-specific pool.<a name="line.145"></a>
+<FONT color="green">146</FONT>         * Called by {@link #getRoutePool} when necessary.<a name="line.146"></a>
+<FONT color="green">147</FONT>         *<a name="line.147"></a>
+<FONT color="green">148</FONT>         * @param route     the route<a name="line.148"></a>
+<FONT color="green">149</FONT>         *<a name="line.149"></a>
+<FONT color="green">150</FONT>         * @return  the new pool<a name="line.150"></a>
+<FONT color="green">151</FONT>         */<a name="line.151"></a>
+<FONT color="green">152</FONT>        protected RouteSpecificPool newRouteSpecificPool(HttpRoute route) {<a name="line.152"></a>
+<FONT color="green">153</FONT>            return new RouteSpecificPool(route, connPerRoute.getMaxForRoute(route));<a name="line.153"></a>
+<FONT color="green">154</FONT>        }<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Creates a new waiting thread.<a name="line.158"></a>
+<FONT color="green">159</FONT>         * Called by {@link #getRoutePool} when necessary.<a name="line.159"></a>
+<FONT color="green">160</FONT>         *<a name="line.160"></a>
+<FONT color="green">161</FONT>         * @param cond      the condition to wait for<a name="line.161"></a>
+<FONT color="green">162</FONT>         * @param rospl     the route specific pool, or &lt;code&gt;null&lt;/code&gt;<a name="line.162"></a>
+<FONT color="green">163</FONT>         *<a name="line.163"></a>
+<FONT color="green">164</FONT>         * @return  a waiting thread representation<a name="line.164"></a>
+<FONT color="green">165</FONT>         */<a name="line.165"></a>
+<FONT color="green">166</FONT>        protected WaitingThread newWaitingThread(Condition cond,<a name="line.166"></a>
+<FONT color="green">167</FONT>                                                 RouteSpecificPool rospl) {<a name="line.167"></a>
+<FONT color="green">168</FONT>            return new WaitingThread(cond, rospl);<a name="line.168"></a>
+<FONT color="green">169</FONT>        }<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>    <a name="line.171"></a>
+<FONT color="green">172</FONT>        /**<a name="line.172"></a>
+<FONT color="green">173</FONT>         * Get a route-specific pool of available connections.<a name="line.173"></a>
+<FONT color="green">174</FONT>         *<a name="line.174"></a>
+<FONT color="green">175</FONT>         * @param route   the route<a name="line.175"></a>
+<FONT color="green">176</FONT>         * @param create    whether to create the pool if it doesn't exist<a name="line.176"></a>
+<FONT color="green">177</FONT>         *<a name="line.177"></a>
+<FONT color="green">178</FONT>         * @return  the pool for the argument route,<a name="line.178"></a>
+<FONT color="green">179</FONT>         *     never &lt;code&gt;null&lt;/code&gt; if &lt;code&gt;create&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;<a name="line.179"></a>
+<FONT color="green">180</FONT>         */<a name="line.180"></a>
+<FONT color="green">181</FONT>        protected RouteSpecificPool getRoutePool(HttpRoute route,<a name="line.181"></a>
+<FONT color="green">182</FONT>                                                 boolean create) {<a name="line.182"></a>
+<FONT color="green">183</FONT>            RouteSpecificPool rospl = null;<a name="line.183"></a>
+<FONT color="green">184</FONT>            poolLock.lock();<a name="line.184"></a>
+<FONT color="green">185</FONT>            try {<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>                rospl = routeToPool.get(route);<a name="line.187"></a>
+<FONT color="green">188</FONT>                if ((rospl == null) &amp;&amp; create) {<a name="line.188"></a>
+<FONT color="green">189</FONT>                    // no pool for this route yet (or anymore)<a name="line.189"></a>
+<FONT color="green">190</FONT>                    rospl = newRouteSpecificPool(route);<a name="line.190"></a>
+<FONT color="green">191</FONT>                    routeToPool.put(route, rospl);<a name="line.191"></a>
+<FONT color="green">192</FONT>                }<a name="line.192"></a>
+<FONT color="green">193</FONT>    <a name="line.193"></a>
+<FONT color="green">194</FONT>            } finally {<a name="line.194"></a>
+<FONT color="green">195</FONT>                poolLock.unlock();<a name="line.195"></a>
+<FONT color="green">196</FONT>            }<a name="line.196"></a>
+<FONT color="green">197</FONT>    <a name="line.197"></a>
+<FONT color="green">198</FONT>            return rospl;<a name="line.198"></a>
+<FONT color="green">199</FONT>        }<a name="line.199"></a>
+<FONT color="green">200</FONT>    <a name="line.200"></a>
+<FONT color="green">201</FONT>    <a name="line.201"></a>
+<FONT color="green">202</FONT>        //@@@ consider alternatives for gathering statistics<a name="line.202"></a>
+<FONT color="green">203</FONT>        public int getConnectionsInPool(HttpRoute route) {<a name="line.203"></a>
+<FONT color="green">204</FONT>    <a name="line.204"></a>
+<FONT color="green">205</FONT>            poolLock.lock();<a name="line.205"></a>
+<FONT color="green">206</FONT>            try {<a name="line.206"></a>
+<FONT color="green">207</FONT>                // don't allow a pool to be created here!<a name="line.207"></a>
+<FONT color="green">208</FONT>                RouteSpecificPool rospl = getRoutePool(route, false);<a name="line.208"></a>
+<FONT color="green">209</FONT>                return (rospl != null) ? rospl.getEntryCount() : 0;<a name="line.209"></a>
+<FONT color="green">210</FONT>    <a name="line.210"></a>
+<FONT color="green">211</FONT>            } finally {<a name="line.211"></a>
+<FONT color="green">212</FONT>                poolLock.unlock();<a name="line.212"></a>
+<FONT color="green">213</FONT>            }<a name="line.213"></a>
+<FONT color="green">214</FONT>        }<a name="line.214"></a>
+<FONT color="green">215</FONT>        <a name="line.215"></a>
+<FONT color="green">216</FONT>        @Override<a name="line.216"></a>
+<FONT color="green">217</FONT>        public PoolEntryRequest requestPoolEntry(<a name="line.217"></a>
+<FONT color="green">218</FONT>                final HttpRoute route,<a name="line.218"></a>
+<FONT color="green">219</FONT>                final Object state) {<a name="line.219"></a>
+<FONT color="green">220</FONT>            <a name="line.220"></a>
+<FONT color="green">221</FONT>            final WaitingThreadAborter aborter = new WaitingThreadAborter();<a name="line.221"></a>
+<FONT color="green">222</FONT>            <a name="line.222"></a>
+<FONT color="green">223</FONT>            return new PoolEntryRequest() {<a name="line.223"></a>
+<FONT color="green">224</FONT>            <a name="line.224"></a>
+<FONT color="green">225</FONT>                public void abortRequest() {<a name="line.225"></a>
+<FONT color="green">226</FONT>                    poolLock.lock();<a name="line.226"></a>
+<FONT color="green">227</FONT>                    try {<a name="line.227"></a>
+<FONT color="green">228</FONT>                        aborter.abort();<a name="line.228"></a>
+<FONT color="green">229</FONT>                    } finally {<a name="line.229"></a>
+<FONT color="green">230</FONT>                        poolLock.unlock();<a name="line.230"></a>
+<FONT color="green">231</FONT>                    }<a name="line.231"></a>
+<FONT color="green">232</FONT>                }<a name="line.232"></a>
+<FONT color="green">233</FONT>                <a name="line.233"></a>
+<FONT color="green">234</FONT>                public BasicPoolEntry getPoolEntry(<a name="line.234"></a>
+<FONT color="green">235</FONT>                        long timeout,<a name="line.235"></a>
+<FONT color="green">236</FONT>                        TimeUnit tunit)<a name="line.236"></a>
+<FONT color="green">237</FONT>                            throws InterruptedException, ConnectionPoolTimeoutException {<a name="line.237"></a>
+<FONT color="green">238</FONT>                    return getEntryBlocking(route, state, timeout, tunit, aborter);<a name="line.238"></a>
+<FONT color="green">239</FONT>                }<a name="line.239"></a>
+<FONT color="green">240</FONT>                <a name="line.240"></a>
+<FONT color="green">241</FONT>            };<a name="line.241"></a>
+<FONT color="green">242</FONT>        }<a name="line.242"></a>
+<FONT color="green">243</FONT>    <a name="line.243"></a>
+<FONT color="green">244</FONT>        /**<a name="line.244"></a>
+<FONT color="green">245</FONT>         * Obtains a pool entry with a connection within the given timeout.<a name="line.245"></a>
+<FONT color="green">246</FONT>         * If a {@link WaitingThread} is used to block, {@link WaitingThreadAborter#setWaitingThread(WaitingThread)}<a name="line.246"></a>
+<FONT color="green">247</FONT>         * must be called before blocking, to allow the thread to be interrupted.<a name="line.247"></a>
+<FONT color="green">248</FONT>         *<a name="line.248"></a>
+<FONT color="green">249</FONT>         * @param route     the route for which to get the connection<a name="line.249"></a>
+<FONT color="green">250</FONT>         * @param timeout   the timeout, 0 or negative for no timeout<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @param tunit     the unit for the &lt;code&gt;timeout&lt;/code&gt;,<a name="line.251"></a>
+<FONT color="green">252</FONT>         *                  may be &lt;code&gt;null&lt;/code&gt; only if there is no timeout<a name="line.252"></a>
+<FONT color="green">253</FONT>         * @param aborter   an object which can abort a {@link WaitingThread}.<a name="line.253"></a>
+<FONT color="green">254</FONT>         *<a name="line.254"></a>
+<FONT color="green">255</FONT>         * @return  pool entry holding a connection for the route<a name="line.255"></a>
+<FONT color="green">256</FONT>         *<a name="line.256"></a>
+<FONT color="green">257</FONT>         * @throws ConnectionPoolTimeoutException<a name="line.257"></a>
+<FONT color="green">258</FONT>         *         if the timeout expired<a name="line.258"></a>
+<FONT color="green">259</FONT>         * @throws InterruptedException<a name="line.259"></a>
+<FONT color="green">260</FONT>         *         if the calling thread was interrupted<a name="line.260"></a>
+<FONT color="green">261</FONT>         */<a name="line.261"></a>
+<FONT color="green">262</FONT>        protected BasicPoolEntry getEntryBlocking(<a name="line.262"></a>
+<FONT color="green">263</FONT>                                       HttpRoute route, Object state,<a name="line.263"></a>
+<FONT color="green">264</FONT>                                       long timeout, TimeUnit tunit,<a name="line.264"></a>
+<FONT color="green">265</FONT>                                       WaitingThreadAborter aborter)<a name="line.265"></a>
+<FONT color="green">266</FONT>            throws ConnectionPoolTimeoutException, InterruptedException {<a name="line.266"></a>
+<FONT color="green">267</FONT>    <a name="line.267"></a>
+<FONT color="green">268</FONT>            Date deadline = null;<a name="line.268"></a>
+<FONT color="green">269</FONT>            if (timeout &gt; 0) {<a name="line.269"></a>
+<FONT color="green">270</FONT>                deadline = new Date<a name="line.270"></a>
+<FONT color="green">271</FONT>                    (System.currentTimeMillis() + tunit.toMillis(timeout));<a name="line.271"></a>
+<FONT color="green">272</FONT>            }<a name="line.272"></a>
+<FONT color="green">273</FONT>    <a name="line.273"></a>
+<FONT color="green">274</FONT>            BasicPoolEntry entry = null;<a name="line.274"></a>
+<FONT color="green">275</FONT>            poolLock.lock();<a name="line.275"></a>
+<FONT color="green">276</FONT>            try {<a name="line.276"></a>
+<FONT color="green">277</FONT>    <a name="line.277"></a>
+<FONT color="green">278</FONT>                RouteSpecificPool rospl = getRoutePool(route, true);<a name="line.278"></a>
+<FONT color="green">279</FONT>                WaitingThread waitingThread = null;<a name="line.279"></a>
+<FONT color="green">280</FONT>    <a name="line.280"></a>
+<FONT color="green">281</FONT>                while (entry == null) {<a name="line.281"></a>
+<FONT color="green">282</FONT>    <a name="line.282"></a>
+<FONT color="green">283</FONT>                    if (isShutDown) {<a name="line.283"></a>
+<FONT color="green">284</FONT>                        throw new IllegalStateException<a name="line.284"></a>
+<FONT color="green">285</FONT>                            ("Connection pool shut down.");<a name="line.285"></a>
+<FONT color="green">286</FONT>                    }<a name="line.286"></a>
+<FONT color="green">287</FONT>    <a name="line.287"></a>
+<FONT color="green">288</FONT>                    if (log.isDebugEnabled()) {<a name="line.288"></a>
+<FONT color="green">289</FONT>                        log.debug("Total connections kept alive: " + freeConnections.size()); <a name="line.289"></a>
+<FONT color="green">290</FONT>                        log.debug("Total issued connections: " + issuedConnections.size()); <a name="line.290"></a>
+<FONT color="green">291</FONT>                        log.debug("Total allocated connection: " + numConnections + " out of " + maxTotalConnections);<a name="line.291"></a>
+<FONT color="green">292</FONT>                    }<a name="line.292"></a>
+<FONT color="green">293</FONT>                    <a name="line.293"></a>
+<FONT color="green">294</FONT>                    // the cases to check for:<a name="line.294"></a>
+<FONT color="green">295</FONT>                    // - have a free connection for that route<a name="line.295"></a>
+<FONT color="green">296</FONT>                    // - allowed to create a free connection for that route<a name="line.296"></a>
+<FONT color="green">297</FONT>                    // - can delete and replace a free connection for another route<a name="line.297"></a>
+<FONT color="green">298</FONT>                    // - need to wait for one of the things above to come true<a name="line.298"></a>
+<FONT color="green">299</FONT>    <a name="line.299"></a>
+<FONT color="green">300</FONT>                    entry = getFreeEntry(rospl, state);<a name="line.300"></a>
+<FONT color="green">301</FONT>                    if (entry != null) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                        break;<a name="line.302"></a>
+<FONT color="green">303</FONT>                    }<a name="line.303"></a>
+<FONT color="green">304</FONT>                    <a name="line.304"></a>
+<FONT color="green">305</FONT>                    boolean hasCapacity = rospl.getCapacity() &gt; 0; <a name="line.305"></a>
+<FONT color="green">306</FONT>                    <a name="line.306"></a>
+<FONT color="green">307</FONT>                    if (log.isDebugEnabled()) {<a name="line.307"></a>
+<FONT color="green">308</FONT>                        log.debug("Available capacity: " + rospl.getCapacity() <a name="line.308"></a>
+<FONT color="green">309</FONT>                                + " out of " + rospl.getMaxEntries()<a name="line.309"></a>
+<FONT color="green">310</FONT>                                + " [" + route + "][" + state + "]");<a name="line.310"></a>
+<FONT color="green">311</FONT>                    }<a name="line.311"></a>
+<FONT color="green">312</FONT>                    <a name="line.312"></a>
+<FONT color="green">313</FONT>                    if (hasCapacity &amp;&amp; numConnections &lt; maxTotalConnections) {<a name="line.313"></a>
+<FONT color="green">314</FONT>    <a name="line.314"></a>
+<FONT color="green">315</FONT>                        entry = createEntry(rospl, operator);<a name="line.315"></a>
+<FONT color="green">316</FONT>    <a name="line.316"></a>
+<FONT color="green">317</FONT>                    } else if (hasCapacity &amp;&amp; !freeConnections.isEmpty()) {<a name="line.317"></a>
+<FONT color="green">318</FONT>    <a name="line.318"></a>
+<FONT color="green">319</FONT>                        deleteLeastUsedEntry();<a name="line.319"></a>
+<FONT color="green">320</FONT>                        entry = createEntry(rospl, operator);<a name="line.320"></a>
+<FONT color="green">321</FONT>    <a name="line.321"></a>
+<FONT color="green">322</FONT>                    } else {<a name="line.322"></a>
+<FONT color="green">323</FONT>    <a name="line.323"></a>
+<FONT color="green">324</FONT>                        if (log.isDebugEnabled()) {<a name="line.324"></a>
+<FONT color="green">325</FONT>                            log.debug("Need to wait for connection" +<a name="line.325"></a>
+<FONT color="green">326</FONT>                                    " [" + route + "][" + state + "]");<a name="line.326"></a>
+<FONT color="green">327</FONT>                        }<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>                        if (waitingThread == null) {<a name="line.329"></a>
+<FONT color="green">330</FONT>                            waitingThread =<a name="line.330"></a>
+<FONT color="green">331</FONT>                                newWaitingThread(poolLock.newCondition(), rospl);<a name="line.331"></a>
+<FONT color="green">332</FONT>                            aborter.setWaitingThread(waitingThread);<a name="line.332"></a>
+<FONT color="green">333</FONT>                        }<a name="line.333"></a>
+<FONT color="green">334</FONT>    <a name="line.334"></a>
+<FONT color="green">335</FONT>                        boolean success = false;<a name="line.335"></a>
+<FONT color="green">336</FONT>                        try {<a name="line.336"></a>
+<FONT color="green">337</FONT>                            rospl.queueThread(waitingThread);<a name="line.337"></a>
+<FONT color="green">338</FONT>                            waitingThreads.add(waitingThread);<a name="line.338"></a>
+<FONT color="green">339</FONT>                            success = waitingThread.await(deadline);<a name="line.339"></a>
+<FONT color="green">340</FONT>    <a name="line.340"></a>
+<FONT color="green">341</FONT>                        } finally {<a name="line.341"></a>
+<FONT color="green">342</FONT>                            // In case of 'success', we were woken up by the<a name="line.342"></a>
+<FONT color="green">343</FONT>                            // connection pool and should now have a connection<a name="line.343"></a>
+<FONT color="green">344</FONT>                            // waiting for us, or else we're shutting down.<a name="line.344"></a>
+<FONT color="green">345</FONT>                            // Just continue in the loop, both cases are checked.<a name="line.345"></a>
+<FONT color="green">346</FONT>                            rospl.removeThread(waitingThread);<a name="line.346"></a>
+<FONT color="green">347</FONT>                            waitingThreads.remove(waitingThread);<a name="line.347"></a>
+<FONT color="green">348</FONT>                        }<a name="line.348"></a>
+<FONT color="green">349</FONT>    <a name="line.349"></a>
+<FONT color="green">350</FONT>                        // check for spurious wakeup vs. timeout<a name="line.350"></a>
+<FONT color="green">351</FONT>                        if (!success &amp;&amp; (deadline != null) &amp;&amp;<a name="line.351"></a>
+<FONT color="green">352</FONT>                            (deadline.getTime() &lt;= System.currentTimeMillis())) {<a name="line.352"></a>
+<FONT color="green">353</FONT>                            throw new ConnectionPoolTimeoutException<a name="line.353"></a>
+<FONT color="green">354</FONT>                                ("Timeout waiting for connection");<a name="line.354"></a>
+<FONT color="green">355</FONT>                        }<a name="line.355"></a>
+<FONT color="green">356</FONT>                    }<a name="line.356"></a>
+<FONT color="green">357</FONT>                } // while no entry<a name="line.357"></a>
+<FONT color="green">358</FONT>    <a name="line.358"></a>
+<FONT color="green">359</FONT>            } finally {<a name="line.359"></a>
+<FONT color="green">360</FONT>                poolLock.unlock();<a name="line.360"></a>
+<FONT color="green">361</FONT>            }<a name="line.361"></a>
+<FONT color="green">362</FONT>    <a name="line.362"></a>
+<FONT color="green">363</FONT>            return entry;<a name="line.363"></a>
+<FONT color="green">364</FONT>    <a name="line.364"></a>
+<FONT color="green">365</FONT>        } // getEntry<a name="line.365"></a>
+<FONT color="green">366</FONT>    <a name="line.366"></a>
+<FONT color="green">367</FONT>    <a name="line.367"></a>
+<FONT color="green">368</FONT>        // non-javadoc, see base class AbstractConnPool<a name="line.368"></a>
+<FONT color="green">369</FONT>        @Override<a name="line.369"></a>
+<FONT color="green">370</FONT>        public void freeEntry(BasicPoolEntry entry, boolean reusable, long validDuration, TimeUnit timeUnit) {<a name="line.370"></a>
+<FONT color="green">371</FONT>    <a name="line.371"></a>
+<FONT color="green">372</FONT>            HttpRoute route = entry.getPlannedRoute();<a name="line.372"></a>
+<FONT color="green">373</FONT>            if (log.isDebugEnabled()) {<a name="line.373"></a>
+<FONT color="green">374</FONT>                log.debug("Freeing connection" +                                 <a name="line.374"></a>
+<FONT color="green">375</FONT>                        " [" + route + "][" + entry.getState() + "]");<a name="line.375"></a>
+<FONT color="green">376</FONT>            }<a name="line.376"></a>
+<FONT color="green">377</FONT>    <a name="line.377"></a>
+<FONT color="green">378</FONT>            poolLock.lock();<a name="line.378"></a>
+<FONT color="green">379</FONT>            try {<a name="line.379"></a>
+<FONT color="green">380</FONT>                if (isShutDown) {<a name="line.380"></a>
+<FONT color="green">381</FONT>                    // the pool is shut down, release the<a name="line.381"></a>
+<FONT color="green">382</FONT>                    // connection's resources and get out of here<a name="line.382"></a>
+<FONT color="green">383</FONT>                    closeConnection(entry.getConnection());<a name="line.383"></a>
+<FONT color="green">384</FONT>                    return;<a name="line.384"></a>
+<FONT color="green">385</FONT>                }<a name="line.385"></a>
+<FONT color="green">386</FONT>    <a name="line.386"></a>
+<FONT color="green">387</FONT>                // no longer issued, we keep a hard reference now<a name="line.387"></a>
+<FONT color="green">388</FONT>                issuedConnections.remove(entry.getWeakRef());<a name="line.388"></a>
+<FONT color="green">389</FONT>    <a name="line.389"></a>
+<FONT color="green">390</FONT>                RouteSpecificPool rospl = getRoutePool(route, true);<a name="line.390"></a>
+<FONT color="green">391</FONT>    <a name="line.391"></a>
+<FONT color="green">392</FONT>                if (reusable) {<a name="line.392"></a>
+<FONT color="green">393</FONT>                    rospl.freeEntry(entry);<a name="line.393"></a>
+<FONT color="green">394</FONT>                    freeConnections.add(entry);<a name="line.394"></a>
+<FONT color="green">395</FONT>                    idleConnHandler.add(entry.getConnection(), validDuration, timeUnit);<a name="line.395"></a>
+<FONT color="green">396</FONT>                } else {<a name="line.396"></a>
+<FONT color="green">397</FONT>                    rospl.dropEntry();<a name="line.397"></a>
+<FONT color="green">398</FONT>                    numConnections--;<a name="line.398"></a>
+<FONT color="green">399</FONT>                }<a name="line.399"></a>
+<FONT color="green">400</FONT>    <a name="line.400"></a>
+<FONT color="green">401</FONT>                notifyWaitingThread(rospl);<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>            } finally {<a name="line.403"></a>
+<FONT color="green">404</FONT>                poolLock.unlock();<a name="line.404"></a>
+<FONT color="green">405</FONT>            }<a name="line.405"></a>
+<FONT color="green">406</FONT>    <a name="line.406"></a>
+<FONT color="green">407</FONT>        } // freeEntry<a name="line.407"></a>
+<FONT color="green">408</FONT>    <a name="line.408"></a>
+<FONT color="green">409</FONT>    <a name="line.409"></a>
+<FONT color="green">410</FONT>    <a name="line.410"></a>
+<FONT color="green">411</FONT>        /**<a name="line.411"></a>
+<FONT color="green">412</FONT>         * If available, get a free pool entry for a route.<a name="line.412"></a>
+<FONT color="green">413</FONT>         *<a name="line.413"></a>
+<FONT color="green">414</FONT>         * @param rospl       the route-specific pool from which to get an entry<a name="line.414"></a>
+<FONT color="green">415</FONT>         *<a name="line.415"></a>
+<FONT color="green">416</FONT>         * @return  an available pool entry for the given route, or<a name="line.416"></a>
+<FONT color="green">417</FONT>         *          &lt;code&gt;null&lt;/code&gt; if none is available<a name="line.417"></a>
+<FONT color="green">418</FONT>         */<a name="line.418"></a>
+<FONT color="green">419</FONT>        protected BasicPoolEntry getFreeEntry(RouteSpecificPool rospl, Object state) {<a name="line.419"></a>
+<FONT color="green">420</FONT>    <a name="line.420"></a>
+<FONT color="green">421</FONT>            BasicPoolEntry entry = null;<a name="line.421"></a>
+<FONT color="green">422</FONT>            poolLock.lock();<a name="line.422"></a>
+<FONT color="green">423</FONT>            try {<a name="line.423"></a>
+<FONT color="green">424</FONT>                boolean done = false;<a name="line.424"></a>
+<FONT color="green">425</FONT>                while(!done) {<a name="line.425"></a>
+<FONT color="green">426</FONT>    <a name="line.426"></a>
+<FONT color="green">427</FONT>                    entry = rospl.allocEntry(state);<a name="line.427"></a>
+<FONT color="green">428</FONT>        <a name="line.428"></a>
+<FONT color="green">429</FONT>                    if (entry != null) {<a name="line.429"></a>
+<FONT color="green">430</FONT>                        if (log.isDebugEnabled()) {<a name="line.430"></a>
+<FONT color="green">431</FONT>                            log.debug("Getting free connection" <a name="line.431"></a>
+<FONT color="green">432</FONT>                                    + " [" + rospl.getRoute() + "][" + state + "]");<a name="line.432"></a>
+<FONT color="green">433</FONT>        <a name="line.433"></a>
+<FONT color="green">434</FONT>                        }<a name="line.434"></a>
+<FONT color="green">435</FONT>                        freeConnections.remove(entry);<a name="line.435"></a>
+<FONT color="green">436</FONT>                        boolean valid = idleConnHandler.remove(entry.getConnection());<a name="line.436"></a>
+<FONT color="green">437</FONT>                        if(!valid) {<a name="line.437"></a>
+<FONT color="green">438</FONT>                            // If the free entry isn't valid anymore, get rid of it<a name="line.438"></a>
+<FONT color="green">439</FONT>                            // and loop to find another one that might be valid.<a name="line.439"></a>
+<FONT color="green">440</FONT>                            if(log.isDebugEnabled())<a name="line.440"></a>
+<FONT color="green">441</FONT>                                log.debug("Closing expired free connection"<a name="line.441"></a>
+<FONT color="green">442</FONT>                                        + " [" + rospl.getRoute() + "][" + state + "]");<a name="line.442"></a>
+<FONT color="green">443</FONT>                            closeConnection(entry.getConnection());<a name="line.443"></a>
+<FONT color="green">444</FONT>                            // We use dropEntry instead of deleteEntry because the entry<a name="line.444"></a>
+<FONT color="green">445</FONT>                            // is no longer "free" (we just allocated it), and deleteEntry<a name="line.445"></a>
+<FONT color="green">446</FONT>                            // can only be used to delete free entries.<a name="line.446"></a>
+<FONT color="green">447</FONT>                            rospl.dropEntry();<a name="line.447"></a>
+<FONT color="green">448</FONT>                            numConnections--;<a name="line.448"></a>
+<FONT color="green">449</FONT>                        } else {<a name="line.449"></a>
+<FONT color="green">450</FONT>                            issuedConnections.add(entry.getWeakRef());<a name="line.450"></a>
+<FONT color="green">451</FONT>                            done = true;<a name="line.451"></a>
+<FONT color="green">452</FONT>                        }<a name="line.452"></a>
+<FONT color="green">453</FONT>        <a name="line.453"></a>
+<FONT color="green">454</FONT>                    } else {<a name="line.454"></a>
+<FONT color="green">455</FONT>                        done = true;<a name="line.455"></a>
+<FONT color="green">456</FONT>                        if (log.isDebugEnabled()) {<a name="line.456"></a>
+<FONT color="green">457</FONT>                            log.debug("No free connections" <a name="line.457"></a>
+<FONT color="green">458</FONT>                                    + " [" + rospl.getRoute() + "][" + state + "]");<a name="line.458"></a>
+<FONT color="green">459</FONT>                        }<a name="line.459"></a>
+<FONT color="green">460</FONT>                    }<a name="line.460"></a>
+<FONT color="green">461</FONT>                }<a name="line.461"></a>
+<FONT color="green">462</FONT>            } finally {<a name="line.462"></a>
+<FONT color="green">463</FONT>                poolLock.unlock();<a name="line.463"></a>
+<FONT color="green">464</FONT>            }<a name="line.464"></a>
+<FONT color="green">465</FONT>    <a name="line.465"></a>
+<FONT color="green">466</FONT>            return entry;<a name="line.466"></a>
+<FONT color="green">467</FONT>        }<a name="line.467"></a>
+<FONT color="green">468</FONT>    <a name="line.468"></a>
+<FONT color="green">469</FONT>    <a name="line.469"></a>
+<FONT color="green">470</FONT>        /**<a name="line.470"></a>
+<FONT color="green">471</FONT>         * Creates a new pool entry.<a name="line.471"></a>
+<FONT color="green">472</FONT>         * This method assumes that the new connection will be handed<a name="line.472"></a>
+<FONT color="green">473</FONT>         * out immediately.<a name="line.473"></a>
+<FONT color="green">474</FONT>         *<a name="line.474"></a>
+<FONT color="green">475</FONT>         * @param rospl       the route-specific pool for which to create the entry<a name="line.475"></a>
+<FONT color="green">476</FONT>         * @param op        the operator for creating a connection<a name="line.476"></a>
+<FONT color="green">477</FONT>         *<a name="line.477"></a>
+<FONT color="green">478</FONT>         * @return  the new pool entry for a new connection<a name="line.478"></a>
+<FONT color="green">479</FONT>         */<a name="line.479"></a>
+<FONT color="green">480</FONT>        protected BasicPoolEntry createEntry(RouteSpecificPool rospl,<a name="line.480"></a>
+<FONT color="green">481</FONT>                                             ClientConnectionOperator op) {<a name="line.481"></a>
+<FONT color="green">482</FONT>    <a name="line.482"></a>
+<FONT color="green">483</FONT>            if (log.isDebugEnabled()) {<a name="line.483"></a>
+<FONT color="green">484</FONT>                log.debug("Creating new connection [" + rospl.getRoute() + "]");<a name="line.484"></a>
+<FONT color="green">485</FONT>            }<a name="line.485"></a>
+<FONT color="green">486</FONT>    <a name="line.486"></a>
+<FONT color="green">487</FONT>            // the entry will create the connection when needed<a name="line.487"></a>
+<FONT color="green">488</FONT>            BasicPoolEntry entry =<a name="line.488"></a>
+<FONT color="green">489</FONT>                new BasicPoolEntry(op, rospl.getRoute(), refQueue);<a name="line.489"></a>
+<FONT color="green">490</FONT>    <a name="line.490"></a>
+<FONT color="green">491</FONT>            poolLock.lock();<a name="line.491"></a>
+<FONT color="green">492</FONT>            try {<a name="line.492"></a>
+<FONT color="green">493</FONT>    <a name="line.493"></a>
+<FONT color="green">494</FONT>                rospl.createdEntry(entry);<a name="line.494"></a>
+<FONT color="green">495</FONT>                numConnections++;<a name="line.495"></a>
+<FONT color="green">496</FONT>    <a name="line.496"></a>
+<FONT color="green">497</FONT>                issuedConnections.add(entry.getWeakRef());<a name="line.497"></a>
+<FONT color="green">498</FONT>    <a name="line.498"></a>
+<FONT color="green">499</FONT>            } finally {<a name="line.499"></a>
+<FONT color="green">500</FONT>                poolLock.unlock();<a name="line.500"></a>
+<FONT color="green">501</FONT>            }<a name="line.501"></a>
+<FONT color="green">502</FONT>    <a name="line.502"></a>
+<FONT color="green">503</FONT>            return entry;<a name="line.503"></a>
+<FONT color="green">504</FONT>        }<a name="line.504"></a>
+<FONT color="green">505</FONT>    <a name="line.505"></a>
+<FONT color="green">506</FONT>            <a name="line.506"></a>
+<FONT color="green">507</FONT>        /**<a name="line.507"></a>
+<FONT color="green">508</FONT>         * Deletes a given pool entry.<a name="line.508"></a>
+<FONT color="green">509</FONT>         * This closes the pooled connection and removes all references,<a name="line.509"></a>
+<FONT color="green">510</FONT>         * so that it can be GCed.<a name="line.510"></a>
+<FONT color="green">511</FONT>         * <a name="line.511"></a>
+<FONT color="green">512</FONT>         * &lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; Does not remove the entry from the freeConnections list.<a name="line.512"></a>
+<FONT color="green">513</FONT>         * It is assumed that the caller has already handled this step.&lt;/p&gt;<a name="line.513"></a>
+<FONT color="green">514</FONT>         * &lt;!-- @@@ is that a good idea? or rather fix it? --&gt;<a name="line.514"></a>
+<FONT color="green">515</FONT>         * <a name="line.515"></a>
+<FONT color="green">516</FONT>         * @param entry         the pool entry for the connection to delete<a name="line.516"></a>
+<FONT color="green">517</FONT>         */<a name="line.517"></a>
+<FONT color="green">518</FONT>        protected void deleteEntry(BasicPoolEntry entry) {<a name="line.518"></a>
+<FONT color="green">519</FONT>    <a name="line.519"></a>
+<FONT color="green">520</FONT>            HttpRoute route = entry.getPlannedRoute();<a name="line.520"></a>
+<FONT color="green">521</FONT>    <a name="line.521"></a>
+<FONT color="green">522</FONT>            if (log.isDebugEnabled()) {<a name="line.522"></a>
+<FONT color="green">523</FONT>                log.debug("Deleting connection" <a name="line.523"></a>
+<FONT color="green">524</FONT>                        + " [" + route + "][" + entry.getState() + "]");<a name="line.524"></a>
+<FONT color="green">525</FONT>            }<a name="line.525"></a>
+<FONT color="green">526</FONT>    <a name="line.526"></a>
+<FONT color="green">527</FONT>            poolLock.lock();<a name="line.527"></a>
+<FONT color="green">528</FONT>            try {<a name="line.528"></a>
+<FONT color="green">529</FONT>    <a name="line.529"></a>
+<FONT color="green">530</FONT>                closeConnection(entry.getConnection());<a name="line.530"></a>
+<FONT color="green">531</FONT>    <a name="line.531"></a>
+<FONT color="green">532</FONT>                RouteSpecificPool rospl = getRoutePool(route, true);<a name="line.532"></a>
+<FONT color="green">533</FONT>                rospl.deleteEntry(entry);<a name="line.533"></a>
+<FONT color="green">534</FONT>                numConnections--;<a name="line.534"></a>
+<FONT color="green">535</FONT>                if (rospl.isUnused()) {<a name="line.535"></a>
+<FONT color="green">536</FONT>                    routeToPool.remove(route);<a name="line.536"></a>
+<FONT color="green">537</FONT>                }<a name="line.537"></a>
+<FONT color="green">538</FONT>    <a name="line.538"></a>
+<FONT color="green">539</FONT>                idleConnHandler.remove(entry.getConnection());// not idle, but dead<a name="line.539"></a>
+<FONT color="green">540</FONT>    <a name="line.540"></a>
+<FONT color="green">541</FONT>            } finally {<a name="line.541"></a>
+<FONT color="green">542</FONT>                poolLock.unlock();<a name="line.542"></a>
+<FONT color="green">543</FONT>            }<a name="line.543"></a>
+<FONT color="green">544</FONT>        }<a name="line.544"></a>
+<FONT color="green">545</FONT>    <a name="line.545"></a>
+<FONT color="green">546</FONT>    <a name="line.546"></a>
+<FONT color="green">547</FONT>        /**<a name="line.547"></a>
+<FONT color="green">548</FONT>         * Delete an old, free pool entry to make room for a new one.<a name="line.548"></a>
+<FONT color="green">549</FONT>         * Used to replace pool entries with ones for a different route.<a name="line.549"></a>
+<FONT color="green">550</FONT>         */<a name="line.550"></a>
+<FONT color="green">551</FONT>        protected void deleteLeastUsedEntry() {<a name="line.551"></a>
+<FONT color="green">552</FONT>    <a name="line.552"></a>
+<FONT color="green">553</FONT>            try {<a name="line.553"></a>
+<FONT color="green">554</FONT>                poolLock.lock();<a name="line.554"></a>
+<FONT color="green">555</FONT>    <a name="line.555"></a>
+<FONT color="green">556</FONT>                //@@@ with get() instead of remove, we could<a name="line.556"></a>
+<FONT color="green">557</FONT>                //@@@ leave the removing to deleteEntry()<a name="line.557"></a>
+<FONT color="green">558</FONT>                BasicPoolEntry entry = freeConnections.remove();<a name="line.558"></a>
+<FONT color="green">559</FONT>    <a name="line.559"></a>
+<FONT color="green">560</FONT>                if (entry != null) {<a name="line.560"></a>
+<FONT color="green">561</FONT>                    deleteEntry(entry);<a name="line.561"></a>
+<FONT color="green">562</FONT>                } else if (log.isDebugEnabled()) {<a name="line.562"></a>
+<FONT color="green">563</FONT>                    log.debug("No free connection to delete.");<a name="line.563"></a>
+<FONT color="green">564</FONT>                }<a name="line.564"></a>
+<FONT color="green">565</FONT>    <a name="line.565"></a>
+<FONT color="green">566</FONT>            } finally {<a name="line.566"></a>
+<FONT color="green">567</FONT>                poolLock.unlock();<a name="line.567"></a>
+<FONT color="green">568</FONT>            }<a name="line.568"></a>
+<FONT color="green">569</FONT>        }<a name="line.569"></a>
+<FONT color="green">570</FONT>    <a name="line.570"></a>
+<FONT color="green">571</FONT>    <a name="line.571"></a>
+<FONT color="green">572</FONT>        // non-javadoc, see base class AbstractConnPool<a name="line.572"></a>
+<FONT color="green">573</FONT>        @Override<a name="line.573"></a>
+<FONT color="green">574</FONT>        protected void handleLostEntry(HttpRoute route) {<a name="line.574"></a>
+<FONT color="green">575</FONT>    <a name="line.575"></a>
+<FONT color="green">576</FONT>            poolLock.lock();<a name="line.576"></a>
+<FONT color="green">577</FONT>            try {<a name="line.577"></a>
+<FONT color="green">578</FONT>    <a name="line.578"></a>
+<FONT color="green">579</FONT>                RouteSpecificPool rospl = getRoutePool(route, true);<a name="line.579"></a>
+<FONT color="green">580</FONT>                rospl.dropEntry();<a name="line.580"></a>
+<FONT color="green">581</FONT>                if (rospl.isUnused()) {<a name="line.581"></a>
+<FONT color="green">582</FONT>                    routeToPool.remove(route);<a name="line.582"></a>
+<FONT color="green">583</FONT>                }<a name="line.583"></a>
+<FONT color="green">584</FONT>    <a name="line.584"></a>
+<FONT color="green">585</FONT>                numConnections--;<a name="line.585"></a>
+<FONT color="green">586</FONT>                notifyWaitingThread(rospl);<a name="line.586"></a>
+<FONT color="green">587</FONT>    <a name="line.587"></a>
+<FONT color="green">588</FONT>            } finally {<a name="line.588"></a>
+<FONT color="green">589</FONT>                poolLock.unlock();<a name="line.589"></a>
+<FONT color="green">590</FONT>            }<a name="line.590"></a>
+<FONT color="green">591</FONT>        }<a name="line.591"></a>
+<FONT color="green">592</FONT>    <a name="line.592"></a>
+<FONT color="green">593</FONT>    <a name="line.593"></a>
+<FONT color="green">594</FONT>        /**<a name="line.594"></a>
+<FONT color="green">595</FONT>         * Notifies a waiting thread that a connection is available.<a name="line.595"></a>
+<FONT color="green">596</FONT>         * This will wake a thread waiting in the specific route pool,<a name="line.596"></a>
+<FONT color="green">597</FONT>         * if there is one.<a name="line.597"></a>
+<FONT color="green">598</FONT>         * Otherwise, a thread in the connection pool will be notified.<a name="line.598"></a>
+<FONT color="green">599</FONT>         * <a name="line.599"></a>
+<FONT color="green">600</FONT>         * @param rospl     the pool in which to notify, or &lt;code&gt;null&lt;/code&gt;<a name="line.600"></a>
+<FONT color="green">601</FONT>         */<a name="line.601"></a>
+<FONT color="green">602</FONT>        protected void notifyWaitingThread(RouteSpecificPool rospl) {<a name="line.602"></a>
+<FONT color="green">603</FONT>    <a name="line.603"></a>
+<FONT color="green">604</FONT>            //@@@ while this strategy provides for best connection re-use,<a name="line.604"></a>
+<FONT color="green">605</FONT>            //@@@ is it fair? only do this if the connection is open?<a name="line.605"></a>
+<FONT color="green">606</FONT>            // Find the thread we are going to notify. We want to ensure that<a name="line.606"></a>
+<FONT color="green">607</FONT>            // each waiting thread is only interrupted once, so we will remove<a name="line.607"></a>
+<FONT color="green">608</FONT>            // it from all wait queues before interrupting.<a name="line.608"></a>
+<FONT color="green">609</FONT>            WaitingThread waitingThread = null;<a name="line.609"></a>
+<FONT color="green">610</FONT>    <a name="line.610"></a>
+<FONT color="green">611</FONT>            poolLock.lock();<a name="line.611"></a>
+<FONT color="green">612</FONT>            try {<a name="line.612"></a>
+<FONT color="green">613</FONT>    <a name="line.613"></a>
+<FONT color="green">614</FONT>                if ((rospl != null) &amp;&amp; rospl.hasThread()) {<a name="line.614"></a>
+<FONT color="green">615</FONT>                    if (log.isDebugEnabled()) {<a name="line.615"></a>
+<FONT color="green">616</FONT>                        log.debug("Notifying thread waiting on pool" +<a name="line.616"></a>
+<FONT color="green">617</FONT>                                " [" + rospl.getRoute() + "]");<a name="line.617"></a>
+<FONT color="green">618</FONT>                    }<a name="line.618"></a>
+<FONT color="green">619</FONT>                    waitingThread = rospl.nextThread();<a name="line.619"></a>
+<FONT color="green">620</FONT>                } else if (!waitingThreads.isEmpty()) {<a name="line.620"></a>
+<FONT color="green">621</FONT>                    if (log.isDebugEnabled()) {<a name="line.621"></a>
+<FONT color="green">622</FONT>                        log.debug("Notifying thread waiting on any pool");<a name="line.622"></a>
+<FONT color="green">623</FONT>                    }<a name="line.623"></a>
+<FONT color="green">624</FONT>                    waitingThread = waitingThreads.remove();<a name="line.624"></a>
+<FONT color="green">625</FONT>                } else if (log.isDebugEnabled()) {<a name="line.625"></a>
+<FONT color="green">626</FONT>                    log.debug("Notifying no-one, there are no waiting threads");<a name="line.626"></a>
+<FONT color="green">627</FONT>                }<a name="line.627"></a>
+<FONT color="green">628</FONT>    <a name="line.628"></a>
+<FONT color="green">629</FONT>                if (waitingThread != null) {<a name="line.629"></a>
+<FONT color="green">630</FONT>                    waitingThread.wakeup();<a name="line.630"></a>
+<FONT color="green">631</FONT>                }<a name="line.631"></a>
+<FONT color="green">632</FONT>    <a name="line.632"></a>
+<FONT color="green">633</FONT>            } finally {<a name="line.633"></a>
+<FONT color="green">634</FONT>                poolLock.unlock();<a name="line.634"></a>
+<FONT color="green">635</FONT>            }<a name="line.635"></a>
+<FONT color="green">636</FONT>        }<a name="line.636"></a>
+<FONT color="green">637</FONT>    <a name="line.637"></a>
+<FONT color="green">638</FONT>    <a name="line.638"></a>
+<FONT color="green">639</FONT>        //@@@ revise this cleanup stuff<a name="line.639"></a>
+<FONT color="green">640</FONT>        //@@@ move method to base class when deleteEntry() is fixed<a name="line.640"></a>
+<FONT color="green">641</FONT>        // non-javadoc, see base class AbstractConnPool<a name="line.641"></a>
+<FONT color="green">642</FONT>        @Override<a name="line.642"></a>
+<FONT color="green">643</FONT>        public void deleteClosedConnections() {<a name="line.643"></a>
+<FONT color="green">644</FONT>    <a name="line.644"></a>
+<FONT color="green">645</FONT>            poolLock.lock();<a name="line.645"></a>
+<FONT color="green">646</FONT>            try {<a name="line.646"></a>
+<FONT color="green">647</FONT>    <a name="line.647"></a>
+<FONT color="green">648</FONT>                Iterator&lt;BasicPoolEntry&gt;  iter = freeConnections.iterator();<a name="line.648"></a>
+<FONT color="green">649</FONT>                while (iter.hasNext()) {<a name="line.649"></a>
+<FONT color="green">650</FONT>                    BasicPoolEntry entry = iter.next();<a name="line.650"></a>
+<FONT color="green">651</FONT>                    if (!entry.getConnection().isOpen()) {<a name="line.651"></a>
+<FONT color="green">652</FONT>                        iter.remove();<a name="line.652"></a>
+<FONT color="green">653</FONT>                        deleteEntry(entry);<a name="line.653"></a>
+<FONT color="green">654</FONT>                    }<a name="line.654"></a>
+<FONT color="green">655</FONT>                }<a name="line.655"></a>
+<FONT color="green">656</FONT>    <a name="line.656"></a>
+<FONT color="green">657</FONT>            } finally {<a name="line.657"></a>
+<FONT color="green">658</FONT>                poolLock.unlock();<a name="line.658"></a>
+<FONT color="green">659</FONT>            }<a name="line.659"></a>
+<FONT color="green">660</FONT>        }<a name="line.660"></a>
+<FONT color="green">661</FONT>    <a name="line.661"></a>
+<FONT color="green">662</FONT>    <a name="line.662"></a>
+<FONT color="green">663</FONT>        // non-javadoc, see base class AbstractConnPool<a name="line.663"></a>
+<FONT color="green">664</FONT>        @Override<a name="line.664"></a>
+<FONT color="green">665</FONT>        public void shutdown() {<a name="line.665"></a>
+<FONT color="green">666</FONT>    <a name="line.666"></a>
+<FONT color="green">667</FONT>            poolLock.lock();<a name="line.667"></a>
+<FONT color="green">668</FONT>            try {<a name="line.668"></a>
+<FONT color="green">669</FONT>    <a name="line.669"></a>
+<FONT color="green">670</FONT>                super.shutdown();<a name="line.670"></a>
+<FONT color="green">671</FONT>    <a name="line.671"></a>
+<FONT color="green">672</FONT>                // close all free connections<a name="line.672"></a>
+<FONT color="green">673</FONT>                //@@@ move this to base class?<a name="line.673"></a>
+<FONT color="green">674</FONT>                Iterator&lt;BasicPoolEntry&gt; ibpe = freeConnections.iterator();<a name="line.674"></a>
+<FONT color="green">675</FONT>                while (ibpe.hasNext()) {<a name="line.675"></a>
+<FONT color="green">676</FONT>                    BasicPoolEntry entry = ibpe.next();<a name="line.676"></a>
+<FONT color="green">677</FONT>                    ibpe.remove();<a name="line.677"></a>
+<FONT color="green">678</FONT>                    closeConnection(entry.getConnection());<a name="line.678"></a>
+<FONT color="green">679</FONT>                }<a name="line.679"></a>
+<FONT color="green">680</FONT>    <a name="line.680"></a>
+<FONT color="green">681</FONT>                // wake up all waiting threads<a name="line.681"></a>
+<FONT color="green">682</FONT>                Iterator&lt;WaitingThread&gt; iwth = waitingThreads.iterator();<a name="line.682"></a>
+<FONT color="green">683</FONT>                while (iwth.hasNext()) {<a name="line.683"></a>
+<FONT color="green">684</FONT>                    WaitingThread waiter = iwth.next();<a name="line.684"></a>
+<FONT color="green">685</FONT>                    iwth.remove();<a name="line.685"></a>
+<FONT color="green">686</FONT>                    waiter.wakeup();<a name="line.686"></a>
+<FONT color="green">687</FONT>                }<a name="line.687"></a>
+<FONT color="green">688</FONT>    <a name="line.688"></a>
+<FONT color="green">689</FONT>                routeToPool.clear();<a name="line.689"></a>
+<FONT color="green">690</FONT>    <a name="line.690"></a>
+<FONT color="green">691</FONT>            } finally {<a name="line.691"></a>
+<FONT color="green">692</FONT>                poolLock.unlock();<a name="line.692"></a>
+<FONT color="green">693</FONT>            }<a name="line.693"></a>
+<FONT color="green">694</FONT>        }<a name="line.694"></a>
+<FONT color="green">695</FONT>    <a name="line.695"></a>
+<FONT color="green">696</FONT>    <a name="line.696"></a>
+<FONT color="green">697</FONT>    } // class ConnPoolByRoute<a name="line.697"></a>
+<FONT color="green">698</FONT>    <a name="line.698"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

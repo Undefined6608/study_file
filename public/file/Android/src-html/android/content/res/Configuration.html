@@ -1,0 +1,503 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    package android.content.res;<a name="line.1"></a>
+<FONT color="green">002</FONT>    <a name="line.2"></a>
+<FONT color="green">003</FONT>    import android.content.pm.ActivityInfo;<a name="line.3"></a>
+<FONT color="green">004</FONT>    import android.os.Parcel;<a name="line.4"></a>
+<FONT color="green">005</FONT>    import android.os.Parcelable;<a name="line.5"></a>
+<FONT color="green">006</FONT>    <a name="line.6"></a>
+<FONT color="green">007</FONT>    import java.util.Locale;<a name="line.7"></a>
+<FONT color="green">008</FONT>    <a name="line.8"></a>
+<FONT color="green">009</FONT>    /**<a name="line.9"></a>
+<FONT color="green">010</FONT>     * This class describes all device configuration information that can<a name="line.10"></a>
+<FONT color="green">011</FONT>     * impact the resources the application retrieves.  This includes both<a name="line.11"></a>
+<FONT color="green">012</FONT>     * user-specified configuration options (locale and scaling) as well<a name="line.12"></a>
+<FONT color="green">013</FONT>     * as dynamic device configuration (various types of input devices).<a name="line.13"></a>
+<FONT color="green">014</FONT>     */<a name="line.14"></a>
+<FONT color="green">015</FONT>    public final class Configuration implements Parcelable, Comparable&lt;Configuration&gt; {<a name="line.15"></a>
+<FONT color="green">016</FONT>        /**<a name="line.16"></a>
+<FONT color="green">017</FONT>         * Current user preference for the scaling factor for fonts, relative<a name="line.17"></a>
+<FONT color="green">018</FONT>         * to the base density scaling.<a name="line.18"></a>
+<FONT color="green">019</FONT>         */<a name="line.19"></a>
+<FONT color="green">020</FONT>        public float fontScale;<a name="line.20"></a>
+<FONT color="green">021</FONT>    <a name="line.21"></a>
+<FONT color="green">022</FONT>        /**<a name="line.22"></a>
+<FONT color="green">023</FONT>         * IMSI MCC (Mobile Country Code).  0 if undefined.<a name="line.23"></a>
+<FONT color="green">024</FONT>         */<a name="line.24"></a>
+<FONT color="green">025</FONT>        public int mcc;<a name="line.25"></a>
+<FONT color="green">026</FONT>        <a name="line.26"></a>
+<FONT color="green">027</FONT>        /**<a name="line.27"></a>
+<FONT color="green">028</FONT>         * IMSI MNC (Mobile Network Code).  0 if undefined.<a name="line.28"></a>
+<FONT color="green">029</FONT>         */<a name="line.29"></a>
+<FONT color="green">030</FONT>        public int mnc;<a name="line.30"></a>
+<FONT color="green">031</FONT>        <a name="line.31"></a>
+<FONT color="green">032</FONT>        /**<a name="line.32"></a>
+<FONT color="green">033</FONT>         * Current user preference for the locale.<a name="line.33"></a>
+<FONT color="green">034</FONT>         */<a name="line.34"></a>
+<FONT color="green">035</FONT>        public Locale locale;<a name="line.35"></a>
+<FONT color="green">036</FONT>    <a name="line.36"></a>
+<FONT color="green">037</FONT>        /**<a name="line.37"></a>
+<FONT color="green">038</FONT>         * Locale should persist on setting.  This is hidden because it is really<a name="line.38"></a>
+<FONT color="green">039</FONT>         * questionable whether this is the right way to expose the functionality.<a name="line.39"></a>
+<FONT color="green">040</FONT>         * @hide<a name="line.40"></a>
+<FONT color="green">041</FONT>         */<a name="line.41"></a>
+<FONT color="green">042</FONT>        public boolean userSetLocale;<a name="line.42"></a>
+<FONT color="green">043</FONT>    <a name="line.43"></a>
+<FONT color="green">044</FONT>        public static final int TOUCHSCREEN_UNDEFINED = 0;<a name="line.44"></a>
+<FONT color="green">045</FONT>        public static final int TOUCHSCREEN_NOTOUCH = 1;<a name="line.45"></a>
+<FONT color="green">046</FONT>        public static final int TOUCHSCREEN_STYLUS = 2;<a name="line.46"></a>
+<FONT color="green">047</FONT>        public static final int TOUCHSCREEN_FINGER = 3;<a name="line.47"></a>
+<FONT color="green">048</FONT>        <a name="line.48"></a>
+<FONT color="green">049</FONT>        /**<a name="line.49"></a>
+<FONT color="green">050</FONT>         * The kind of touch screen attached to the device.<a name="line.50"></a>
+<FONT color="green">051</FONT>         * One of: {@link #TOUCHSCREEN_NOTOUCH}, {@link #TOUCHSCREEN_STYLUS}, <a name="line.51"></a>
+<FONT color="green">052</FONT>         * {@link #TOUCHSCREEN_FINGER}. <a name="line.52"></a>
+<FONT color="green">053</FONT>         */<a name="line.53"></a>
+<FONT color="green">054</FONT>        public int touchscreen;<a name="line.54"></a>
+<FONT color="green">055</FONT>        <a name="line.55"></a>
+<FONT color="green">056</FONT>        public static final int KEYBOARD_UNDEFINED = 0;<a name="line.56"></a>
+<FONT color="green">057</FONT>        public static final int KEYBOARD_NOKEYS = 1;<a name="line.57"></a>
+<FONT color="green">058</FONT>        public static final int KEYBOARD_QWERTY = 2;<a name="line.58"></a>
+<FONT color="green">059</FONT>        public static final int KEYBOARD_12KEY = 3;<a name="line.59"></a>
+<FONT color="green">060</FONT>        <a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * The kind of keyboard attached to the device.<a name="line.62"></a>
+<FONT color="green">063</FONT>         * One of: {@link #KEYBOARD_QWERTY}, {@link #KEYBOARD_12KEY}.<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        public int keyboard;<a name="line.65"></a>
+<FONT color="green">066</FONT>        <a name="line.66"></a>
+<FONT color="green">067</FONT>        public static final int KEYBOARDHIDDEN_UNDEFINED = 0;<a name="line.67"></a>
+<FONT color="green">068</FONT>        public static final int KEYBOARDHIDDEN_NO = 1;<a name="line.68"></a>
+<FONT color="green">069</FONT>        public static final int KEYBOARDHIDDEN_YES = 2;<a name="line.69"></a>
+<FONT color="green">070</FONT>        /** Constant matching actual resource implementation. {@hide} */<a name="line.70"></a>
+<FONT color="green">071</FONT>        public static final int KEYBOARDHIDDEN_SOFT = 3;<a name="line.71"></a>
+<FONT color="green">072</FONT>        <a name="line.72"></a>
+<FONT color="green">073</FONT>        /**<a name="line.73"></a>
+<FONT color="green">074</FONT>         * A flag indicating whether any keyboard is available.  Unlike<a name="line.74"></a>
+<FONT color="green">075</FONT>         * {@link #hardKeyboardHidden}, this also takes into account a soft<a name="line.75"></a>
+<FONT color="green">076</FONT>         * keyboard, so if the hard keyboard is hidden but there is soft<a name="line.76"></a>
+<FONT color="green">077</FONT>         * keyboard available, it will be set to NO.  Value is one of:<a name="line.77"></a>
+<FONT color="green">078</FONT>         * {@link #KEYBOARDHIDDEN_NO}, {@link #KEYBOARDHIDDEN_YES}.<a name="line.78"></a>
+<FONT color="green">079</FONT>         */<a name="line.79"></a>
+<FONT color="green">080</FONT>        public int keyboardHidden;<a name="line.80"></a>
+<FONT color="green">081</FONT>        <a name="line.81"></a>
+<FONT color="green">082</FONT>        public static final int HARDKEYBOARDHIDDEN_UNDEFINED = 0;<a name="line.82"></a>
+<FONT color="green">083</FONT>        public static final int HARDKEYBOARDHIDDEN_NO = 1;<a name="line.83"></a>
+<FONT color="green">084</FONT>        public static final int HARDKEYBOARDHIDDEN_YES = 2;<a name="line.84"></a>
+<FONT color="green">085</FONT>        <a name="line.85"></a>
+<FONT color="green">086</FONT>        /**<a name="line.86"></a>
+<FONT color="green">087</FONT>         * A flag indicating whether the hard keyboard has been hidden.  This will<a name="line.87"></a>
+<FONT color="green">088</FONT>         * be set on a device with a mechanism to hide the keyboard from the<a name="line.88"></a>
+<FONT color="green">089</FONT>         * user, when that mechanism is closed.  One of:<a name="line.89"></a>
+<FONT color="green">090</FONT>         * {@link #HARDKEYBOARDHIDDEN_NO}, {@link #HARDKEYBOARDHIDDEN_YES}.<a name="line.90"></a>
+<FONT color="green">091</FONT>         */<a name="line.91"></a>
+<FONT color="green">092</FONT>        public int hardKeyboardHidden;<a name="line.92"></a>
+<FONT color="green">093</FONT>        <a name="line.93"></a>
+<FONT color="green">094</FONT>        public static final int NAVIGATION_UNDEFINED = 0;<a name="line.94"></a>
+<FONT color="green">095</FONT>        public static final int NAVIGATION_NONAV = 1;<a name="line.95"></a>
+<FONT color="green">096</FONT>        public static final int NAVIGATION_DPAD = 2;<a name="line.96"></a>
+<FONT color="green">097</FONT>        public static final int NAVIGATION_TRACKBALL = 3;<a name="line.97"></a>
+<FONT color="green">098</FONT>        public static final int NAVIGATION_WHEEL = 4;<a name="line.98"></a>
+<FONT color="green">099</FONT>        <a name="line.99"></a>
+<FONT color="green">100</FONT>        /**<a name="line.100"></a>
+<FONT color="green">101</FONT>         * The kind of navigation method available on the device.<a name="line.101"></a>
+<FONT color="green">102</FONT>         * One of: {@link #NAVIGATION_DPAD}, {@link #NAVIGATION_TRACKBALL}, <a name="line.102"></a>
+<FONT color="green">103</FONT>         * {@link #NAVIGATION_WHEEL}. <a name="line.103"></a>
+<FONT color="green">104</FONT>         */<a name="line.104"></a>
+<FONT color="green">105</FONT>        public int navigation;<a name="line.105"></a>
+<FONT color="green">106</FONT>        <a name="line.106"></a>
+<FONT color="green">107</FONT>        public static final int ORIENTATION_UNDEFINED = 0;<a name="line.107"></a>
+<FONT color="green">108</FONT>        public static final int ORIENTATION_PORTRAIT = 1;<a name="line.108"></a>
+<FONT color="green">109</FONT>        public static final int ORIENTATION_LANDSCAPE = 2;<a name="line.109"></a>
+<FONT color="green">110</FONT>        public static final int ORIENTATION_SQUARE = 3;<a name="line.110"></a>
+<FONT color="green">111</FONT>        <a name="line.111"></a>
+<FONT color="green">112</FONT>        /**<a name="line.112"></a>
+<FONT color="green">113</FONT>         * Overall orientation of the screen.  May be one of<a name="line.113"></a>
+<FONT color="green">114</FONT>         * {@link #ORIENTATION_LANDSCAPE}, {@link #ORIENTATION_PORTRAIT},<a name="line.114"></a>
+<FONT color="green">115</FONT>         * or {@link #ORIENTATION_SQUARE}.<a name="line.115"></a>
+<FONT color="green">116</FONT>         */<a name="line.116"></a>
+<FONT color="green">117</FONT>        public int orientation;<a name="line.117"></a>
+<FONT color="green">118</FONT>        <a name="line.118"></a>
+<FONT color="green">119</FONT>        /**<a name="line.119"></a>
+<FONT color="green">120</FONT>         * Construct an invalid Configuration.  You must call {@link #setToDefaults}<a name="line.120"></a>
+<FONT color="green">121</FONT>         * for this object to be valid.  {@more}<a name="line.121"></a>
+<FONT color="green">122</FONT>         */<a name="line.122"></a>
+<FONT color="green">123</FONT>        public Configuration() {<a name="line.123"></a>
+<FONT color="green">124</FONT>            setToDefaults();<a name="line.124"></a>
+<FONT color="green">125</FONT>        }<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>        /**<a name="line.127"></a>
+<FONT color="green">128</FONT>         * Makes a deep copy suitable for modification.<a name="line.128"></a>
+<FONT color="green">129</FONT>         */<a name="line.129"></a>
+<FONT color="green">130</FONT>        public Configuration(Configuration o) {<a name="line.130"></a>
+<FONT color="green">131</FONT>            fontScale = o.fontScale;<a name="line.131"></a>
+<FONT color="green">132</FONT>            mcc = o.mcc;<a name="line.132"></a>
+<FONT color="green">133</FONT>            mnc = o.mnc;<a name="line.133"></a>
+<FONT color="green">134</FONT>            if (o.locale != null) {<a name="line.134"></a>
+<FONT color="green">135</FONT>                locale = (Locale) o.locale.clone();<a name="line.135"></a>
+<FONT color="green">136</FONT>            }<a name="line.136"></a>
+<FONT color="green">137</FONT>            userSetLocale = o.userSetLocale;<a name="line.137"></a>
+<FONT color="green">138</FONT>            touchscreen = o.touchscreen;<a name="line.138"></a>
+<FONT color="green">139</FONT>            keyboard = o.keyboard;<a name="line.139"></a>
+<FONT color="green">140</FONT>            keyboardHidden = o.keyboardHidden;<a name="line.140"></a>
+<FONT color="green">141</FONT>            hardKeyboardHidden = o.hardKeyboardHidden;<a name="line.141"></a>
+<FONT color="green">142</FONT>            navigation = o.navigation;<a name="line.142"></a>
+<FONT color="green">143</FONT>            orientation = o.orientation;<a name="line.143"></a>
+<FONT color="green">144</FONT>        }<a name="line.144"></a>
+<FONT color="green">145</FONT>    <a name="line.145"></a>
+<FONT color="green">146</FONT>        public String toString() {<a name="line.146"></a>
+<FONT color="green">147</FONT>            return "{ scale=" + fontScale + " imsi=" + mcc + "/" + mnc<a name="line.147"></a>
+<FONT color="green">148</FONT>                    + " locale=" + locale<a name="line.148"></a>
+<FONT color="green">149</FONT>                    + " touch=" + touchscreen + " key=" + keyboard + "/"<a name="line.149"></a>
+<FONT color="green">150</FONT>                    + keyboardHidden + "/" + hardKeyboardHidden<a name="line.150"></a>
+<FONT color="green">151</FONT>                    + " nav=" + navigation + " orien=" + orientation + " }";<a name="line.151"></a>
+<FONT color="green">152</FONT>        }<a name="line.152"></a>
+<FONT color="green">153</FONT>    <a name="line.153"></a>
+<FONT color="green">154</FONT>        /**<a name="line.154"></a>
+<FONT color="green">155</FONT>         * Set this object to the system defaults.<a name="line.155"></a>
+<FONT color="green">156</FONT>         */<a name="line.156"></a>
+<FONT color="green">157</FONT>        public void setToDefaults() {<a name="line.157"></a>
+<FONT color="green">158</FONT>            fontScale = 1;<a name="line.158"></a>
+<FONT color="green">159</FONT>            mcc = mnc = 0;<a name="line.159"></a>
+<FONT color="green">160</FONT>            locale = Locale.getDefault();<a name="line.160"></a>
+<FONT color="green">161</FONT>            userSetLocale = false;<a name="line.161"></a>
+<FONT color="green">162</FONT>            touchscreen = TOUCHSCREEN_UNDEFINED;<a name="line.162"></a>
+<FONT color="green">163</FONT>            keyboard = KEYBOARD_UNDEFINED;<a name="line.163"></a>
+<FONT color="green">164</FONT>            keyboardHidden = KEYBOARDHIDDEN_UNDEFINED;<a name="line.164"></a>
+<FONT color="green">165</FONT>            hardKeyboardHidden = HARDKEYBOARDHIDDEN_UNDEFINED;<a name="line.165"></a>
+<FONT color="green">166</FONT>            navigation = NAVIGATION_UNDEFINED;<a name="line.166"></a>
+<FONT color="green">167</FONT>            orientation = ORIENTATION_UNDEFINED;<a name="line.167"></a>
+<FONT color="green">168</FONT>        }<a name="line.168"></a>
+<FONT color="green">169</FONT>    <a name="line.169"></a>
+<FONT color="green">170</FONT>        /** {@hide} */<a name="line.170"></a>
+<FONT color="green">171</FONT>        @Deprecated public void makeDefault() {<a name="line.171"></a>
+<FONT color="green">172</FONT>            setToDefaults();<a name="line.172"></a>
+<FONT color="green">173</FONT>        }<a name="line.173"></a>
+<FONT color="green">174</FONT>        <a name="line.174"></a>
+<FONT color="green">175</FONT>        /**<a name="line.175"></a>
+<FONT color="green">176</FONT>         * Copy the fields from delta into this Configuration object, keeping<a name="line.176"></a>
+<FONT color="green">177</FONT>         * track of which ones have changed.  Any undefined fields in<a name="line.177"></a>
+<FONT color="green">178</FONT>         * &lt;var&gt;delta&lt;/var&gt; are ignored and not copied in to the current<a name="line.178"></a>
+<FONT color="green">179</FONT>         * Configuration.<a name="line.179"></a>
+<FONT color="green">180</FONT>         * @return Returns a bit mask of the changed fields, as per<a name="line.180"></a>
+<FONT color="green">181</FONT>         * {@link #diff}.<a name="line.181"></a>
+<FONT color="green">182</FONT>         */<a name="line.182"></a>
+<FONT color="green">183</FONT>        public int updateFrom(Configuration delta) {<a name="line.183"></a>
+<FONT color="green">184</FONT>            int changed = 0;<a name="line.184"></a>
+<FONT color="green">185</FONT>            if (delta.fontScale &gt; 0 &amp;&amp; fontScale != delta.fontScale) {<a name="line.185"></a>
+<FONT color="green">186</FONT>                changed |= ActivityInfo.CONFIG_FONT_SCALE;<a name="line.186"></a>
+<FONT color="green">187</FONT>                fontScale = delta.fontScale;<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>            if (delta.mcc != 0 &amp;&amp; mcc != delta.mcc) {<a name="line.189"></a>
+<FONT color="green">190</FONT>                changed |= ActivityInfo.CONFIG_MCC;<a name="line.190"></a>
+<FONT color="green">191</FONT>                mcc = delta.mcc;<a name="line.191"></a>
+<FONT color="green">192</FONT>            }<a name="line.192"></a>
+<FONT color="green">193</FONT>            if (delta.mnc != 0 &amp;&amp; mnc != delta.mnc) {<a name="line.193"></a>
+<FONT color="green">194</FONT>                changed |= ActivityInfo.CONFIG_MNC;<a name="line.194"></a>
+<FONT color="green">195</FONT>                mnc = delta.mnc;<a name="line.195"></a>
+<FONT color="green">196</FONT>            }<a name="line.196"></a>
+<FONT color="green">197</FONT>            if (delta.locale != null<a name="line.197"></a>
+<FONT color="green">198</FONT>                    &amp;&amp; (locale == null || !locale.equals(delta.locale))) {<a name="line.198"></a>
+<FONT color="green">199</FONT>                changed |= ActivityInfo.CONFIG_LOCALE;<a name="line.199"></a>
+<FONT color="green">200</FONT>                locale = delta.locale != null<a name="line.200"></a>
+<FONT color="green">201</FONT>                        ? (Locale) delta.locale.clone() : null;<a name="line.201"></a>
+<FONT color="green">202</FONT>            }<a name="line.202"></a>
+<FONT color="green">203</FONT>            if (delta.userSetLocale &amp;&amp; (!userSetLocale || ((changed &amp; ActivityInfo.CONFIG_LOCALE) != 0)))<a name="line.203"></a>
+<FONT color="green">204</FONT>            {<a name="line.204"></a>
+<FONT color="green">205</FONT>                userSetLocale = true;<a name="line.205"></a>
+<FONT color="green">206</FONT>                changed |= ActivityInfo.CONFIG_LOCALE;<a name="line.206"></a>
+<FONT color="green">207</FONT>            }<a name="line.207"></a>
+<FONT color="green">208</FONT>            if (delta.touchscreen != TOUCHSCREEN_UNDEFINED<a name="line.208"></a>
+<FONT color="green">209</FONT>                    &amp;&amp; touchscreen != delta.touchscreen) {<a name="line.209"></a>
+<FONT color="green">210</FONT>                changed |= ActivityInfo.CONFIG_TOUCHSCREEN;<a name="line.210"></a>
+<FONT color="green">211</FONT>                touchscreen = delta.touchscreen;<a name="line.211"></a>
+<FONT color="green">212</FONT>            }<a name="line.212"></a>
+<FONT color="green">213</FONT>            if (delta.keyboard != KEYBOARD_UNDEFINED<a name="line.213"></a>
+<FONT color="green">214</FONT>                    &amp;&amp; keyboard != delta.keyboard) {<a name="line.214"></a>
+<FONT color="green">215</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD;<a name="line.215"></a>
+<FONT color="green">216</FONT>                keyboard = delta.keyboard;<a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>            if (delta.keyboardHidden != KEYBOARDHIDDEN_UNDEFINED<a name="line.218"></a>
+<FONT color="green">219</FONT>                    &amp;&amp; keyboardHidden != delta.keyboardHidden) {<a name="line.219"></a>
+<FONT color="green">220</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD_HIDDEN;<a name="line.220"></a>
+<FONT color="green">221</FONT>                keyboardHidden = delta.keyboardHidden;<a name="line.221"></a>
+<FONT color="green">222</FONT>            }<a name="line.222"></a>
+<FONT color="green">223</FONT>            if (delta.hardKeyboardHidden != HARDKEYBOARDHIDDEN_UNDEFINED<a name="line.223"></a>
+<FONT color="green">224</FONT>                    &amp;&amp; hardKeyboardHidden != delta.hardKeyboardHidden) {<a name="line.224"></a>
+<FONT color="green">225</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD_HIDDEN;<a name="line.225"></a>
+<FONT color="green">226</FONT>                hardKeyboardHidden = delta.hardKeyboardHidden;<a name="line.226"></a>
+<FONT color="green">227</FONT>            }<a name="line.227"></a>
+<FONT color="green">228</FONT>            if (delta.navigation != NAVIGATION_UNDEFINED<a name="line.228"></a>
+<FONT color="green">229</FONT>                    &amp;&amp; navigation != delta.navigation) {<a name="line.229"></a>
+<FONT color="green">230</FONT>                changed |= ActivityInfo.CONFIG_NAVIGATION;<a name="line.230"></a>
+<FONT color="green">231</FONT>                navigation = delta.navigation;<a name="line.231"></a>
+<FONT color="green">232</FONT>            }<a name="line.232"></a>
+<FONT color="green">233</FONT>            if (delta.orientation != ORIENTATION_UNDEFINED<a name="line.233"></a>
+<FONT color="green">234</FONT>                    &amp;&amp; orientation != delta.orientation) {<a name="line.234"></a>
+<FONT color="green">235</FONT>                changed |= ActivityInfo.CONFIG_ORIENTATION;<a name="line.235"></a>
+<FONT color="green">236</FONT>                orientation = delta.orientation;<a name="line.236"></a>
+<FONT color="green">237</FONT>            }<a name="line.237"></a>
+<FONT color="green">238</FONT>            <a name="line.238"></a>
+<FONT color="green">239</FONT>            return changed;<a name="line.239"></a>
+<FONT color="green">240</FONT>        }<a name="line.240"></a>
+<FONT color="green">241</FONT>    <a name="line.241"></a>
+<FONT color="green">242</FONT>        /**<a name="line.242"></a>
+<FONT color="green">243</FONT>         * Return a bit mask of the differences between this Configuration<a name="line.243"></a>
+<FONT color="green">244</FONT>         * object and the given one.  Does not change the values of either.  Any<a name="line.244"></a>
+<FONT color="green">245</FONT>         * undefined fields in &lt;var&gt;delta&lt;/var&gt; are ignored.<a name="line.245"></a>
+<FONT color="green">246</FONT>         * @return Returns a bit mask indicating which configuration<a name="line.246"></a>
+<FONT color="green">247</FONT>         * values has changed, containing any combination of<a name="line.247"></a>
+<FONT color="green">248</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_FONT_SCALE<a name="line.248"></a>
+<FONT color="green">249</FONT>         * PackageManager.ActivityInfo.CONFIG_FONT_SCALE},<a name="line.249"></a>
+<FONT color="green">250</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_MCC<a name="line.250"></a>
+<FONT color="green">251</FONT>         * PackageManager.ActivityInfo.CONFIG_MCC},<a name="line.251"></a>
+<FONT color="green">252</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_MNC<a name="line.252"></a>
+<FONT color="green">253</FONT>         * PackageManager.ActivityInfo.CONFIG_MNC},<a name="line.253"></a>
+<FONT color="green">254</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_LOCALE<a name="line.254"></a>
+<FONT color="green">255</FONT>         * PackageManager.ActivityInfo.CONFIG_LOCALE},<a name="line.255"></a>
+<FONT color="green">256</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_TOUCHSCREEN<a name="line.256"></a>
+<FONT color="green">257</FONT>         * PackageManager.ActivityInfo.CONFIG_TOUCHSCREEN},<a name="line.257"></a>
+<FONT color="green">258</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_KEYBOARD<a name="line.258"></a>
+<FONT color="green">259</FONT>         * PackageManager.ActivityInfo.CONFIG_KEYBOARD},<a name="line.259"></a>
+<FONT color="green">260</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_NAVIGATION<a name="line.260"></a>
+<FONT color="green">261</FONT>         * PackageManager.ActivityInfo.CONFIG_NAVIGATION}, or<a name="line.261"></a>
+<FONT color="green">262</FONT>         * {@link android.content.pm.ActivityInfo#CONFIG_ORIENTATION<a name="line.262"></a>
+<FONT color="green">263</FONT>         * PackageManager.ActivityInfo.CONFIG_ORIENTATION}.<a name="line.263"></a>
+<FONT color="green">264</FONT>         */<a name="line.264"></a>
+<FONT color="green">265</FONT>        public int diff(Configuration delta) {<a name="line.265"></a>
+<FONT color="green">266</FONT>            int changed = 0;<a name="line.266"></a>
+<FONT color="green">267</FONT>            if (delta.fontScale &gt; 0 &amp;&amp; fontScale != delta.fontScale) {<a name="line.267"></a>
+<FONT color="green">268</FONT>                changed |= ActivityInfo.CONFIG_FONT_SCALE;<a name="line.268"></a>
+<FONT color="green">269</FONT>            }<a name="line.269"></a>
+<FONT color="green">270</FONT>            if (delta.mcc != 0 &amp;&amp; mcc != delta.mcc) {<a name="line.270"></a>
+<FONT color="green">271</FONT>                changed |= ActivityInfo.CONFIG_MCC;<a name="line.271"></a>
+<FONT color="green">272</FONT>            }<a name="line.272"></a>
+<FONT color="green">273</FONT>            if (delta.mnc != 0 &amp;&amp; mnc != delta.mnc) {<a name="line.273"></a>
+<FONT color="green">274</FONT>                changed |= ActivityInfo.CONFIG_MNC;<a name="line.274"></a>
+<FONT color="green">275</FONT>            }<a name="line.275"></a>
+<FONT color="green">276</FONT>            if (delta.locale != null<a name="line.276"></a>
+<FONT color="green">277</FONT>                    &amp;&amp; (locale == null || !locale.equals(delta.locale))) {<a name="line.277"></a>
+<FONT color="green">278</FONT>                changed |= ActivityInfo.CONFIG_LOCALE;<a name="line.278"></a>
+<FONT color="green">279</FONT>            }<a name="line.279"></a>
+<FONT color="green">280</FONT>            if (delta.touchscreen != TOUCHSCREEN_UNDEFINED<a name="line.280"></a>
+<FONT color="green">281</FONT>                    &amp;&amp; touchscreen != delta.touchscreen) {<a name="line.281"></a>
+<FONT color="green">282</FONT>                changed |= ActivityInfo.CONFIG_TOUCHSCREEN;<a name="line.282"></a>
+<FONT color="green">283</FONT>            }<a name="line.283"></a>
+<FONT color="green">284</FONT>            if (delta.keyboard != KEYBOARD_UNDEFINED<a name="line.284"></a>
+<FONT color="green">285</FONT>                    &amp;&amp; keyboard != delta.keyboard) {<a name="line.285"></a>
+<FONT color="green">286</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD;<a name="line.286"></a>
+<FONT color="green">287</FONT>            }<a name="line.287"></a>
+<FONT color="green">288</FONT>            if (delta.keyboardHidden != KEYBOARDHIDDEN_UNDEFINED<a name="line.288"></a>
+<FONT color="green">289</FONT>                    &amp;&amp; keyboardHidden != delta.keyboardHidden) {<a name="line.289"></a>
+<FONT color="green">290</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD_HIDDEN;<a name="line.290"></a>
+<FONT color="green">291</FONT>            }<a name="line.291"></a>
+<FONT color="green">292</FONT>            if (delta.hardKeyboardHidden != HARDKEYBOARDHIDDEN_UNDEFINED<a name="line.292"></a>
+<FONT color="green">293</FONT>                    &amp;&amp; hardKeyboardHidden != delta.hardKeyboardHidden) {<a name="line.293"></a>
+<FONT color="green">294</FONT>                changed |= ActivityInfo.CONFIG_KEYBOARD_HIDDEN;<a name="line.294"></a>
+<FONT color="green">295</FONT>            }<a name="line.295"></a>
+<FONT color="green">296</FONT>            if (delta.navigation != NAVIGATION_UNDEFINED<a name="line.296"></a>
+<FONT color="green">297</FONT>                    &amp;&amp; navigation != delta.navigation) {<a name="line.297"></a>
+<FONT color="green">298</FONT>                changed |= ActivityInfo.CONFIG_NAVIGATION;<a name="line.298"></a>
+<FONT color="green">299</FONT>            }<a name="line.299"></a>
+<FONT color="green">300</FONT>            if (delta.orientation != ORIENTATION_UNDEFINED<a name="line.300"></a>
+<FONT color="green">301</FONT>                    &amp;&amp; orientation != delta.orientation) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                changed |= ActivityInfo.CONFIG_ORIENTATION;<a name="line.302"></a>
+<FONT color="green">303</FONT>            }<a name="line.303"></a>
+<FONT color="green">304</FONT>            <a name="line.304"></a>
+<FONT color="green">305</FONT>            return changed;<a name="line.305"></a>
+<FONT color="green">306</FONT>        }<a name="line.306"></a>
+<FONT color="green">307</FONT>    <a name="line.307"></a>
+<FONT color="green">308</FONT>        /**<a name="line.308"></a>
+<FONT color="green">309</FONT>         * Determine if a new resource needs to be loaded from the bit set of<a name="line.309"></a>
+<FONT color="green">310</FONT>         * configuration changes returned by {@link #updateFrom(Configuration)}.<a name="line.310"></a>
+<FONT color="green">311</FONT>         * <a name="line.311"></a>
+<FONT color="green">312</FONT>         * @param configChanges The mask of changes configurations as returned by<a name="line.312"></a>
+<FONT color="green">313</FONT>         * {@link #updateFrom(Configuration)}.<a name="line.313"></a>
+<FONT color="green">314</FONT>         * @param interestingChanges The configuration changes that the resource<a name="line.314"></a>
+<FONT color="green">315</FONT>         * can handled, as given in {@link android.util.TypedValue#changingConfigurations}.<a name="line.315"></a>
+<FONT color="green">316</FONT>         * <a name="line.316"></a>
+<FONT color="green">317</FONT>         * @return Return true if the resource needs to be loaded, else false.<a name="line.317"></a>
+<FONT color="green">318</FONT>         */<a name="line.318"></a>
+<FONT color="green">319</FONT>        public static boolean needNewResources(int configChanges, int interestingChanges) {<a name="line.319"></a>
+<FONT color="green">320</FONT>            return (configChanges &amp; (interestingChanges|ActivityInfo.CONFIG_FONT_SCALE)) != 0;<a name="line.320"></a>
+<FONT color="green">321</FONT>        }<a name="line.321"></a>
+<FONT color="green">322</FONT>        <a name="line.322"></a>
+<FONT color="green">323</FONT>        /**<a name="line.323"></a>
+<FONT color="green">324</FONT>         * Parcelable methods<a name="line.324"></a>
+<FONT color="green">325</FONT>         */<a name="line.325"></a>
+<FONT color="green">326</FONT>        public int describeContents() {<a name="line.326"></a>
+<FONT color="green">327</FONT>            return 0;<a name="line.327"></a>
+<FONT color="green">328</FONT>        }<a name="line.328"></a>
+<FONT color="green">329</FONT>    <a name="line.329"></a>
+<FONT color="green">330</FONT>        public void writeToParcel(Parcel dest, int flags) {<a name="line.330"></a>
+<FONT color="green">331</FONT>            dest.writeFloat(fontScale);<a name="line.331"></a>
+<FONT color="green">332</FONT>            dest.writeInt(mcc);<a name="line.332"></a>
+<FONT color="green">333</FONT>            dest.writeInt(mnc);<a name="line.333"></a>
+<FONT color="green">334</FONT>            if (locale == null) {<a name="line.334"></a>
+<FONT color="green">335</FONT>                dest.writeInt(0);<a name="line.335"></a>
+<FONT color="green">336</FONT>            } else {<a name="line.336"></a>
+<FONT color="green">337</FONT>                dest.writeInt(1);<a name="line.337"></a>
+<FONT color="green">338</FONT>                dest.writeString(locale.getLanguage());<a name="line.338"></a>
+<FONT color="green">339</FONT>                dest.writeString(locale.getCountry());<a name="line.339"></a>
+<FONT color="green">340</FONT>                dest.writeString(locale.getVariant());<a name="line.340"></a>
+<FONT color="green">341</FONT>            }<a name="line.341"></a>
+<FONT color="green">342</FONT>            if(userSetLocale) {<a name="line.342"></a>
+<FONT color="green">343</FONT>                dest.writeInt(1);<a name="line.343"></a>
+<FONT color="green">344</FONT>            } else {<a name="line.344"></a>
+<FONT color="green">345</FONT>                dest.writeInt(0);<a name="line.345"></a>
+<FONT color="green">346</FONT>            }<a name="line.346"></a>
+<FONT color="green">347</FONT>            dest.writeInt(touchscreen);<a name="line.347"></a>
+<FONT color="green">348</FONT>            dest.writeInt(keyboard);<a name="line.348"></a>
+<FONT color="green">349</FONT>            dest.writeInt(keyboardHidden);<a name="line.349"></a>
+<FONT color="green">350</FONT>            dest.writeInt(hardKeyboardHidden);<a name="line.350"></a>
+<FONT color="green">351</FONT>            dest.writeInt(navigation);<a name="line.351"></a>
+<FONT color="green">352</FONT>            dest.writeInt(orientation);<a name="line.352"></a>
+<FONT color="green">353</FONT>        }<a name="line.353"></a>
+<FONT color="green">354</FONT>    <a name="line.354"></a>
+<FONT color="green">355</FONT>        public static final Parcelable.Creator&lt;Configuration&gt; CREATOR<a name="line.355"></a>
+<FONT color="green">356</FONT>                = new Parcelable.Creator&lt;Configuration&gt;() {<a name="line.356"></a>
+<FONT color="green">357</FONT>            public Configuration createFromParcel(Parcel source) {<a name="line.357"></a>
+<FONT color="green">358</FONT>                return new Configuration(source);<a name="line.358"></a>
+<FONT color="green">359</FONT>            }<a name="line.359"></a>
+<FONT color="green">360</FONT>    <a name="line.360"></a>
+<FONT color="green">361</FONT>            public Configuration[] newArray(int size) {<a name="line.361"></a>
+<FONT color="green">362</FONT>                return new Configuration[size];<a name="line.362"></a>
+<FONT color="green">363</FONT>            }<a name="line.363"></a>
+<FONT color="green">364</FONT>        };<a name="line.364"></a>
+<FONT color="green">365</FONT>    <a name="line.365"></a>
+<FONT color="green">366</FONT>        /**<a name="line.366"></a>
+<FONT color="green">367</FONT>         * Construct this Configuration object, reading from the Parcel.<a name="line.367"></a>
+<FONT color="green">368</FONT>         */<a name="line.368"></a>
+<FONT color="green">369</FONT>        private Configuration(Parcel source) {<a name="line.369"></a>
+<FONT color="green">370</FONT>            fontScale = source.readFloat();<a name="line.370"></a>
+<FONT color="green">371</FONT>            mcc = source.readInt();<a name="line.371"></a>
+<FONT color="green">372</FONT>            mnc = source.readInt();<a name="line.372"></a>
+<FONT color="green">373</FONT>            if (source.readInt() != 0) {<a name="line.373"></a>
+<FONT color="green">374</FONT>                locale = new Locale(source.readString(), source.readString(),<a name="line.374"></a>
+<FONT color="green">375</FONT>                        source.readString());<a name="line.375"></a>
+<FONT color="green">376</FONT>            }<a name="line.376"></a>
+<FONT color="green">377</FONT>            userSetLocale = (source.readInt()==1);<a name="line.377"></a>
+<FONT color="green">378</FONT>            touchscreen = source.readInt();<a name="line.378"></a>
+<FONT color="green">379</FONT>            keyboard = source.readInt();<a name="line.379"></a>
+<FONT color="green">380</FONT>            keyboardHidden = source.readInt();<a name="line.380"></a>
+<FONT color="green">381</FONT>            hardKeyboardHidden = source.readInt();<a name="line.381"></a>
+<FONT color="green">382</FONT>            navigation = source.readInt();<a name="line.382"></a>
+<FONT color="green">383</FONT>            orientation = source.readInt();<a name="line.383"></a>
+<FONT color="green">384</FONT>        }<a name="line.384"></a>
+<FONT color="green">385</FONT>    <a name="line.385"></a>
+<FONT color="green">386</FONT>        public int compareTo(Configuration that) {<a name="line.386"></a>
+<FONT color="green">387</FONT>            int n;<a name="line.387"></a>
+<FONT color="green">388</FONT>            float a = this.fontScale;<a name="line.388"></a>
+<FONT color="green">389</FONT>            float b = that.fontScale;<a name="line.389"></a>
+<FONT color="green">390</FONT>            if (a &lt; b) return -1;<a name="line.390"></a>
+<FONT color="green">391</FONT>            if (a &gt; b) return 1;<a name="line.391"></a>
+<FONT color="green">392</FONT>            n = this.mcc - that.mcc;<a name="line.392"></a>
+<FONT color="green">393</FONT>            if (n != 0) return n;<a name="line.393"></a>
+<FONT color="green">394</FONT>            n = this.mnc - that.mnc;<a name="line.394"></a>
+<FONT color="green">395</FONT>            if (n != 0) return n;<a name="line.395"></a>
+<FONT color="green">396</FONT>            n = this.locale.getLanguage().compareTo(that.locale.getLanguage());<a name="line.396"></a>
+<FONT color="green">397</FONT>            if (n != 0) return n;<a name="line.397"></a>
+<FONT color="green">398</FONT>            n = this.locale.getCountry().compareTo(that.locale.getCountry());<a name="line.398"></a>
+<FONT color="green">399</FONT>            if (n != 0) return n;<a name="line.399"></a>
+<FONT color="green">400</FONT>            n = this.locale.getVariant().compareTo(that.locale.getVariant());<a name="line.400"></a>
+<FONT color="green">401</FONT>            if (n != 0) return n;<a name="line.401"></a>
+<FONT color="green">402</FONT>            n = this.touchscreen - that.touchscreen;<a name="line.402"></a>
+<FONT color="green">403</FONT>            if (n != 0) return n;<a name="line.403"></a>
+<FONT color="green">404</FONT>            n = this.keyboard - that.keyboard;<a name="line.404"></a>
+<FONT color="green">405</FONT>            if (n != 0) return n;<a name="line.405"></a>
+<FONT color="green">406</FONT>            n = this.keyboardHidden - that.keyboardHidden;<a name="line.406"></a>
+<FONT color="green">407</FONT>            if (n != 0) return n;<a name="line.407"></a>
+<FONT color="green">408</FONT>            n = this.hardKeyboardHidden - that.hardKeyboardHidden;<a name="line.408"></a>
+<FONT color="green">409</FONT>            if (n != 0) return n;<a name="line.409"></a>
+<FONT color="green">410</FONT>            n = this.navigation - that.navigation;<a name="line.410"></a>
+<FONT color="green">411</FONT>            if (n != 0) return n;<a name="line.411"></a>
+<FONT color="green">412</FONT>            n = this.orientation - that.orientation;<a name="line.412"></a>
+<FONT color="green">413</FONT>            //if (n != 0) return n;<a name="line.413"></a>
+<FONT color="green">414</FONT>            return n;<a name="line.414"></a>
+<FONT color="green">415</FONT>        }<a name="line.415"></a>
+<FONT color="green">416</FONT>    <a name="line.416"></a>
+<FONT color="green">417</FONT>        public boolean equals(Configuration that) {<a name="line.417"></a>
+<FONT color="green">418</FONT>            if (that == null) return false;<a name="line.418"></a>
+<FONT color="green">419</FONT>            if (that == this) return true;<a name="line.419"></a>
+<FONT color="green">420</FONT>            return this.compareTo(that) == 0;<a name="line.420"></a>
+<FONT color="green">421</FONT>        }<a name="line.421"></a>
+<FONT color="green">422</FONT>    <a name="line.422"></a>
+<FONT color="green">423</FONT>        public boolean equals(Object that) {<a name="line.423"></a>
+<FONT color="green">424</FONT>            try {<a name="line.424"></a>
+<FONT color="green">425</FONT>                return equals((Configuration)that);<a name="line.425"></a>
+<FONT color="green">426</FONT>            } catch (ClassCastException e) {<a name="line.426"></a>
+<FONT color="green">427</FONT>            }<a name="line.427"></a>
+<FONT color="green">428</FONT>            return false;<a name="line.428"></a>
+<FONT color="green">429</FONT>        }<a name="line.429"></a>
+<FONT color="green">430</FONT>        <a name="line.430"></a>
+<FONT color="green">431</FONT>        public int hashCode() {<a name="line.431"></a>
+<FONT color="green">432</FONT>            return ((int)this.fontScale) + this.mcc + this.mnc<a name="line.432"></a>
+<FONT color="green">433</FONT>                    + this.locale.hashCode() + this.touchscreen<a name="line.433"></a>
+<FONT color="green">434</FONT>                    + this.keyboard + this.keyboardHidden + this.hardKeyboardHidden<a name="line.434"></a>
+<FONT color="green">435</FONT>                    + this.navigation + this.orientation;<a name="line.435"></a>
+<FONT color="green">436</FONT>        }<a name="line.436"></a>
+<FONT color="green">437</FONT>    }<a name="line.437"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

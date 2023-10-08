@@ -1,0 +1,810 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.view;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.content.Context;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.content.res.TypedArray;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.content.res.XmlResourceParser;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.util.AttributeSet;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.util.Xml;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import org.xmlpull.v1.XmlPullParser;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import org.xmlpull.v1.XmlPullParserException;<a name="line.26"></a>
+<FONT color="green">027</FONT>    <a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.io.IOException;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.lang.reflect.Constructor;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.HashMap;<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    /**<a name="line.32"></a>
+<FONT color="green">033</FONT>     * This class is used to instantiate layout XML file into its corresponding View<a name="line.33"></a>
+<FONT color="green">034</FONT>     * objects. It is never be used directly -- use<a name="line.34"></a>
+<FONT color="green">035</FONT>     * {@link android.app.Activity#getLayoutInflater()} or<a name="line.35"></a>
+<FONT color="green">036</FONT>     * {@link Context#getSystemService} to retrieve a standard LayoutInflater instance<a name="line.36"></a>
+<FONT color="green">037</FONT>     * that is already hooked up to the current context and correctly configured<a name="line.37"></a>
+<FONT color="green">038</FONT>     * for the device you are running on.  For example:<a name="line.38"></a>
+<FONT color="green">039</FONT>     *<a name="line.39"></a>
+<FONT color="green">040</FONT>     * &lt;pre&gt;LayoutInflater inflater = (LayoutInflater)context.getSystemService<a name="line.40"></a>
+<FONT color="green">041</FONT>     *      Context.LAYOUT_INFLATER_SERVICE);&lt;/pre&gt;<a name="line.41"></a>
+<FONT color="green">042</FONT>     * <a name="line.42"></a>
+<FONT color="green">043</FONT>     * &lt;p&gt;<a name="line.43"></a>
+<FONT color="green">044</FONT>     * To create a new LayoutInflater with an additional {@link Factory} for your<a name="line.44"></a>
+<FONT color="green">045</FONT>     * own views, you can use {@link #cloneInContext} to clone an existing<a name="line.45"></a>
+<FONT color="green">046</FONT>     * ViewFactory, and then call {@link #setFactory} on it to include your<a name="line.46"></a>
+<FONT color="green">047</FONT>     * Factory.<a name="line.47"></a>
+<FONT color="green">048</FONT>     * <a name="line.48"></a>
+<FONT color="green">049</FONT>     * &lt;p&gt;<a name="line.49"></a>
+<FONT color="green">050</FONT>     * For performance reasons, view inflation relies heavily on pre-processing of<a name="line.50"></a>
+<FONT color="green">051</FONT>     * XML files that is done at build time. Therefore, it is not currently possible<a name="line.51"></a>
+<FONT color="green">052</FONT>     * to use LayoutInflater with an XmlPullParser over a plain XML file at runtime;<a name="line.52"></a>
+<FONT color="green">053</FONT>     * it only works with an XmlPullParser returned from a compiled resource<a name="line.53"></a>
+<FONT color="green">054</FONT>     * (R.&lt;em&gt;something&lt;/em&gt; file.)<a name="line.54"></a>
+<FONT color="green">055</FONT>     * <a name="line.55"></a>
+<FONT color="green">056</FONT>     * @see Context#getSystemService<a name="line.56"></a>
+<FONT color="green">057</FONT>     */<a name="line.57"></a>
+<FONT color="green">058</FONT>    public abstract class LayoutInflater {<a name="line.58"></a>
+<FONT color="green">059</FONT>        private final boolean DEBUG = false;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * This field should be made private, so it is hidden from the SDK.<a name="line.62"></a>
+<FONT color="green">063</FONT>         * {@hide}<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        protected final Context mContext;<a name="line.65"></a>
+<FONT color="green">066</FONT>    <a name="line.66"></a>
+<FONT color="green">067</FONT>        // these are optional, set by the caller<a name="line.67"></a>
+<FONT color="green">068</FONT>        private boolean mFactorySet;<a name="line.68"></a>
+<FONT color="green">069</FONT>        private Factory mFactory;<a name="line.69"></a>
+<FONT color="green">070</FONT>        private Filter mFilter;<a name="line.70"></a>
+<FONT color="green">071</FONT>    <a name="line.71"></a>
+<FONT color="green">072</FONT>        private final Object[] mConstructorArgs = new Object[2];<a name="line.72"></a>
+<FONT color="green">073</FONT>    <a name="line.73"></a>
+<FONT color="green">074</FONT>        private static final Class[] mConstructorSignature = new Class[] {<a name="line.74"></a>
+<FONT color="green">075</FONT>                Context.class, AttributeSet.class};<a name="line.75"></a>
+<FONT color="green">076</FONT>    <a name="line.76"></a>
+<FONT color="green">077</FONT>        private static final HashMap&lt;String, Constructor&gt; sConstructorMap =<a name="line.77"></a>
+<FONT color="green">078</FONT>                new HashMap&lt;String, Constructor&gt;();<a name="line.78"></a>
+<FONT color="green">079</FONT>        <a name="line.79"></a>
+<FONT color="green">080</FONT>        private HashMap&lt;String, Boolean&gt; mFilterMap;<a name="line.80"></a>
+<FONT color="green">081</FONT>    <a name="line.81"></a>
+<FONT color="green">082</FONT>        private static final String TAG_MERGE = "merge";<a name="line.82"></a>
+<FONT color="green">083</FONT>        private static final String TAG_INCLUDE = "include";<a name="line.83"></a>
+<FONT color="green">084</FONT>        private static final String TAG_REQUEST_FOCUS = "requestFocus";<a name="line.84"></a>
+<FONT color="green">085</FONT>    <a name="line.85"></a>
+<FONT color="green">086</FONT>        /**<a name="line.86"></a>
+<FONT color="green">087</FONT>         * Hook to allow clients of the LayoutInflater to restrict the set of Views that are allowed<a name="line.87"></a>
+<FONT color="green">088</FONT>         * to be inflated.<a name="line.88"></a>
+<FONT color="green">089</FONT>         * <a name="line.89"></a>
+<FONT color="green">090</FONT>         */<a name="line.90"></a>
+<FONT color="green">091</FONT>        public interface Filter {<a name="line.91"></a>
+<FONT color="green">092</FONT>            /**<a name="line.92"></a>
+<FONT color="green">093</FONT>             * Hook to allow clients of the LayoutInflater to restrict the set of Views <a name="line.93"></a>
+<FONT color="green">094</FONT>             * that are allowed to be inflated.<a name="line.94"></a>
+<FONT color="green">095</FONT>             * <a name="line.95"></a>
+<FONT color="green">096</FONT>             * @param clazz The class object for the View that is about to be inflated<a name="line.96"></a>
+<FONT color="green">097</FONT>             * <a name="line.97"></a>
+<FONT color="green">098</FONT>             * @return True if this class is allowed to be inflated, or false otherwise<a name="line.98"></a>
+<FONT color="green">099</FONT>             */<a name="line.99"></a>
+<FONT color="green">100</FONT>            boolean onLoadClass(Class clazz);<a name="line.100"></a>
+<FONT color="green">101</FONT>        }<a name="line.101"></a>
+<FONT color="green">102</FONT>        <a name="line.102"></a>
+<FONT color="green">103</FONT>        public interface Factory {<a name="line.103"></a>
+<FONT color="green">104</FONT>            /**<a name="line.104"></a>
+<FONT color="green">105</FONT>             * Hook you can supply that is called when inflating from a LayoutInflater.<a name="line.105"></a>
+<FONT color="green">106</FONT>             * You can use this to customize the tag names available in your XML<a name="line.106"></a>
+<FONT color="green">107</FONT>             * layout files.<a name="line.107"></a>
+<FONT color="green">108</FONT>             * <a name="line.108"></a>
+<FONT color="green">109</FONT>             * &lt;p&gt;<a name="line.109"></a>
+<FONT color="green">110</FONT>             * Note that it is good practice to prefix these custom names with your<a name="line.110"></a>
+<FONT color="green">111</FONT>             * package (i.e., com.coolcompany.apps) to avoid conflicts with system<a name="line.111"></a>
+<FONT color="green">112</FONT>             * names.<a name="line.112"></a>
+<FONT color="green">113</FONT>             * <a name="line.113"></a>
+<FONT color="green">114</FONT>             * @param name Tag name to be inflated.<a name="line.114"></a>
+<FONT color="green">115</FONT>             * @param context The context the view is being created in.<a name="line.115"></a>
+<FONT color="green">116</FONT>             * @param attrs Inflation attributes as specified in XML file.<a name="line.116"></a>
+<FONT color="green">117</FONT>             * <a name="line.117"></a>
+<FONT color="green">118</FONT>             * @return View Newly created view. Return null for the default<a name="line.118"></a>
+<FONT color="green">119</FONT>             *         behavior.<a name="line.119"></a>
+<FONT color="green">120</FONT>             */<a name="line.120"></a>
+<FONT color="green">121</FONT>            public View onCreateView(String name, Context context, AttributeSet attrs);<a name="line.121"></a>
+<FONT color="green">122</FONT>        }<a name="line.122"></a>
+<FONT color="green">123</FONT>    <a name="line.123"></a>
+<FONT color="green">124</FONT>        private static class FactoryMerger implements Factory {<a name="line.124"></a>
+<FONT color="green">125</FONT>            private final Factory mF1, mF2;<a name="line.125"></a>
+<FONT color="green">126</FONT>            <a name="line.126"></a>
+<FONT color="green">127</FONT>            FactoryMerger(Factory f1, Factory f2) {<a name="line.127"></a>
+<FONT color="green">128</FONT>                mF1 = f1;<a name="line.128"></a>
+<FONT color="green">129</FONT>                mF2 = f2;<a name="line.129"></a>
+<FONT color="green">130</FONT>            }<a name="line.130"></a>
+<FONT color="green">131</FONT>            <a name="line.131"></a>
+<FONT color="green">132</FONT>            public View onCreateView(String name, Context context, AttributeSet attrs) {<a name="line.132"></a>
+<FONT color="green">133</FONT>                View v = mF1.onCreateView(name, context, attrs);<a name="line.133"></a>
+<FONT color="green">134</FONT>                if (v != null) return v;<a name="line.134"></a>
+<FONT color="green">135</FONT>                return mF2.onCreateView(name, context, attrs);<a name="line.135"></a>
+<FONT color="green">136</FONT>            }<a name="line.136"></a>
+<FONT color="green">137</FONT>        }<a name="line.137"></a>
+<FONT color="green">138</FONT>        <a name="line.138"></a>
+<FONT color="green">139</FONT>        /**<a name="line.139"></a>
+<FONT color="green">140</FONT>         * Create a new LayoutInflater instance associated with a particular Context.<a name="line.140"></a>
+<FONT color="green">141</FONT>         * Applications will almost always want to use<a name="line.141"></a>
+<FONT color="green">142</FONT>         * {@link Context#getSystemService Context.getSystemService()} to retrieve<a name="line.142"></a>
+<FONT color="green">143</FONT>         * the standard {@link Context#LAYOUT_INFLATER_SERVICE Context.INFLATER_SERVICE}.<a name="line.143"></a>
+<FONT color="green">144</FONT>         * <a name="line.144"></a>
+<FONT color="green">145</FONT>         * @param context The Context in which this LayoutInflater will create its<a name="line.145"></a>
+<FONT color="green">146</FONT>         * Views; most importantly, this supplies the theme from which the default<a name="line.146"></a>
+<FONT color="green">147</FONT>         * values for their attributes are retrieved.<a name="line.147"></a>
+<FONT color="green">148</FONT>         */<a name="line.148"></a>
+<FONT color="green">149</FONT>        protected LayoutInflater(Context context) {<a name="line.149"></a>
+<FONT color="green">150</FONT>            mContext = context;<a name="line.150"></a>
+<FONT color="green">151</FONT>        }<a name="line.151"></a>
+<FONT color="green">152</FONT>    <a name="line.152"></a>
+<FONT color="green">153</FONT>        /**<a name="line.153"></a>
+<FONT color="green">154</FONT>         * Create a new LayoutInflater instance that is a copy of an existing<a name="line.154"></a>
+<FONT color="green">155</FONT>         * LayoutInflater, optionally with its Context changed.  For use in<a name="line.155"></a>
+<FONT color="green">156</FONT>         * implementing {@link #cloneInContext}.<a name="line.156"></a>
+<FONT color="green">157</FONT>         * <a name="line.157"></a>
+<FONT color="green">158</FONT>         * @param original The original LayoutInflater to copy.<a name="line.158"></a>
+<FONT color="green">159</FONT>         * @param newContext The new Context to use.<a name="line.159"></a>
+<FONT color="green">160</FONT>         */<a name="line.160"></a>
+<FONT color="green">161</FONT>        protected LayoutInflater(LayoutInflater original, Context newContext) {<a name="line.161"></a>
+<FONT color="green">162</FONT>            mContext = newContext;<a name="line.162"></a>
+<FONT color="green">163</FONT>            mFactory = original.mFactory;<a name="line.163"></a>
+<FONT color="green">164</FONT>            mFilter = original.mFilter;<a name="line.164"></a>
+<FONT color="green">165</FONT>        }<a name="line.165"></a>
+<FONT color="green">166</FONT>        <a name="line.166"></a>
+<FONT color="green">167</FONT>        /**<a name="line.167"></a>
+<FONT color="green">168</FONT>         * Obtains the LayoutInflater from the given context.<a name="line.168"></a>
+<FONT color="green">169</FONT>         */<a name="line.169"></a>
+<FONT color="green">170</FONT>        public static LayoutInflater from(Context context) {<a name="line.170"></a>
+<FONT color="green">171</FONT>            LayoutInflater LayoutInflater =<a name="line.171"></a>
+<FONT color="green">172</FONT>                    (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);<a name="line.172"></a>
+<FONT color="green">173</FONT>            if (LayoutInflater == null) {<a name="line.173"></a>
+<FONT color="green">174</FONT>                throw new AssertionError("LayoutInflater not found.");<a name="line.174"></a>
+<FONT color="green">175</FONT>            }<a name="line.175"></a>
+<FONT color="green">176</FONT>            return LayoutInflater;<a name="line.176"></a>
+<FONT color="green">177</FONT>        }<a name="line.177"></a>
+<FONT color="green">178</FONT>    <a name="line.178"></a>
+<FONT color="green">179</FONT>        /**<a name="line.179"></a>
+<FONT color="green">180</FONT>         * Create a copy of the existing LayoutInflater object, with the copy<a name="line.180"></a>
+<FONT color="green">181</FONT>         * pointing to a different Context than the original.  This is used by<a name="line.181"></a>
+<FONT color="green">182</FONT>         * {@link ContextThemeWrapper} to create a new LayoutInflater to go along<a name="line.182"></a>
+<FONT color="green">183</FONT>         * with the new Context theme.<a name="line.183"></a>
+<FONT color="green">184</FONT>         * <a name="line.184"></a>
+<FONT color="green">185</FONT>         * @param newContext The new Context to associate with the new LayoutInflater.<a name="line.185"></a>
+<FONT color="green">186</FONT>         * May be the same as the original Context if desired.<a name="line.186"></a>
+<FONT color="green">187</FONT>         * <a name="line.187"></a>
+<FONT color="green">188</FONT>         * @return Returns a brand spanking new LayoutInflater object associated with<a name="line.188"></a>
+<FONT color="green">189</FONT>         * the given Context.<a name="line.189"></a>
+<FONT color="green">190</FONT>         */<a name="line.190"></a>
+<FONT color="green">191</FONT>        public abstract LayoutInflater cloneInContext(Context newContext);<a name="line.191"></a>
+<FONT color="green">192</FONT>        <a name="line.192"></a>
+<FONT color="green">193</FONT>        /**<a name="line.193"></a>
+<FONT color="green">194</FONT>         * Return the context we are running in, for access to resources, class<a name="line.194"></a>
+<FONT color="green">195</FONT>         * loader, etc.<a name="line.195"></a>
+<FONT color="green">196</FONT>         */<a name="line.196"></a>
+<FONT color="green">197</FONT>        public Context getContext() {<a name="line.197"></a>
+<FONT color="green">198</FONT>            return mContext;<a name="line.198"></a>
+<FONT color="green">199</FONT>        }<a name="line.199"></a>
+<FONT color="green">200</FONT>    <a name="line.200"></a>
+<FONT color="green">201</FONT>        /**<a name="line.201"></a>
+<FONT color="green">202</FONT>         * Return the current factory (or null). This is called on each element<a name="line.202"></a>
+<FONT color="green">203</FONT>         * name. If the factory returns a View, add that to the hierarchy. If it<a name="line.203"></a>
+<FONT color="green">204</FONT>         * returns null, proceed to call onCreateView(name).<a name="line.204"></a>
+<FONT color="green">205</FONT>         */<a name="line.205"></a>
+<FONT color="green">206</FONT>        public final Factory getFactory() {<a name="line.206"></a>
+<FONT color="green">207</FONT>            return mFactory;<a name="line.207"></a>
+<FONT color="green">208</FONT>        }<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>        /**<a name="line.210"></a>
+<FONT color="green">211</FONT>         * Attach a custom Factory interface for creating views while using<a name="line.211"></a>
+<FONT color="green">212</FONT>         * this LayoutInflater.  This must not be null, and can only be set once;<a name="line.212"></a>
+<FONT color="green">213</FONT>         * after setting, you can not change the factory.  This is<a name="line.213"></a>
+<FONT color="green">214</FONT>         * called on each element name as the xml is parsed. If the factory returns<a name="line.214"></a>
+<FONT color="green">215</FONT>         * a View, that is added to the hierarchy. If it returns null, the next<a name="line.215"></a>
+<FONT color="green">216</FONT>         * factory default {@link #onCreateView} method is called.<a name="line.216"></a>
+<FONT color="green">217</FONT>         * <a name="line.217"></a>
+<FONT color="green">218</FONT>         * &lt;p&gt;If you have an existing<a name="line.218"></a>
+<FONT color="green">219</FONT>         * LayoutInflater and want to add your own factory to it, use<a name="line.219"></a>
+<FONT color="green">220</FONT>         * {@link #cloneInContext} to clone the existing instance and then you<a name="line.220"></a>
+<FONT color="green">221</FONT>         * can use this function (once) on the returned new instance.  This will<a name="line.221"></a>
+<FONT color="green">222</FONT>         * merge your own factory with whatever factory the original instance is<a name="line.222"></a>
+<FONT color="green">223</FONT>         * using.<a name="line.223"></a>
+<FONT color="green">224</FONT>         */<a name="line.224"></a>
+<FONT color="green">225</FONT>        public void setFactory(Factory factory) {<a name="line.225"></a>
+<FONT color="green">226</FONT>            if (mFactorySet) {<a name="line.226"></a>
+<FONT color="green">227</FONT>                throw new IllegalStateException("A factory has already been set on this LayoutInflater");<a name="line.227"></a>
+<FONT color="green">228</FONT>            }<a name="line.228"></a>
+<FONT color="green">229</FONT>            if (factory == null) {<a name="line.229"></a>
+<FONT color="green">230</FONT>                throw new NullPointerException("Given factory can not be null");<a name="line.230"></a>
+<FONT color="green">231</FONT>            }<a name="line.231"></a>
+<FONT color="green">232</FONT>            mFactorySet = true;<a name="line.232"></a>
+<FONT color="green">233</FONT>            if (mFactory == null) {<a name="line.233"></a>
+<FONT color="green">234</FONT>                mFactory = factory;<a name="line.234"></a>
+<FONT color="green">235</FONT>            } else {<a name="line.235"></a>
+<FONT color="green">236</FONT>                mFactory = new FactoryMerger(factory, mFactory);<a name="line.236"></a>
+<FONT color="green">237</FONT>            }<a name="line.237"></a>
+<FONT color="green">238</FONT>        }<a name="line.238"></a>
+<FONT color="green">239</FONT>    <a name="line.239"></a>
+<FONT color="green">240</FONT>        /**<a name="line.240"></a>
+<FONT color="green">241</FONT>         * @return The {@link Filter} currently used by this LayoutInflater to restrict the set of Views<a name="line.241"></a>
+<FONT color="green">242</FONT>         * that are allowed to be inflated.<a name="line.242"></a>
+<FONT color="green">243</FONT>         */<a name="line.243"></a>
+<FONT color="green">244</FONT>        public Filter getFilter() {<a name="line.244"></a>
+<FONT color="green">245</FONT>            return mFilter;<a name="line.245"></a>
+<FONT color="green">246</FONT>        }<a name="line.246"></a>
+<FONT color="green">247</FONT>        <a name="line.247"></a>
+<FONT color="green">248</FONT>        /**<a name="line.248"></a>
+<FONT color="green">249</FONT>         * Sets the {@link Filter} to by this LayoutInflater. If a view is attempted to be inflated<a name="line.249"></a>
+<FONT color="green">250</FONT>         * which is not allowed by the {@link Filter}, the {@link #inflate(int, ViewGroup)} call will<a name="line.250"></a>
+<FONT color="green">251</FONT>         * throw an {@link InflateException}. This filter will replace any previous filter set on this<a name="line.251"></a>
+<FONT color="green">252</FONT>         * LayoutInflater.<a name="line.252"></a>
+<FONT color="green">253</FONT>         * <a name="line.253"></a>
+<FONT color="green">254</FONT>         * @param filter The Filter which restricts the set of Views that are allowed to be inflated.<a name="line.254"></a>
+<FONT color="green">255</FONT>         *        This filter will replace any previous filter set on this LayoutInflater.<a name="line.255"></a>
+<FONT color="green">256</FONT>         */<a name="line.256"></a>
+<FONT color="green">257</FONT>        public void setFilter(Filter filter) {<a name="line.257"></a>
+<FONT color="green">258</FONT>            mFilter = filter;<a name="line.258"></a>
+<FONT color="green">259</FONT>            if (filter != null) {<a name="line.259"></a>
+<FONT color="green">260</FONT>                mFilterMap = new HashMap&lt;String, Boolean&gt;();<a name="line.260"></a>
+<FONT color="green">261</FONT>            }<a name="line.261"></a>
+<FONT color="green">262</FONT>        }<a name="line.262"></a>
+<FONT color="green">263</FONT>    <a name="line.263"></a>
+<FONT color="green">264</FONT>        /**<a name="line.264"></a>
+<FONT color="green">265</FONT>         * Inflate a new view hierarchy from the specified xml resource. Throws<a name="line.265"></a>
+<FONT color="green">266</FONT>         * {@link InflateException} if there is an error.<a name="line.266"></a>
+<FONT color="green">267</FONT>         * <a name="line.267"></a>
+<FONT color="green">268</FONT>         * @param resource ID for an XML layout resource to load (e.g.,<a name="line.268"></a>
+<FONT color="green">269</FONT>         *        &lt;code&gt;R.layout.main_page&lt;/code&gt;)<a name="line.269"></a>
+<FONT color="green">270</FONT>         * @param root Optional view to be the parent of the generated hierarchy.<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @return The root View of the inflated hierarchy. If root was supplied,<a name="line.271"></a>
+<FONT color="green">272</FONT>         *         this is the root View; otherwise it is the root of the inflated<a name="line.272"></a>
+<FONT color="green">273</FONT>         *         XML file.<a name="line.273"></a>
+<FONT color="green">274</FONT>         */<a name="line.274"></a>
+<FONT color="green">275</FONT>        public View inflate(int resource, ViewGroup root) {<a name="line.275"></a>
+<FONT color="green">276</FONT>            return inflate(resource, root, root != null);<a name="line.276"></a>
+<FONT color="green">277</FONT>        }<a name="line.277"></a>
+<FONT color="green">278</FONT>    <a name="line.278"></a>
+<FONT color="green">279</FONT>        /**<a name="line.279"></a>
+<FONT color="green">280</FONT>         * Inflate a new view hierarchy from the specified xml node. Throws<a name="line.280"></a>
+<FONT color="green">281</FONT>         * {@link InflateException} if there is an error. *<a name="line.281"></a>
+<FONT color="green">282</FONT>         * &lt;p&gt;<a name="line.282"></a>
+<FONT color="green">283</FONT>         * &lt;em&gt;&lt;strong&gt;Important&lt;/strong&gt;&lt;/em&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;For performance<a name="line.283"></a>
+<FONT color="green">284</FONT>         * reasons, view inflation relies heavily on pre-processing of XML files<a name="line.284"></a>
+<FONT color="green">285</FONT>         * that is done at build time. Therefore, it is not currently possible to<a name="line.285"></a>
+<FONT color="green">286</FONT>         * use LayoutInflater with an XmlPullParser over a plain XML file at runtime.<a name="line.286"></a>
+<FONT color="green">287</FONT>         * <a name="line.287"></a>
+<FONT color="green">288</FONT>         * @param parser XML dom node containing the description of the view<a name="line.288"></a>
+<FONT color="green">289</FONT>         *        hierarchy.<a name="line.289"></a>
+<FONT color="green">290</FONT>         * @param root Optional view to be the parent of the generated hierarchy.<a name="line.290"></a>
+<FONT color="green">291</FONT>         * @return The root View of the inflated hierarchy. If root was supplied,<a name="line.291"></a>
+<FONT color="green">292</FONT>         *         this is the root View; otherwise it is the root of the inflated<a name="line.292"></a>
+<FONT color="green">293</FONT>         *         XML file.<a name="line.293"></a>
+<FONT color="green">294</FONT>         */<a name="line.294"></a>
+<FONT color="green">295</FONT>        public View inflate(XmlPullParser parser, ViewGroup root) {<a name="line.295"></a>
+<FONT color="green">296</FONT>            return inflate(parser, root, root != null);<a name="line.296"></a>
+<FONT color="green">297</FONT>        }<a name="line.297"></a>
+<FONT color="green">298</FONT>    <a name="line.298"></a>
+<FONT color="green">299</FONT>        /**<a name="line.299"></a>
+<FONT color="green">300</FONT>         * Inflate a new view hierarchy from the specified xml resource. Throws<a name="line.300"></a>
+<FONT color="green">301</FONT>         * {@link InflateException} if there is an error.<a name="line.301"></a>
+<FONT color="green">302</FONT>         * <a name="line.302"></a>
+<FONT color="green">303</FONT>         * @param resource ID for an XML layout resource to load (e.g.,<a name="line.303"></a>
+<FONT color="green">304</FONT>         *        &lt;code&gt;R.layout.main_page&lt;/code&gt;)<a name="line.304"></a>
+<FONT color="green">305</FONT>         * @param root Optional view to be the parent of the generated hierarchy (if<a name="line.305"></a>
+<FONT color="green">306</FONT>         *        &lt;em&gt;attachToRoot&lt;/em&gt; is true), or else simply an object that<a name="line.306"></a>
+<FONT color="green">307</FONT>         *        provides a set of LayoutParams values for root of the returned<a name="line.307"></a>
+<FONT color="green">308</FONT>         *        hierarchy (if &lt;em&gt;attachToRoot&lt;/em&gt; is false.)<a name="line.308"></a>
+<FONT color="green">309</FONT>         * @param attachToRoot Whether the inflated hierarchy should be attached to<a name="line.309"></a>
+<FONT color="green">310</FONT>         *        the root parameter? If false, root is only used to create the<a name="line.310"></a>
+<FONT color="green">311</FONT>         *        correct subclass of LayoutParams for the root view in the XML.<a name="line.311"></a>
+<FONT color="green">312</FONT>         * @return The root View of the inflated hierarchy. If root was supplied and<a name="line.312"></a>
+<FONT color="green">313</FONT>         *         attachToRoot is true, this is root; otherwise it is the root of<a name="line.313"></a>
+<FONT color="green">314</FONT>         *         the inflated XML file.<a name="line.314"></a>
+<FONT color="green">315</FONT>         */<a name="line.315"></a>
+<FONT color="green">316</FONT>        public View inflate(int resource, ViewGroup root, boolean attachToRoot) {<a name="line.316"></a>
+<FONT color="green">317</FONT>            if (DEBUG) System.out.println("INFLATING from resource: " + resource);<a name="line.317"></a>
+<FONT color="green">318</FONT>            XmlResourceParser parser = getContext().getResources().getLayout(resource);<a name="line.318"></a>
+<FONT color="green">319</FONT>            try {<a name="line.319"></a>
+<FONT color="green">320</FONT>                return inflate(parser, root, attachToRoot);<a name="line.320"></a>
+<FONT color="green">321</FONT>            } finally {<a name="line.321"></a>
+<FONT color="green">322</FONT>                parser.close();<a name="line.322"></a>
+<FONT color="green">323</FONT>            }<a name="line.323"></a>
+<FONT color="green">324</FONT>        }<a name="line.324"></a>
+<FONT color="green">325</FONT>    <a name="line.325"></a>
+<FONT color="green">326</FONT>        /**<a name="line.326"></a>
+<FONT color="green">327</FONT>         * Inflate a new view hierarchy from the specified XML node. Throws<a name="line.327"></a>
+<FONT color="green">328</FONT>         * {@link InflateException} if there is an error.<a name="line.328"></a>
+<FONT color="green">329</FONT>         * &lt;p&gt;<a name="line.329"></a>
+<FONT color="green">330</FONT>         * &lt;em&gt;&lt;strong&gt;Important&lt;/strong&gt;&lt;/em&gt;&amp;nbsp;&amp;nbsp;&amp;nbsp;For performance<a name="line.330"></a>
+<FONT color="green">331</FONT>         * reasons, view inflation relies heavily on pre-processing of XML files<a name="line.331"></a>
+<FONT color="green">332</FONT>         * that is done at build time. Therefore, it is not currently possible to<a name="line.332"></a>
+<FONT color="green">333</FONT>         * use LayoutInflater with an XmlPullParser over a plain XML file at runtime.<a name="line.333"></a>
+<FONT color="green">334</FONT>         * <a name="line.334"></a>
+<FONT color="green">335</FONT>         * @param parser XML dom node containing the description of the view<a name="line.335"></a>
+<FONT color="green">336</FONT>         *        hierarchy.<a name="line.336"></a>
+<FONT color="green">337</FONT>         * @param root Optional view to be the parent of the generated hierarchy (if<a name="line.337"></a>
+<FONT color="green">338</FONT>         *        &lt;em&gt;attachToRoot&lt;/em&gt; is true), or else simply an object that<a name="line.338"></a>
+<FONT color="green">339</FONT>         *        provides a set of LayoutParams values for root of the returned<a name="line.339"></a>
+<FONT color="green">340</FONT>         *        hierarchy (if &lt;em&gt;attachToRoot&lt;/em&gt; is false.)<a name="line.340"></a>
+<FONT color="green">341</FONT>         * @param attachToRoot Whether the inflated hierarchy should be attached to<a name="line.341"></a>
+<FONT color="green">342</FONT>         *        the root parameter? If false, root is only used to create the<a name="line.342"></a>
+<FONT color="green">343</FONT>         *        correct subclass of LayoutParams for the root view in the XML.<a name="line.343"></a>
+<FONT color="green">344</FONT>         * @return The root View of the inflated hierarchy. If root was supplied and<a name="line.344"></a>
+<FONT color="green">345</FONT>         *         attachToRoot is true, this is root; otherwise it is the root of<a name="line.345"></a>
+<FONT color="green">346</FONT>         *         the inflated XML file.<a name="line.346"></a>
+<FONT color="green">347</FONT>         */<a name="line.347"></a>
+<FONT color="green">348</FONT>        public View inflate(XmlPullParser parser, ViewGroup root, boolean attachToRoot) {<a name="line.348"></a>
+<FONT color="green">349</FONT>            synchronized (mConstructorArgs) {<a name="line.349"></a>
+<FONT color="green">350</FONT>                final AttributeSet attrs = Xml.asAttributeSet(parser);<a name="line.350"></a>
+<FONT color="green">351</FONT>                mConstructorArgs[0] = mContext;<a name="line.351"></a>
+<FONT color="green">352</FONT>                View result = root;<a name="line.352"></a>
+<FONT color="green">353</FONT>    <a name="line.353"></a>
+<FONT color="green">354</FONT>                try {<a name="line.354"></a>
+<FONT color="green">355</FONT>                    // Look for the root node.<a name="line.355"></a>
+<FONT color="green">356</FONT>                    int type;<a name="line.356"></a>
+<FONT color="green">357</FONT>                    while ((type = parser.next()) != XmlPullParser.START_TAG &amp;&amp;<a name="line.357"></a>
+<FONT color="green">358</FONT>                            type != XmlPullParser.END_DOCUMENT) {<a name="line.358"></a>
+<FONT color="green">359</FONT>                        // Empty<a name="line.359"></a>
+<FONT color="green">360</FONT>                    }<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>                    if (type != XmlPullParser.START_TAG) {<a name="line.362"></a>
+<FONT color="green">363</FONT>                        throw new InflateException(parser.getPositionDescription()<a name="line.363"></a>
+<FONT color="green">364</FONT>                                + ": No start tag found!");<a name="line.364"></a>
+<FONT color="green">365</FONT>                    }<a name="line.365"></a>
+<FONT color="green">366</FONT>    <a name="line.366"></a>
+<FONT color="green">367</FONT>                    final String name = parser.getName();<a name="line.367"></a>
+<FONT color="green">368</FONT>                    <a name="line.368"></a>
+<FONT color="green">369</FONT>                    if (DEBUG) {<a name="line.369"></a>
+<FONT color="green">370</FONT>                        System.out.println("**************************");<a name="line.370"></a>
+<FONT color="green">371</FONT>                        System.out.println("Creating root view: "<a name="line.371"></a>
+<FONT color="green">372</FONT>                                + name);<a name="line.372"></a>
+<FONT color="green">373</FONT>                        System.out.println("**************************");<a name="line.373"></a>
+<FONT color="green">374</FONT>                    }<a name="line.374"></a>
+<FONT color="green">375</FONT>    <a name="line.375"></a>
+<FONT color="green">376</FONT>                    if (TAG_MERGE.equals(name)) {<a name="line.376"></a>
+<FONT color="green">377</FONT>                        if (root == null || !attachToRoot) {<a name="line.377"></a>
+<FONT color="green">378</FONT>                            throw new InflateException("&lt;merge /&gt; can be used only with a valid "<a name="line.378"></a>
+<FONT color="green">379</FONT>                                    + "ViewGroup root and attachToRoot=true");<a name="line.379"></a>
+<FONT color="green">380</FONT>                        }<a name="line.380"></a>
+<FONT color="green">381</FONT>    <a name="line.381"></a>
+<FONT color="green">382</FONT>                        rInflate(parser, root, attrs);<a name="line.382"></a>
+<FONT color="green">383</FONT>                    } else {<a name="line.383"></a>
+<FONT color="green">384</FONT>                        // Temp is the root view that was found in the xml<a name="line.384"></a>
+<FONT color="green">385</FONT>                        View temp = createViewFromTag(name, attrs);<a name="line.385"></a>
+<FONT color="green">386</FONT>    <a name="line.386"></a>
+<FONT color="green">387</FONT>                        ViewGroup.LayoutParams params = null;<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>                        if (root != null) {<a name="line.389"></a>
+<FONT color="green">390</FONT>                            if (DEBUG) {<a name="line.390"></a>
+<FONT color="green">391</FONT>                                System.out.println("Creating params from root: " +<a name="line.391"></a>
+<FONT color="green">392</FONT>                                        root);<a name="line.392"></a>
+<FONT color="green">393</FONT>                            }<a name="line.393"></a>
+<FONT color="green">394</FONT>                            // Create layout params that match root, if supplied<a name="line.394"></a>
+<FONT color="green">395</FONT>                            params = root.generateLayoutParams(attrs);<a name="line.395"></a>
+<FONT color="green">396</FONT>                            if (!attachToRoot) {<a name="line.396"></a>
+<FONT color="green">397</FONT>                                // Set the layout params for temp if we are not<a name="line.397"></a>
+<FONT color="green">398</FONT>                                // attaching. (If we are, we use addView, below)<a name="line.398"></a>
+<FONT color="green">399</FONT>                                temp.setLayoutParams(params);<a name="line.399"></a>
+<FONT color="green">400</FONT>                            }<a name="line.400"></a>
+<FONT color="green">401</FONT>                        }<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>                        if (DEBUG) {<a name="line.403"></a>
+<FONT color="green">404</FONT>                            System.out.println("-----&gt; start inflating children");<a name="line.404"></a>
+<FONT color="green">405</FONT>                        }<a name="line.405"></a>
+<FONT color="green">406</FONT>                        // Inflate all children under temp<a name="line.406"></a>
+<FONT color="green">407</FONT>                        rInflate(parser, temp, attrs);<a name="line.407"></a>
+<FONT color="green">408</FONT>                        if (DEBUG) {<a name="line.408"></a>
+<FONT color="green">409</FONT>                            System.out.println("-----&gt; done inflating children");<a name="line.409"></a>
+<FONT color="green">410</FONT>                        }<a name="line.410"></a>
+<FONT color="green">411</FONT>    <a name="line.411"></a>
+<FONT color="green">412</FONT>                        // We are supposed to attach all the views we found (int temp)<a name="line.412"></a>
+<FONT color="green">413</FONT>                        // to root. Do that now.<a name="line.413"></a>
+<FONT color="green">414</FONT>                        if (root != null &amp;&amp; attachToRoot) {<a name="line.414"></a>
+<FONT color="green">415</FONT>                            root.addView(temp, params);<a name="line.415"></a>
+<FONT color="green">416</FONT>                        }<a name="line.416"></a>
+<FONT color="green">417</FONT>    <a name="line.417"></a>
+<FONT color="green">418</FONT>                        // Decide whether to return the root that was passed in or the<a name="line.418"></a>
+<FONT color="green">419</FONT>                        // top view found in xml.<a name="line.419"></a>
+<FONT color="green">420</FONT>                        if (root == null || !attachToRoot) {<a name="line.420"></a>
+<FONT color="green">421</FONT>                            result = temp;<a name="line.421"></a>
+<FONT color="green">422</FONT>                        }<a name="line.422"></a>
+<FONT color="green">423</FONT>                    }<a name="line.423"></a>
+<FONT color="green">424</FONT>    <a name="line.424"></a>
+<FONT color="green">425</FONT>                } catch (XmlPullParserException e) {<a name="line.425"></a>
+<FONT color="green">426</FONT>                    InflateException ex = new InflateException(e.getMessage());<a name="line.426"></a>
+<FONT color="green">427</FONT>                    ex.initCause(e);<a name="line.427"></a>
+<FONT color="green">428</FONT>                    throw ex;<a name="line.428"></a>
+<FONT color="green">429</FONT>                } catch (IOException e) {<a name="line.429"></a>
+<FONT color="green">430</FONT>                    InflateException ex = new InflateException(<a name="line.430"></a>
+<FONT color="green">431</FONT>                            parser.getPositionDescription()<a name="line.431"></a>
+<FONT color="green">432</FONT>                            + ": " + e.getMessage());<a name="line.432"></a>
+<FONT color="green">433</FONT>                    ex.initCause(e);<a name="line.433"></a>
+<FONT color="green">434</FONT>                    throw ex;<a name="line.434"></a>
+<FONT color="green">435</FONT>                }<a name="line.435"></a>
+<FONT color="green">436</FONT>    <a name="line.436"></a>
+<FONT color="green">437</FONT>                return result;<a name="line.437"></a>
+<FONT color="green">438</FONT>            }<a name="line.438"></a>
+<FONT color="green">439</FONT>        }<a name="line.439"></a>
+<FONT color="green">440</FONT>    <a name="line.440"></a>
+<FONT color="green">441</FONT>        /**<a name="line.441"></a>
+<FONT color="green">442</FONT>         * Low-level function for instantiating a view by name. This attempts to<a name="line.442"></a>
+<FONT color="green">443</FONT>         * instantiate a view class of the given &lt;var&gt;name&lt;/var&gt; found in this<a name="line.443"></a>
+<FONT color="green">444</FONT>         * LayoutInflater's ClassLoader.<a name="line.444"></a>
+<FONT color="green">445</FONT>         * <a name="line.445"></a>
+<FONT color="green">446</FONT>         * &lt;p&gt;<a name="line.446"></a>
+<FONT color="green">447</FONT>         * There are two things that can happen in an error case: either the<a name="line.447"></a>
+<FONT color="green">448</FONT>         * exception describing the error will be thrown, or a null will be<a name="line.448"></a>
+<FONT color="green">449</FONT>         * returned. You must deal with both possibilities -- the former will happen<a name="line.449"></a>
+<FONT color="green">450</FONT>         * the first time createView() is called for a class of a particular name,<a name="line.450"></a>
+<FONT color="green">451</FONT>         * the latter every time there-after for that class name.<a name="line.451"></a>
+<FONT color="green">452</FONT>         * <a name="line.452"></a>
+<FONT color="green">453</FONT>         * @param name The full name of the class to be instantiated.<a name="line.453"></a>
+<FONT color="green">454</FONT>         * @param attrs The XML attributes supplied for this instance.<a name="line.454"></a>
+<FONT color="green">455</FONT>         * <a name="line.455"></a>
+<FONT color="green">456</FONT>         * @return View The newly instantied view, or null.<a name="line.456"></a>
+<FONT color="green">457</FONT>         */<a name="line.457"></a>
+<FONT color="green">458</FONT>        public final View createView(String name, String prefix, AttributeSet attrs)<a name="line.458"></a>
+<FONT color="green">459</FONT>                throws ClassNotFoundException, InflateException {<a name="line.459"></a>
+<FONT color="green">460</FONT>            Constructor constructor = sConstructorMap.get(name);<a name="line.460"></a>
+<FONT color="green">461</FONT>    <a name="line.461"></a>
+<FONT color="green">462</FONT>            try {<a name="line.462"></a>
+<FONT color="green">463</FONT>                if (constructor == null) {<a name="line.463"></a>
+<FONT color="green">464</FONT>                    // Class not found in the cache, see if it's real, and try to add it<a name="line.464"></a>
+<FONT color="green">465</FONT>                    Class clazz = mContext.getClassLoader().loadClass(<a name="line.465"></a>
+<FONT color="green">466</FONT>                            prefix != null ? (prefix + name) : name);<a name="line.466"></a>
+<FONT color="green">467</FONT>                    <a name="line.467"></a>
+<FONT color="green">468</FONT>                    if (mFilter != null &amp;&amp; clazz != null) {<a name="line.468"></a>
+<FONT color="green">469</FONT>                        boolean allowed = mFilter.onLoadClass(clazz);<a name="line.469"></a>
+<FONT color="green">470</FONT>                        if (!allowed) {<a name="line.470"></a>
+<FONT color="green">471</FONT>                            failNotAllowed(name, prefix, attrs);<a name="line.471"></a>
+<FONT color="green">472</FONT>                        }<a name="line.472"></a>
+<FONT color="green">473</FONT>                    }<a name="line.473"></a>
+<FONT color="green">474</FONT>                    constructor = clazz.getConstructor(mConstructorSignature);<a name="line.474"></a>
+<FONT color="green">475</FONT>                    sConstructorMap.put(name, constructor);<a name="line.475"></a>
+<FONT color="green">476</FONT>                } else {<a name="line.476"></a>
+<FONT color="green">477</FONT>                    // If we have a filter, apply it to cached constructor<a name="line.477"></a>
+<FONT color="green">478</FONT>                    if (mFilter != null) {<a name="line.478"></a>
+<FONT color="green">479</FONT>                        // Have we seen this name before?<a name="line.479"></a>
+<FONT color="green">480</FONT>                        Boolean allowedState = mFilterMap.get(name);<a name="line.480"></a>
+<FONT color="green">481</FONT>                        if (allowedState == null) {<a name="line.481"></a>
+<FONT color="green">482</FONT>                            // New class -- remember whether it is allowed<a name="line.482"></a>
+<FONT color="green">483</FONT>                            Class clazz = mContext.getClassLoader().loadClass(<a name="line.483"></a>
+<FONT color="green">484</FONT>                                    prefix != null ? (prefix + name) : name);<a name="line.484"></a>
+<FONT color="green">485</FONT>                            <a name="line.485"></a>
+<FONT color="green">486</FONT>                            boolean allowed = clazz != null &amp;&amp; mFilter.onLoadClass(clazz);<a name="line.486"></a>
+<FONT color="green">487</FONT>                            mFilterMap.put(name, allowed);<a name="line.487"></a>
+<FONT color="green">488</FONT>                            if (!allowed) {<a name="line.488"></a>
+<FONT color="green">489</FONT>                                failNotAllowed(name, prefix, attrs);<a name="line.489"></a>
+<FONT color="green">490</FONT>                            }<a name="line.490"></a>
+<FONT color="green">491</FONT>                        } else if (allowedState.equals(Boolean.FALSE)) {<a name="line.491"></a>
+<FONT color="green">492</FONT>                            failNotAllowed(name, prefix, attrs);<a name="line.492"></a>
+<FONT color="green">493</FONT>                        }<a name="line.493"></a>
+<FONT color="green">494</FONT>                    }<a name="line.494"></a>
+<FONT color="green">495</FONT>                }<a name="line.495"></a>
+<FONT color="green">496</FONT>    <a name="line.496"></a>
+<FONT color="green">497</FONT>                Object[] args = mConstructorArgs;<a name="line.497"></a>
+<FONT color="green">498</FONT>                args[1] = attrs;<a name="line.498"></a>
+<FONT color="green">499</FONT>                return (View) constructor.newInstance(args);<a name="line.499"></a>
+<FONT color="green">500</FONT>    <a name="line.500"></a>
+<FONT color="green">501</FONT>            } catch (NoSuchMethodException e) {<a name="line.501"></a>
+<FONT color="green">502</FONT>                InflateException ie = new InflateException(attrs.getPositionDescription()<a name="line.502"></a>
+<FONT color="green">503</FONT>                        + ": Error inflating class "<a name="line.503"></a>
+<FONT color="green">504</FONT>                        + (prefix != null ? (prefix + name) : name));<a name="line.504"></a>
+<FONT color="green">505</FONT>                ie.initCause(e);<a name="line.505"></a>
+<FONT color="green">506</FONT>                throw ie;<a name="line.506"></a>
+<FONT color="green">507</FONT>    <a name="line.507"></a>
+<FONT color="green">508</FONT>            } catch (ClassNotFoundException e) {<a name="line.508"></a>
+<FONT color="green">509</FONT>                // If loadClass fails, we should propagate the exception.<a name="line.509"></a>
+<FONT color="green">510</FONT>                throw e;<a name="line.510"></a>
+<FONT color="green">511</FONT>            } catch (Exception e) {<a name="line.511"></a>
+<FONT color="green">512</FONT>                InflateException ie = new InflateException(attrs.getPositionDescription()<a name="line.512"></a>
+<FONT color="green">513</FONT>                        + ": Error inflating class "<a name="line.513"></a>
+<FONT color="green">514</FONT>                        + (constructor == null ? "&lt;unknown&gt;" : constructor.getClass().getName()));<a name="line.514"></a>
+<FONT color="green">515</FONT>                ie.initCause(e);<a name="line.515"></a>
+<FONT color="green">516</FONT>                throw ie;<a name="line.516"></a>
+<FONT color="green">517</FONT>            }<a name="line.517"></a>
+<FONT color="green">518</FONT>        }<a name="line.518"></a>
+<FONT color="green">519</FONT>    <a name="line.519"></a>
+<FONT color="green">520</FONT>        /**<a name="line.520"></a>
+<FONT color="green">521</FONT>         * Throw an excpetion because the specified class is not allowed to be inflated.<a name="line.521"></a>
+<FONT color="green">522</FONT>         */<a name="line.522"></a>
+<FONT color="green">523</FONT>        private void failNotAllowed(String name, String prefix, AttributeSet attrs) {<a name="line.523"></a>
+<FONT color="green">524</FONT>            InflateException ie = new InflateException(attrs.getPositionDescription()<a name="line.524"></a>
+<FONT color="green">525</FONT>                    + ": Class not allowed to be inflated "<a name="line.525"></a>
+<FONT color="green">526</FONT>                    + (prefix != null ? (prefix + name) : name));<a name="line.526"></a>
+<FONT color="green">527</FONT>            throw ie;<a name="line.527"></a>
+<FONT color="green">528</FONT>        }<a name="line.528"></a>
+<FONT color="green">529</FONT>    <a name="line.529"></a>
+<FONT color="green">530</FONT>        /**<a name="line.530"></a>
+<FONT color="green">531</FONT>         * This routine is responsible for creating the correct subclass of View<a name="line.531"></a>
+<FONT color="green">532</FONT>         * given the xml element name. Override it to handle custom view objects. If<a name="line.532"></a>
+<FONT color="green">533</FONT>         * you override this in your subclass be sure to call through to<a name="line.533"></a>
+<FONT color="green">534</FONT>         * super.onCreateView(name) for names you do not recognize.<a name="line.534"></a>
+<FONT color="green">535</FONT>         * <a name="line.535"></a>
+<FONT color="green">536</FONT>         * @param name The fully qualified class name of the View to be create.<a name="line.536"></a>
+<FONT color="green">537</FONT>         * @param attrs An AttributeSet of attributes to apply to the View.<a name="line.537"></a>
+<FONT color="green">538</FONT>         * <a name="line.538"></a>
+<FONT color="green">539</FONT>         * @return View The View created.<a name="line.539"></a>
+<FONT color="green">540</FONT>         */<a name="line.540"></a>
+<FONT color="green">541</FONT>        protected View onCreateView(String name, AttributeSet attrs)<a name="line.541"></a>
+<FONT color="green">542</FONT>                throws ClassNotFoundException {<a name="line.542"></a>
+<FONT color="green">543</FONT>            return createView(name, "android.view.", attrs);<a name="line.543"></a>
+<FONT color="green">544</FONT>        }<a name="line.544"></a>
+<FONT color="green">545</FONT>    <a name="line.545"></a>
+<FONT color="green">546</FONT>        /*<a name="line.546"></a>
+<FONT color="green">547</FONT>         * default visibility so the BridgeInflater can override it.<a name="line.547"></a>
+<FONT color="green">548</FONT>         */<a name="line.548"></a>
+<FONT color="green">549</FONT>        View createViewFromTag(String name, AttributeSet attrs) {<a name="line.549"></a>
+<FONT color="green">550</FONT>            if (name.equals("view")) {<a name="line.550"></a>
+<FONT color="green">551</FONT>                name = attrs.getAttributeValue(null, "class");<a name="line.551"></a>
+<FONT color="green">552</FONT>            }<a name="line.552"></a>
+<FONT color="green">553</FONT>    <a name="line.553"></a>
+<FONT color="green">554</FONT>            if (DEBUG) System.out.println("******** Creating view: " + name);<a name="line.554"></a>
+<FONT color="green">555</FONT>    <a name="line.555"></a>
+<FONT color="green">556</FONT>            try {<a name="line.556"></a>
+<FONT color="green">557</FONT>                View view = (mFactory == null) ? null : mFactory.onCreateView(name,<a name="line.557"></a>
+<FONT color="green">558</FONT>                        mContext, attrs);<a name="line.558"></a>
+<FONT color="green">559</FONT>    <a name="line.559"></a>
+<FONT color="green">560</FONT>                if (view == null) {<a name="line.560"></a>
+<FONT color="green">561</FONT>                    if (-1 == name.indexOf('.')) {<a name="line.561"></a>
+<FONT color="green">562</FONT>                        view = onCreateView(name, attrs);<a name="line.562"></a>
+<FONT color="green">563</FONT>                    } else {<a name="line.563"></a>
+<FONT color="green">564</FONT>                        view = createView(name, null, attrs);<a name="line.564"></a>
+<FONT color="green">565</FONT>                    }<a name="line.565"></a>
+<FONT color="green">566</FONT>                }<a name="line.566"></a>
+<FONT color="green">567</FONT>    <a name="line.567"></a>
+<FONT color="green">568</FONT>                if (DEBUG) System.out.println("Created view is: " + view);<a name="line.568"></a>
+<FONT color="green">569</FONT>                return view;<a name="line.569"></a>
+<FONT color="green">570</FONT>    <a name="line.570"></a>
+<FONT color="green">571</FONT>            } catch (InflateException e) {<a name="line.571"></a>
+<FONT color="green">572</FONT>                throw e;<a name="line.572"></a>
+<FONT color="green">573</FONT>    <a name="line.573"></a>
+<FONT color="green">574</FONT>            } catch (ClassNotFoundException e) {<a name="line.574"></a>
+<FONT color="green">575</FONT>                InflateException ie = new InflateException(attrs.getPositionDescription()<a name="line.575"></a>
+<FONT color="green">576</FONT>                        + ": Error inflating class " + name);<a name="line.576"></a>
+<FONT color="green">577</FONT>                ie.initCause(e);<a name="line.577"></a>
+<FONT color="green">578</FONT>                throw ie;<a name="line.578"></a>
+<FONT color="green">579</FONT>    <a name="line.579"></a>
+<FONT color="green">580</FONT>            } catch (Exception e) {<a name="line.580"></a>
+<FONT color="green">581</FONT>                InflateException ie = new InflateException(attrs.getPositionDescription()<a name="line.581"></a>
+<FONT color="green">582</FONT>                        + ": Error inflating class " + name);<a name="line.582"></a>
+<FONT color="green">583</FONT>                ie.initCause(e);<a name="line.583"></a>
+<FONT color="green">584</FONT>                throw ie;<a name="line.584"></a>
+<FONT color="green">585</FONT>            }<a name="line.585"></a>
+<FONT color="green">586</FONT>        }<a name="line.586"></a>
+<FONT color="green">587</FONT>    <a name="line.587"></a>
+<FONT color="green">588</FONT>        /**<a name="line.588"></a>
+<FONT color="green">589</FONT>         * Recursive method used to descend down the xml hierarchy and instantiate<a name="line.589"></a>
+<FONT color="green">590</FONT>         * views, instantiate their children, and then call onFinishInflate().<a name="line.590"></a>
+<FONT color="green">591</FONT>         */<a name="line.591"></a>
+<FONT color="green">592</FONT>        private void rInflate(XmlPullParser parser, View parent, final AttributeSet attrs)<a name="line.592"></a>
+<FONT color="green">593</FONT>                throws XmlPullParserException, IOException {<a name="line.593"></a>
+<FONT color="green">594</FONT>    <a name="line.594"></a>
+<FONT color="green">595</FONT>            final int depth = parser.getDepth();<a name="line.595"></a>
+<FONT color="green">596</FONT>            int type;<a name="line.596"></a>
+<FONT color="green">597</FONT>    <a name="line.597"></a>
+<FONT color="green">598</FONT>            while (((type = parser.next()) != XmlPullParser.END_TAG ||<a name="line.598"></a>
+<FONT color="green">599</FONT>                    parser.getDepth() &gt; depth) &amp;&amp; type != XmlPullParser.END_DOCUMENT) {<a name="line.599"></a>
+<FONT color="green">600</FONT>    <a name="line.600"></a>
+<FONT color="green">601</FONT>                if (type != XmlPullParser.START_TAG) {<a name="line.601"></a>
+<FONT color="green">602</FONT>                    continue;<a name="line.602"></a>
+<FONT color="green">603</FONT>                }<a name="line.603"></a>
+<FONT color="green">604</FONT>    <a name="line.604"></a>
+<FONT color="green">605</FONT>                final String name = parser.getName();<a name="line.605"></a>
+<FONT color="green">606</FONT>                <a name="line.606"></a>
+<FONT color="green">607</FONT>                if (TAG_REQUEST_FOCUS.equals(name)) {<a name="line.607"></a>
+<FONT color="green">608</FONT>                    parseRequestFocus(parser, parent);<a name="line.608"></a>
+<FONT color="green">609</FONT>                } else if (TAG_INCLUDE.equals(name)) {<a name="line.609"></a>
+<FONT color="green">610</FONT>                    if (parser.getDepth() == 0) {<a name="line.610"></a>
+<FONT color="green">611</FONT>                        throw new InflateException("&lt;include /&gt; cannot be the root element");<a name="line.611"></a>
+<FONT color="green">612</FONT>                    }<a name="line.612"></a>
+<FONT color="green">613</FONT>                    parseInclude(parser, parent, attrs);<a name="line.613"></a>
+<FONT color="green">614</FONT>                } else if (TAG_MERGE.equals(name)) {<a name="line.614"></a>
+<FONT color="green">615</FONT>                    throw new InflateException("&lt;merge /&gt; must be the root element");<a name="line.615"></a>
+<FONT color="green">616</FONT>                } else {<a name="line.616"></a>
+<FONT color="green">617</FONT>                    final View view = createViewFromTag(name, attrs);<a name="line.617"></a>
+<FONT color="green">618</FONT>                    final ViewGroup viewGroup = (ViewGroup) parent;<a name="line.618"></a>
+<FONT color="green">619</FONT>                    final ViewGroup.LayoutParams params = viewGroup.generateLayoutParams(attrs);<a name="line.619"></a>
+<FONT color="green">620</FONT>                    rInflate(parser, view, attrs);<a name="line.620"></a>
+<FONT color="green">621</FONT>                    viewGroup.addView(view, params);<a name="line.621"></a>
+<FONT color="green">622</FONT>                }<a name="line.622"></a>
+<FONT color="green">623</FONT>            }<a name="line.623"></a>
+<FONT color="green">624</FONT>    <a name="line.624"></a>
+<FONT color="green">625</FONT>            parent.onFinishInflate();<a name="line.625"></a>
+<FONT color="green">626</FONT>        }<a name="line.626"></a>
+<FONT color="green">627</FONT>    <a name="line.627"></a>
+<FONT color="green">628</FONT>        private void parseRequestFocus(XmlPullParser parser, View parent)<a name="line.628"></a>
+<FONT color="green">629</FONT>                throws XmlPullParserException, IOException {<a name="line.629"></a>
+<FONT color="green">630</FONT>            int type;<a name="line.630"></a>
+<FONT color="green">631</FONT>            parent.requestFocus();<a name="line.631"></a>
+<FONT color="green">632</FONT>            final int currentDepth = parser.getDepth();<a name="line.632"></a>
+<FONT color="green">633</FONT>            while (((type = parser.next()) != XmlPullParser.END_TAG ||<a name="line.633"></a>
+<FONT color="green">634</FONT>                    parser.getDepth() &gt; currentDepth) &amp;&amp; type != XmlPullParser.END_DOCUMENT) {<a name="line.634"></a>
+<FONT color="green">635</FONT>                // Empty<a name="line.635"></a>
+<FONT color="green">636</FONT>            }<a name="line.636"></a>
+<FONT color="green">637</FONT>        }<a name="line.637"></a>
+<FONT color="green">638</FONT>    <a name="line.638"></a>
+<FONT color="green">639</FONT>        private void parseInclude(XmlPullParser parser, View parent, AttributeSet attrs)<a name="line.639"></a>
+<FONT color="green">640</FONT>                throws XmlPullParserException, IOException {<a name="line.640"></a>
+<FONT color="green">641</FONT>    <a name="line.641"></a>
+<FONT color="green">642</FONT>            int type;<a name="line.642"></a>
+<FONT color="green">643</FONT>    <a name="line.643"></a>
+<FONT color="green">644</FONT>            if (parent instanceof ViewGroup) {<a name="line.644"></a>
+<FONT color="green">645</FONT>                final int layout = attrs.getAttributeResourceValue(null, "layout", 0);<a name="line.645"></a>
+<FONT color="green">646</FONT>                if (layout == 0) {<a name="line.646"></a>
+<FONT color="green">647</FONT>                    final String value = attrs.getAttributeValue(null, "layout");<a name="line.647"></a>
+<FONT color="green">648</FONT>                    if (value == null) {<a name="line.648"></a>
+<FONT color="green">649</FONT>                        throw new InflateException("You must specifiy a layout in the"<a name="line.649"></a>
+<FONT color="green">650</FONT>                                + " include tag: &lt;include layout=\"@layout/layoutID\" /&gt;");<a name="line.650"></a>
+<FONT color="green">651</FONT>                    } else {<a name="line.651"></a>
+<FONT color="green">652</FONT>                        throw new InflateException("You must specifiy a valid layout "<a name="line.652"></a>
+<FONT color="green">653</FONT>                                + "reference. The layout ID " + value + " is not valid.");<a name="line.653"></a>
+<FONT color="green">654</FONT>                    }<a name="line.654"></a>
+<FONT color="green">655</FONT>                } else {<a name="line.655"></a>
+<FONT color="green">656</FONT>                    final XmlResourceParser childParser =<a name="line.656"></a>
+<FONT color="green">657</FONT>                            getContext().getResources().getLayout(layout);<a name="line.657"></a>
+<FONT color="green">658</FONT>    <a name="line.658"></a>
+<FONT color="green">659</FONT>                    try {<a name="line.659"></a>
+<FONT color="green">660</FONT>                        final AttributeSet childAttrs = Xml.asAttributeSet(childParser);<a name="line.660"></a>
+<FONT color="green">661</FONT>    <a name="line.661"></a>
+<FONT color="green">662</FONT>                        while ((type = childParser.next()) != XmlPullParser.START_TAG &amp;&amp;<a name="line.662"></a>
+<FONT color="green">663</FONT>                                type != XmlPullParser.END_DOCUMENT) {<a name="line.663"></a>
+<FONT color="green">664</FONT>                            // Empty.<a name="line.664"></a>
+<FONT color="green">665</FONT>                        }<a name="line.665"></a>
+<FONT color="green">666</FONT>    <a name="line.666"></a>
+<FONT color="green">667</FONT>                        if (type != XmlPullParser.START_TAG) {<a name="line.667"></a>
+<FONT color="green">668</FONT>                            throw new InflateException(childParser.getPositionDescription() +<a name="line.668"></a>
+<FONT color="green">669</FONT>                                    ": No start tag found!");<a name="line.669"></a>
+<FONT color="green">670</FONT>                        }<a name="line.670"></a>
+<FONT color="green">671</FONT>    <a name="line.671"></a>
+<FONT color="green">672</FONT>                        final String childName = childParser.getName();<a name="line.672"></a>
+<FONT color="green">673</FONT>    <a name="line.673"></a>
+<FONT color="green">674</FONT>                        if (TAG_MERGE.equals(childName)) {<a name="line.674"></a>
+<FONT color="green">675</FONT>                            // Inflate all children.<a name="line.675"></a>
+<FONT color="green">676</FONT>                            rInflate(childParser, parent, childAttrs);<a name="line.676"></a>
+<FONT color="green">677</FONT>                        } else {<a name="line.677"></a>
+<FONT color="green">678</FONT>                            final View view = createViewFromTag(childName, childAttrs);<a name="line.678"></a>
+<FONT color="green">679</FONT>                            final ViewGroup group = (ViewGroup) parent;<a name="line.679"></a>
+<FONT color="green">680</FONT>    <a name="line.680"></a>
+<FONT color="green">681</FONT>                            // We try to load the layout params set in the &lt;include /&gt; tag. If<a name="line.681"></a>
+<FONT color="green">682</FONT>                            // they don't exist, we will rely on the layout params set in the<a name="line.682"></a>
+<FONT color="green">683</FONT>                            // included XML file.<a name="line.683"></a>
+<FONT color="green">684</FONT>                            // During a layoutparams generation, a runtime exception is thrown<a name="line.684"></a>
+<FONT color="green">685</FONT>                            // if either layout_width or layout_height is missing. We catch<a name="line.685"></a>
+<FONT color="green">686</FONT>                            // this exception and set localParams accordingly: true means we<a name="line.686"></a>
+<FONT color="green">687</FONT>                            // successfully loaded layout params from the &lt;include /&gt; tag,<a name="line.687"></a>
+<FONT color="green">688</FONT>                            // false means we need to rely on the included layout params.<a name="line.688"></a>
+<FONT color="green">689</FONT>                            ViewGroup.LayoutParams params = null;<a name="line.689"></a>
+<FONT color="green">690</FONT>                            try {<a name="line.690"></a>
+<FONT color="green">691</FONT>                                params = group.generateLayoutParams(attrs);<a name="line.691"></a>
+<FONT color="green">692</FONT>                            } catch (RuntimeException e) {<a name="line.692"></a>
+<FONT color="green">693</FONT>                                params = group.generateLayoutParams(childAttrs);<a name="line.693"></a>
+<FONT color="green">694</FONT>                            } finally {<a name="line.694"></a>
+<FONT color="green">695</FONT>                                if (params != null) {<a name="line.695"></a>
+<FONT color="green">696</FONT>                                    view.setLayoutParams(params);<a name="line.696"></a>
+<FONT color="green">697</FONT>                                }<a name="line.697"></a>
+<FONT color="green">698</FONT>                            }<a name="line.698"></a>
+<FONT color="green">699</FONT>    <a name="line.699"></a>
+<FONT color="green">700</FONT>                            // Inflate all children.<a name="line.700"></a>
+<FONT color="green">701</FONT>                            rInflate(childParser, view, childAttrs);<a name="line.701"></a>
+<FONT color="green">702</FONT>    <a name="line.702"></a>
+<FONT color="green">703</FONT>                            // Attempt to override the included layout's android:id with the<a name="line.703"></a>
+<FONT color="green">704</FONT>                            // one set on the &lt;include /&gt; tag itself.<a name="line.704"></a>
+<FONT color="green">705</FONT>                            TypedArray a = mContext.obtainStyledAttributes(attrs,<a name="line.705"></a>
+<FONT color="green">706</FONT>                                com.android.internal.R.styleable.View, 0, 0);<a name="line.706"></a>
+<FONT color="green">707</FONT>                            int id = a.getResourceId(com.android.internal.R.styleable.View_id, View.NO_ID);<a name="line.707"></a>
+<FONT color="green">708</FONT>                            // While we're at it, let's try to override android:visibility.<a name="line.708"></a>
+<FONT color="green">709</FONT>                            int visibility = a.getInt(com.android.internal.R.styleable.View_visibility, -1);<a name="line.709"></a>
+<FONT color="green">710</FONT>                            a.recycle();<a name="line.710"></a>
+<FONT color="green">711</FONT>    <a name="line.711"></a>
+<FONT color="green">712</FONT>                            if (id != View.NO_ID) {<a name="line.712"></a>
+<FONT color="green">713</FONT>                                view.setId(id);<a name="line.713"></a>
+<FONT color="green">714</FONT>                            }<a name="line.714"></a>
+<FONT color="green">715</FONT>    <a name="line.715"></a>
+<FONT color="green">716</FONT>                            switch (visibility) {<a name="line.716"></a>
+<FONT color="green">717</FONT>                                case 0:<a name="line.717"></a>
+<FONT color="green">718</FONT>                                    view.setVisibility(View.VISIBLE);<a name="line.718"></a>
+<FONT color="green">719</FONT>                                    break;<a name="line.719"></a>
+<FONT color="green">720</FONT>                                case 1:<a name="line.720"></a>
+<FONT color="green">721</FONT>                                    view.setVisibility(View.INVISIBLE);<a name="line.721"></a>
+<FONT color="green">722</FONT>                                    break;<a name="line.722"></a>
+<FONT color="green">723</FONT>                                case 2:<a name="line.723"></a>
+<FONT color="green">724</FONT>                                    view.setVisibility(View.GONE);<a name="line.724"></a>
+<FONT color="green">725</FONT>                                    break;<a name="line.725"></a>
+<FONT color="green">726</FONT>                            }<a name="line.726"></a>
+<FONT color="green">727</FONT>    <a name="line.727"></a>
+<FONT color="green">728</FONT>                            group.addView(view);<a name="line.728"></a>
+<FONT color="green">729</FONT>                        }<a name="line.729"></a>
+<FONT color="green">730</FONT>                    } finally {<a name="line.730"></a>
+<FONT color="green">731</FONT>                        childParser.close();<a name="line.731"></a>
+<FONT color="green">732</FONT>                    }<a name="line.732"></a>
+<FONT color="green">733</FONT>                }<a name="line.733"></a>
+<FONT color="green">734</FONT>            } else {<a name="line.734"></a>
+<FONT color="green">735</FONT>                throw new InflateException("&lt;include /&gt; can only be used inside of a ViewGroup");<a name="line.735"></a>
+<FONT color="green">736</FONT>            }<a name="line.736"></a>
+<FONT color="green">737</FONT>    <a name="line.737"></a>
+<FONT color="green">738</FONT>            final int currentDepth = parser.getDepth();<a name="line.738"></a>
+<FONT color="green">739</FONT>            while (((type = parser.next()) != XmlPullParser.END_TAG ||<a name="line.739"></a>
+<FONT color="green">740</FONT>                    parser.getDepth() &gt; currentDepth) &amp;&amp; type != XmlPullParser.END_DOCUMENT) {<a name="line.740"></a>
+<FONT color="green">741</FONT>                // Empty<a name="line.741"></a>
+<FONT color="green">742</FONT>            }<a name="line.742"></a>
+<FONT color="green">743</FONT>        }    <a name="line.743"></a>
+<FONT color="green">744</FONT>    }<a name="line.744"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

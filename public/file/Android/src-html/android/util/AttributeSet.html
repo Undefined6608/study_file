@@ -1,0 +1,335 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.util;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    /**<a name="line.20"></a>
+<FONT color="green">021</FONT>     * A collection of attributes, as found associated with a tag in an XML<a name="line.21"></a>
+<FONT color="green">022</FONT>     * document.  Often you will not want to use this interface directly, instead<a name="line.22"></a>
+<FONT color="green">023</FONT>     * passing it to {@link android.content.res.Resources.Theme#obtainStyledAttributes(AttributeSet, int[], int, int)<a name="line.23"></a>
+<FONT color="green">024</FONT>     * Resources.Theme.obtainStyledAttributes()}<a name="line.24"></a>
+<FONT color="green">025</FONT>     * which will take care of parsing the attributes for you.  In particular,<a name="line.25"></a>
+<FONT color="green">026</FONT>     * the Resources API will convert resource references (attribute values such as<a name="line.26"></a>
+<FONT color="green">027</FONT>     * "@string/my_label" in the original XML) to the desired type<a name="line.27"></a>
+<FONT color="green">028</FONT>     * for you; if you use AttributeSet directly then you will need to manually<a name="line.28"></a>
+<FONT color="green">029</FONT>     * check for resource references<a name="line.29"></a>
+<FONT color="green">030</FONT>     * (with {@link #getAttributeResourceValue(int, int)}) and do the resource<a name="line.30"></a>
+<FONT color="green">031</FONT>     * lookup yourself if needed.  Direct use of AttributeSet also prevents the<a name="line.31"></a>
+<FONT color="green">032</FONT>     * application of themes and styles when retrieving attribute values.<a name="line.32"></a>
+<FONT color="green">033</FONT>     * <a name="line.33"></a>
+<FONT color="green">034</FONT>     * &lt;p&gt;This interface provides an efficient mechanism for retrieving<a name="line.34"></a>
+<FONT color="green">035</FONT>     * data from compiled XML files, which can be retrieved for a particular<a name="line.35"></a>
+<FONT color="green">036</FONT>     * XmlPullParser through {@link Xml#asAttributeSet<a name="line.36"></a>
+<FONT color="green">037</FONT>     * Xml.getAttributeSet()}.  Normally this will return an implementation<a name="line.37"></a>
+<FONT color="green">038</FONT>     * of the interface that works on top of a generic XmlPullParser, however it<a name="line.38"></a>
+<FONT color="green">039</FONT>     * is more useful in conjunction with compiled XML resources:<a name="line.39"></a>
+<FONT color="green">040</FONT>     * <a name="line.40"></a>
+<FONT color="green">041</FONT>     * &lt;pre&gt;<a name="line.41"></a>
+<FONT color="green">042</FONT>     * XmlPullParser parser = resources.getXml(myResouce);<a name="line.42"></a>
+<FONT color="green">043</FONT>     * AttributeSet attributes = Xml.getAttributeSet(parser);&lt;/pre&gt;<a name="line.43"></a>
+<FONT color="green">044</FONT>     * <a name="line.44"></a>
+<FONT color="green">045</FONT>     * &lt;p&gt;The implementation returned here, unlike using<a name="line.45"></a>
+<FONT color="green">046</FONT>     * the implementation on top of a generic XmlPullParser,<a name="line.46"></a>
+<FONT color="green">047</FONT>     * is highly optimized by retrieving pre-computed information that was<a name="line.47"></a>
+<FONT color="green">048</FONT>     * generated by aapt when compiling your resources.  For example,<a name="line.48"></a>
+<FONT color="green">049</FONT>     * the {@link #getAttributeFloatValue(int, float)} method returns a floating<a name="line.49"></a>
+<FONT color="green">050</FONT>     * point number previous stored in the compiled resource instead of parsing<a name="line.50"></a>
+<FONT color="green">051</FONT>     * at runtime the string originally in the XML file.<a name="line.51"></a>
+<FONT color="green">052</FONT>     * <a name="line.52"></a>
+<FONT color="green">053</FONT>     * &lt;p&gt;This interface also provides additional information contained in the<a name="line.53"></a>
+<FONT color="green">054</FONT>     * compiled XML resource that is not available in a normal XML file, such<a name="line.54"></a>
+<FONT color="green">055</FONT>     * as {@link #getAttributeNameResource(int)} which returns the resource<a name="line.55"></a>
+<FONT color="green">056</FONT>     * identifier associated with a particular XML attribute name.<a name="line.56"></a>
+<FONT color="green">057</FONT>     */<a name="line.57"></a>
+<FONT color="green">058</FONT>    public interface AttributeSet {<a name="line.58"></a>
+<FONT color="green">059</FONT>        public int getAttributeCount();<a name="line.59"></a>
+<FONT color="green">060</FONT>        public String getAttributeName(int index);<a name="line.60"></a>
+<FONT color="green">061</FONT>        public String getAttributeValue(int index);<a name="line.61"></a>
+<FONT color="green">062</FONT>        public String getAttributeValue(String namespace, String name);<a name="line.62"></a>
+<FONT color="green">063</FONT>        public String getPositionDescription();<a name="line.63"></a>
+<FONT color="green">064</FONT>    <a name="line.64"></a>
+<FONT color="green">065</FONT>        /**<a name="line.65"></a>
+<FONT color="green">066</FONT>         * Return the resource ID associated with the given attribute name.  This<a name="line.66"></a>
+<FONT color="green">067</FONT>         * will be the identifier for an attribute resource, which can be used by<a name="line.67"></a>
+<FONT color="green">068</FONT>         * styles.  Returns 0 if there is no resource associated with this<a name="line.68"></a>
+<FONT color="green">069</FONT>         * attribute.<a name="line.69"></a>
+<FONT color="green">070</FONT>         * <a name="line.70"></a>
+<FONT color="green">071</FONT>         * &lt;p&gt;Note that this is different than {@link #getAttributeResourceValue}<a name="line.71"></a>
+<FONT color="green">072</FONT>         * in that it returns a resource identifier for the attribute name; the<a name="line.72"></a>
+<FONT color="green">073</FONT>         * other method returns this attribute's value as a resource identifier.<a name="line.73"></a>
+<FONT color="green">074</FONT>         * <a name="line.74"></a>
+<FONT color="green">075</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.75"></a>
+<FONT color="green">076</FONT>         * <a name="line.76"></a>
+<FONT color="green">077</FONT>         * @return The resource identifier, 0 if none.<a name="line.77"></a>
+<FONT color="green">078</FONT>         */<a name="line.78"></a>
+<FONT color="green">079</FONT>        public int getAttributeNameResource(int index);<a name="line.79"></a>
+<FONT color="green">080</FONT>    <a name="line.80"></a>
+<FONT color="green">081</FONT>        /**<a name="line.81"></a>
+<FONT color="green">082</FONT>         * Return the index of the value of 'attribute' in the list 'options'.<a name="line.82"></a>
+<FONT color="green">083</FONT>         * <a name="line.83"></a>
+<FONT color="green">084</FONT>         * @param attribute Name of attribute to retrieve.<a name="line.84"></a>
+<FONT color="green">085</FONT>         * @param options List of strings whose values we are checking against.<a name="line.85"></a>
+<FONT color="green">086</FONT>         * @param defaultValue Value returned if attribute doesn't exist or no<a name="line.86"></a>
+<FONT color="green">087</FONT>         *                     match is found.<a name="line.87"></a>
+<FONT color="green">088</FONT>         * <a name="line.88"></a>
+<FONT color="green">089</FONT>         * @return Index in to 'options' or defaultValue.<a name="line.89"></a>
+<FONT color="green">090</FONT>         */<a name="line.90"></a>
+<FONT color="green">091</FONT>        public int getAttributeListValue(String namespace, String attribute,<a name="line.91"></a>
+<FONT color="green">092</FONT>                                         String[] options, int defaultValue);<a name="line.92"></a>
+<FONT color="green">093</FONT>    <a name="line.93"></a>
+<FONT color="green">094</FONT>        /**<a name="line.94"></a>
+<FONT color="green">095</FONT>         * Return the boolean value of 'attribute'.<a name="line.95"></a>
+<FONT color="green">096</FONT>         * <a name="line.96"></a>
+<FONT color="green">097</FONT>         * @param attribute The attribute to retrieve.<a name="line.97"></a>
+<FONT color="green">098</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.98"></a>
+<FONT color="green">099</FONT>         * <a name="line.99"></a>
+<FONT color="green">100</FONT>         * @return Resulting value.<a name="line.100"></a>
+<FONT color="green">101</FONT>         */<a name="line.101"></a>
+<FONT color="green">102</FONT>        public boolean getAttributeBooleanValue(String namespace, String attribute,<a name="line.102"></a>
+<FONT color="green">103</FONT>                                                boolean defaultValue);<a name="line.103"></a>
+<FONT color="green">104</FONT>    <a name="line.104"></a>
+<FONT color="green">105</FONT>        /**<a name="line.105"></a>
+<FONT color="green">106</FONT>         * Return the value of 'attribute' as a resource identifier.<a name="line.106"></a>
+<FONT color="green">107</FONT>         * <a name="line.107"></a>
+<FONT color="green">108</FONT>         * &lt;p&gt;Note that this is different than {@link #getAttributeNameResource}<a name="line.108"></a>
+<FONT color="green">109</FONT>         * in that it returns a the value contained in this attribute as a<a name="line.109"></a>
+<FONT color="green">110</FONT>         * resource identifier (i.e., a value originally of the form<a name="line.110"></a>
+<FONT color="green">111</FONT>         * "@package:type/resource"); the other method returns a resource<a name="line.111"></a>
+<FONT color="green">112</FONT>         * identifier that identifies the name of the attribute.<a name="line.112"></a>
+<FONT color="green">113</FONT>         * <a name="line.113"></a>
+<FONT color="green">114</FONT>         * @param attribute The attribute to retrieve.<a name="line.114"></a>
+<FONT color="green">115</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.115"></a>
+<FONT color="green">116</FONT>         * <a name="line.116"></a>
+<FONT color="green">117</FONT>         * @return Resulting value.<a name="line.117"></a>
+<FONT color="green">118</FONT>         */<a name="line.118"></a>
+<FONT color="green">119</FONT>        public int getAttributeResourceValue(String namespace, String attribute,<a name="line.119"></a>
+<FONT color="green">120</FONT>                                             int defaultValue);<a name="line.120"></a>
+<FONT color="green">121</FONT>    <a name="line.121"></a>
+<FONT color="green">122</FONT>        /**<a name="line.122"></a>
+<FONT color="green">123</FONT>         * Return the integer value of 'attribute'.<a name="line.123"></a>
+<FONT color="green">124</FONT>         * <a name="line.124"></a>
+<FONT color="green">125</FONT>         * @param attribute The attribute to retrieve.<a name="line.125"></a>
+<FONT color="green">126</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.126"></a>
+<FONT color="green">127</FONT>         * <a name="line.127"></a>
+<FONT color="green">128</FONT>         * @return Resulting value.<a name="line.128"></a>
+<FONT color="green">129</FONT>         */<a name="line.129"></a>
+<FONT color="green">130</FONT>        public int getAttributeIntValue(String namespace, String attribute,<a name="line.130"></a>
+<FONT color="green">131</FONT>                                        int defaultValue);<a name="line.131"></a>
+<FONT color="green">132</FONT>    <a name="line.132"></a>
+<FONT color="green">133</FONT>        /**<a name="line.133"></a>
+<FONT color="green">134</FONT>         * Return the boolean value of 'attribute' that is formatted as an<a name="line.134"></a>
+<FONT color="green">135</FONT>         * unsigned value.  In particular, the formats 0xn...n and #n...n are<a name="line.135"></a>
+<FONT color="green">136</FONT>         * handled.<a name="line.136"></a>
+<FONT color="green">137</FONT>         * <a name="line.137"></a>
+<FONT color="green">138</FONT>         * @param attribute The attribute to retrieve.<a name="line.138"></a>
+<FONT color="green">139</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.139"></a>
+<FONT color="green">140</FONT>         * <a name="line.140"></a>
+<FONT color="green">141</FONT>         * @return Resulting value.<a name="line.141"></a>
+<FONT color="green">142</FONT>         */<a name="line.142"></a>
+<FONT color="green">143</FONT>        public int getAttributeUnsignedIntValue(String namespace, String attribute,<a name="line.143"></a>
+<FONT color="green">144</FONT>                                                int defaultValue);<a name="line.144"></a>
+<FONT color="green">145</FONT>    <a name="line.145"></a>
+<FONT color="green">146</FONT>        /**<a name="line.146"></a>
+<FONT color="green">147</FONT>         * Return the float value of 'attribute'.<a name="line.147"></a>
+<FONT color="green">148</FONT>         * <a name="line.148"></a>
+<FONT color="green">149</FONT>         * @param attribute The attribute to retrieve.<a name="line.149"></a>
+<FONT color="green">150</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.150"></a>
+<FONT color="green">151</FONT>         * <a name="line.151"></a>
+<FONT color="green">152</FONT>         * @return Resulting value.<a name="line.152"></a>
+<FONT color="green">153</FONT>         */<a name="line.153"></a>
+<FONT color="green">154</FONT>        public float getAttributeFloatValue(String namespace, String attribute,<a name="line.154"></a>
+<FONT color="green">155</FONT>                                            float defaultValue);<a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Return the index of the value of attribute at 'index' in the list <a name="line.158"></a>
+<FONT color="green">159</FONT>         * 'options'. <a name="line.159"></a>
+<FONT color="green">160</FONT>         * <a name="line.160"></a>
+<FONT color="green">161</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.161"></a>
+<FONT color="green">162</FONT>         * @param options List of strings whose values we are checking against.<a name="line.162"></a>
+<FONT color="green">163</FONT>         * @param defaultValue Value returned if attribute doesn't exist or no<a name="line.163"></a>
+<FONT color="green">164</FONT>         *                     match is found.<a name="line.164"></a>
+<FONT color="green">165</FONT>         * <a name="line.165"></a>
+<FONT color="green">166</FONT>         * @return Index in to 'options' or defaultValue.<a name="line.166"></a>
+<FONT color="green">167</FONT>         */<a name="line.167"></a>
+<FONT color="green">168</FONT>        public int getAttributeListValue(int index,<a name="line.168"></a>
+<FONT color="green">169</FONT>                                         String[] options, int defaultValue);<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>        /**<a name="line.171"></a>
+<FONT color="green">172</FONT>         * Return the boolean value of attribute at 'index'.<a name="line.172"></a>
+<FONT color="green">173</FONT>         * <a name="line.173"></a>
+<FONT color="green">174</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.174"></a>
+<FONT color="green">175</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.175"></a>
+<FONT color="green">176</FONT>         * <a name="line.176"></a>
+<FONT color="green">177</FONT>         * @return Resulting value.<a name="line.177"></a>
+<FONT color="green">178</FONT>         */<a name="line.178"></a>
+<FONT color="green">179</FONT>        public boolean getAttributeBooleanValue(int index,<a name="line.179"></a>
+<FONT color="green">180</FONT>                                                boolean defaultValue);<a name="line.180"></a>
+<FONT color="green">181</FONT>    <a name="line.181"></a>
+<FONT color="green">182</FONT>        /**<a name="line.182"></a>
+<FONT color="green">183</FONT>         * Return the value of attribute at 'index' as a resource identifier.<a name="line.183"></a>
+<FONT color="green">184</FONT>         * <a name="line.184"></a>
+<FONT color="green">185</FONT>         * &lt;p&gt;Note that this is different than {@link #getAttributeNameResource}<a name="line.185"></a>
+<FONT color="green">186</FONT>         * in that it returns a the value contained in this attribute as a<a name="line.186"></a>
+<FONT color="green">187</FONT>         * resource identifier (i.e., a value originally of the form<a name="line.187"></a>
+<FONT color="green">188</FONT>         * "@package:type/resource"); the other method returns a resource<a name="line.188"></a>
+<FONT color="green">189</FONT>         * identifier that identifies the name of the attribute.<a name="line.189"></a>
+<FONT color="green">190</FONT>         * <a name="line.190"></a>
+<FONT color="green">191</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.191"></a>
+<FONT color="green">192</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.192"></a>
+<FONT color="green">193</FONT>         * <a name="line.193"></a>
+<FONT color="green">194</FONT>         * @return Resulting value.<a name="line.194"></a>
+<FONT color="green">195</FONT>         */<a name="line.195"></a>
+<FONT color="green">196</FONT>        public int getAttributeResourceValue(int index,<a name="line.196"></a>
+<FONT color="green">197</FONT>                                             int defaultValue);<a name="line.197"></a>
+<FONT color="green">198</FONT>    <a name="line.198"></a>
+<FONT color="green">199</FONT>        /**<a name="line.199"></a>
+<FONT color="green">200</FONT>         * Return the integer value of attribute at 'index'.<a name="line.200"></a>
+<FONT color="green">201</FONT>         * <a name="line.201"></a>
+<FONT color="green">202</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.202"></a>
+<FONT color="green">203</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.203"></a>
+<FONT color="green">204</FONT>         * <a name="line.204"></a>
+<FONT color="green">205</FONT>         * @return Resulting value.<a name="line.205"></a>
+<FONT color="green">206</FONT>         */<a name="line.206"></a>
+<FONT color="green">207</FONT>        public int getAttributeIntValue(int index,<a name="line.207"></a>
+<FONT color="green">208</FONT>                                        int defaultValue);<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>        /**<a name="line.210"></a>
+<FONT color="green">211</FONT>         * Return the integer value of attribute at 'index' that is formatted as an<a name="line.211"></a>
+<FONT color="green">212</FONT>         * unsigned value.  In particular, the formats 0xn...n and #n...n are<a name="line.212"></a>
+<FONT color="green">213</FONT>         * handled.<a name="line.213"></a>
+<FONT color="green">214</FONT>         * <a name="line.214"></a>
+<FONT color="green">215</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.215"></a>
+<FONT color="green">216</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.216"></a>
+<FONT color="green">217</FONT>         * <a name="line.217"></a>
+<FONT color="green">218</FONT>         * @return Resulting value.<a name="line.218"></a>
+<FONT color="green">219</FONT>         */<a name="line.219"></a>
+<FONT color="green">220</FONT>        public int getAttributeUnsignedIntValue(int index,<a name="line.220"></a>
+<FONT color="green">221</FONT>                                                int defaultValue);<a name="line.221"></a>
+<FONT color="green">222</FONT>    <a name="line.222"></a>
+<FONT color="green">223</FONT>        /**<a name="line.223"></a>
+<FONT color="green">224</FONT>         * Return the float value of attribute at 'index'.<a name="line.224"></a>
+<FONT color="green">225</FONT>         * <a name="line.225"></a>
+<FONT color="green">226</FONT>         * @param index Index of the desired attribute, 0...count-1.<a name="line.226"></a>
+<FONT color="green">227</FONT>         * @param defaultValue What to return if the attribute isn't found.<a name="line.227"></a>
+<FONT color="green">228</FONT>         * <a name="line.228"></a>
+<FONT color="green">229</FONT>         * @return Resulting value.<a name="line.229"></a>
+<FONT color="green">230</FONT>         */<a name="line.230"></a>
+<FONT color="green">231</FONT>        public float getAttributeFloatValue(int index,<a name="line.231"></a>
+<FONT color="green">232</FONT>                                            float defaultValue);<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>        /**<a name="line.234"></a>
+<FONT color="green">235</FONT>         * Return the value of the "id" attribute or null if there is not one.<a name="line.235"></a>
+<FONT color="green">236</FONT>         * Equivalent to getAttributeValue(null, "id").<a name="line.236"></a>
+<FONT color="green">237</FONT>         * <a name="line.237"></a>
+<FONT color="green">238</FONT>         * @return The id attribute's value or null.<a name="line.238"></a>
+<FONT color="green">239</FONT>         */<a name="line.239"></a>
+<FONT color="green">240</FONT>        public String getIdAttribute();<a name="line.240"></a>
+<FONT color="green">241</FONT>    <a name="line.241"></a>
+<FONT color="green">242</FONT>        /**<a name="line.242"></a>
+<FONT color="green">243</FONT>         * Return the value of the "class" attribute or null if there is not one.<a name="line.243"></a>
+<FONT color="green">244</FONT>         * Equivalent to getAttributeValue(null, "class").<a name="line.244"></a>
+<FONT color="green">245</FONT>         * <a name="line.245"></a>
+<FONT color="green">246</FONT>         * @return The class attribute's value or null.<a name="line.246"></a>
+<FONT color="green">247</FONT>         */<a name="line.247"></a>
+<FONT color="green">248</FONT>        public String getClassAttribute();<a name="line.248"></a>
+<FONT color="green">249</FONT>    <a name="line.249"></a>
+<FONT color="green">250</FONT>        /**<a name="line.250"></a>
+<FONT color="green">251</FONT>         * Return the integer value of the "id" attribute or defaultValue if there<a name="line.251"></a>
+<FONT color="green">252</FONT>         * is none.<a name="line.252"></a>
+<FONT color="green">253</FONT>         * Equivalent to getAttributeResourceValue(null, "id", defaultValue);<a name="line.253"></a>
+<FONT color="green">254</FONT>         *<a name="line.254"></a>
+<FONT color="green">255</FONT>         * @param defaultValue What to return if the "id" attribute isn't found.<a name="line.255"></a>
+<FONT color="green">256</FONT>         * @return int Resulting value.<a name="line.256"></a>
+<FONT color="green">257</FONT>         */<a name="line.257"></a>
+<FONT color="green">258</FONT>        public int getIdAttributeResourceValue(int defaultValue);<a name="line.258"></a>
+<FONT color="green">259</FONT>    <a name="line.259"></a>
+<FONT color="green">260</FONT>        /**<a name="line.260"></a>
+<FONT color="green">261</FONT>    <a name="line.261"></a>
+<FONT color="green">262</FONT>         * Return the value of the "style" attribute or 0 if there is not one.<a name="line.262"></a>
+<FONT color="green">263</FONT>         * Equivalent to getAttributeResourceValue(null, "style").<a name="line.263"></a>
+<FONT color="green">264</FONT>         * <a name="line.264"></a>
+<FONT color="green">265</FONT>         * @return The style attribute's resource identifier or 0.<a name="line.265"></a>
+<FONT color="green">266</FONT>         */<a name="line.266"></a>
+<FONT color="green">267</FONT>        public int getStyleAttribute();<a name="line.267"></a>
+<FONT color="green">268</FONT>    }<a name="line.268"></a>
+<FONT color="green">269</FONT>    <a name="line.269"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

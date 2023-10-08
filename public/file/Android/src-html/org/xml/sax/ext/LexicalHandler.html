@@ -1,0 +1,278 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    // LexicalHandler.java - optional handler for lexical parse events.<a name="line.1"></a>
+<FONT color="green">002</FONT>    // http://www.saxproject.org<a name="line.2"></a>
+<FONT color="green">003</FONT>    // Public Domain: no warranty.<a name="line.3"></a>
+<FONT color="green">004</FONT>    // $Id: LexicalHandler.java,v 1.5 2002/01/30 21:00:44 dbrownell Exp $<a name="line.4"></a>
+<FONT color="green">005</FONT>    <a name="line.5"></a>
+<FONT color="green">006</FONT>    package org.xml.sax.ext;<a name="line.6"></a>
+<FONT color="green">007</FONT>    <a name="line.7"></a>
+<FONT color="green">008</FONT>    import org.xml.sax.SAXException;<a name="line.8"></a>
+<FONT color="green">009</FONT>    <a name="line.9"></a>
+<FONT color="green">010</FONT>    /**<a name="line.10"></a>
+<FONT color="green">011</FONT>     * SAX2 extension handler for lexical events.<a name="line.11"></a>
+<FONT color="green">012</FONT>     *<a name="line.12"></a>
+<FONT color="green">013</FONT>     * &lt;blockquote&gt;<a name="line.13"></a>
+<FONT color="green">014</FONT>     * &lt;em&gt;This module, both source code and documentation, is in the<a name="line.14"></a>
+<FONT color="green">015</FONT>     * Public Domain, and comes with &lt;strong&gt;NO WARRANTY&lt;/strong&gt;.&lt;/em&gt;<a name="line.15"></a>
+<FONT color="green">016</FONT>     * See &lt;a href='http://www.saxproject.org'&gt;http://www.saxproject.org&lt;/a&gt;<a name="line.16"></a>
+<FONT color="green">017</FONT>     * for further information.<a name="line.17"></a>
+<FONT color="green">018</FONT>     * &lt;/blockquote&gt;<a name="line.18"></a>
+<FONT color="green">019</FONT>     *<a name="line.19"></a>
+<FONT color="green">020</FONT>     * &lt;p&gt;This is an optional extension handler for SAX2 to provide<a name="line.20"></a>
+<FONT color="green">021</FONT>     * lexical information about an XML document, such as comments<a name="line.21"></a>
+<FONT color="green">022</FONT>     * and CDATA section boundaries.<a name="line.22"></a>
+<FONT color="green">023</FONT>     * XML readers are not required to recognize this handler, and it<a name="line.23"></a>
+<FONT color="green">024</FONT>     * is not part of core-only SAX2 distributions.&lt;/p&gt;<a name="line.24"></a>
+<FONT color="green">025</FONT>     *<a name="line.25"></a>
+<FONT color="green">026</FONT>     * &lt;p&gt;The events in the lexical handler apply to the entire document,<a name="line.26"></a>
+<FONT color="green">027</FONT>     * not just to the document element, and all lexical handler events<a name="line.27"></a>
+<FONT color="green">028</FONT>     * must appear between the content handler's startDocument and<a name="line.28"></a>
+<FONT color="green">029</FONT>     * endDocument events.&lt;/p&gt;<a name="line.29"></a>
+<FONT color="green">030</FONT>     *<a name="line.30"></a>
+<FONT color="green">031</FONT>     * &lt;p&gt;To set the LexicalHandler for an XML reader, use the<a name="line.31"></a>
+<FONT color="green">032</FONT>     * {@link org.xml.sax.XMLReader#setProperty setProperty} method<a name="line.32"></a>
+<FONT color="green">033</FONT>     * with the property name<a name="line.33"></a>
+<FONT color="green">034</FONT>     * &lt;code&gt;http://xml.org/sax/properties/lexical-handler&lt;/code&gt;<a name="line.34"></a>
+<FONT color="green">035</FONT>     * and an object implementing this interface (or null) as the value.<a name="line.35"></a>
+<FONT color="green">036</FONT>     * If the reader does not report lexical events, it will throw a<a name="line.36"></a>
+<FONT color="green">037</FONT>     * {@link org.xml.sax.SAXNotRecognizedException SAXNotRecognizedException}<a name="line.37"></a>
+<FONT color="green">038</FONT>     * when you attempt to register the handler.&lt;/p&gt;<a name="line.38"></a>
+<FONT color="green">039</FONT>     *<a name="line.39"></a>
+<FONT color="green">040</FONT>     * @since SAX 2.0 (extensions 1.0)<a name="line.40"></a>
+<FONT color="green">041</FONT>     * @author David Megginson<a name="line.41"></a>
+<FONT color="green">042</FONT>     * @version 2.0.1 (sax2r2)<a name="line.42"></a>
+<FONT color="green">043</FONT>     */<a name="line.43"></a>
+<FONT color="green">044</FONT>    public interface LexicalHandler<a name="line.44"></a>
+<FONT color="green">045</FONT>    {<a name="line.45"></a>
+<FONT color="green">046</FONT>    <a name="line.46"></a>
+<FONT color="green">047</FONT>        /**<a name="line.47"></a>
+<FONT color="green">048</FONT>         * Report the start of DTD declarations, if any.<a name="line.48"></a>
+<FONT color="green">049</FONT>         *<a name="line.49"></a>
+<FONT color="green">050</FONT>         * &lt;p&gt;This method is intended to report the beginning of the<a name="line.50"></a>
+<FONT color="green">051</FONT>         * DOCTYPE declaration; if the document has no DOCTYPE declaration,<a name="line.51"></a>
+<FONT color="green">052</FONT>         * this method will not be invoked.&lt;/p&gt;<a name="line.52"></a>
+<FONT color="green">053</FONT>         *<a name="line.53"></a>
+<FONT color="green">054</FONT>         * &lt;p&gt;All declarations reported through <a name="line.54"></a>
+<FONT color="green">055</FONT>         * {@link org.xml.sax.DTDHandler DTDHandler} or<a name="line.55"></a>
+<FONT color="green">056</FONT>         * {@link org.xml.sax.ext.DeclHandler DeclHandler} events must appear<a name="line.56"></a>
+<FONT color="green">057</FONT>         * between the startDTD and {@link #endDTD endDTD} events.<a name="line.57"></a>
+<FONT color="green">058</FONT>         * Declarations are assumed to belong to the internal DTD subset<a name="line.58"></a>
+<FONT color="green">059</FONT>         * unless they appear between {@link #startEntity startEntity}<a name="line.59"></a>
+<FONT color="green">060</FONT>         * and {@link #endEntity endEntity} events.  Comments and<a name="line.60"></a>
+<FONT color="green">061</FONT>         * processing instructions from the DTD should also be reported<a name="line.61"></a>
+<FONT color="green">062</FONT>         * between the startDTD and endDTD events, in their original <a name="line.62"></a>
+<FONT color="green">063</FONT>         * order of (logical) occurrence; they are not required to<a name="line.63"></a>
+<FONT color="green">064</FONT>         * appear in their correct locations relative to DTDHandler<a name="line.64"></a>
+<FONT color="green">065</FONT>         * or DeclHandler events, however.&lt;/p&gt;<a name="line.65"></a>
+<FONT color="green">066</FONT>         *<a name="line.66"></a>
+<FONT color="green">067</FONT>         * &lt;p&gt;Note that the start/endDTD events will appear within<a name="line.67"></a>
+<FONT color="green">068</FONT>         * the start/endDocument events from ContentHandler and<a name="line.68"></a>
+<FONT color="green">069</FONT>         * before the first <a name="line.69"></a>
+<FONT color="green">070</FONT>         * {@link org.xml.sax.ContentHandler#startElement startElement}<a name="line.70"></a>
+<FONT color="green">071</FONT>         * event.&lt;/p&gt;<a name="line.71"></a>
+<FONT color="green">072</FONT>         *<a name="line.72"></a>
+<FONT color="green">073</FONT>         * @param name The document type name.<a name="line.73"></a>
+<FONT color="green">074</FONT>         * @param publicId The declared public identifier for the<a name="line.74"></a>
+<FONT color="green">075</FONT>         *        external DTD subset, or null if none was declared.<a name="line.75"></a>
+<FONT color="green">076</FONT>         * @param systemId The declared system identifier for the<a name="line.76"></a>
+<FONT color="green">077</FONT>         *        external DTD subset, or null if none was declared.<a name="line.77"></a>
+<FONT color="green">078</FONT>         *        (Note that this is not resolved against the document<a name="line.78"></a>
+<FONT color="green">079</FONT>         *        base URI.)<a name="line.79"></a>
+<FONT color="green">080</FONT>         * @exception SAXException The application may raise an<a name="line.80"></a>
+<FONT color="green">081</FONT>         *            exception.<a name="line.81"></a>
+<FONT color="green">082</FONT>         * @see #endDTD<a name="line.82"></a>
+<FONT color="green">083</FONT>         * @see #startEntity<a name="line.83"></a>
+<FONT color="green">084</FONT>         */<a name="line.84"></a>
+<FONT color="green">085</FONT>        public abstract void startDTD (String name, String publicId,<a name="line.85"></a>
+<FONT color="green">086</FONT>                       String systemId)<a name="line.86"></a>
+<FONT color="green">087</FONT>        throws SAXException;<a name="line.87"></a>
+<FONT color="green">088</FONT>    <a name="line.88"></a>
+<FONT color="green">089</FONT>    <a name="line.89"></a>
+<FONT color="green">090</FONT>        /**<a name="line.90"></a>
+<FONT color="green">091</FONT>         * Report the end of DTD declarations.<a name="line.91"></a>
+<FONT color="green">092</FONT>         *<a name="line.92"></a>
+<FONT color="green">093</FONT>         * &lt;p&gt;This method is intended to report the end of the<a name="line.93"></a>
+<FONT color="green">094</FONT>         * DOCTYPE declaration; if the document has no DOCTYPE declaration,<a name="line.94"></a>
+<FONT color="green">095</FONT>         * this method will not be invoked.&lt;/p&gt;<a name="line.95"></a>
+<FONT color="green">096</FONT>         *<a name="line.96"></a>
+<FONT color="green">097</FONT>         * @exception SAXException The application may raise an exception.<a name="line.97"></a>
+<FONT color="green">098</FONT>         * @see #startDTD<a name="line.98"></a>
+<FONT color="green">099</FONT>         */<a name="line.99"></a>
+<FONT color="green">100</FONT>        public abstract void endDTD ()<a name="line.100"></a>
+<FONT color="green">101</FONT>        throws SAXException;<a name="line.101"></a>
+<FONT color="green">102</FONT>    <a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>        /**<a name="line.104"></a>
+<FONT color="green">105</FONT>         * Report the beginning of some internal and external XML entities.<a name="line.105"></a>
+<FONT color="green">106</FONT>         *<a name="line.106"></a>
+<FONT color="green">107</FONT>         * &lt;p&gt;The reporting of parameter entities (including<a name="line.107"></a>
+<FONT color="green">108</FONT>         * the external DTD subset) is optional, and SAX2 drivers that<a name="line.108"></a>
+<FONT color="green">109</FONT>         * report LexicalHandler events may not implement it; you can use the<a name="line.109"></a>
+<FONT color="green">110</FONT>         * &lt;code<a name="line.110"></a>
+<FONT color="green">111</FONT>         * &gt;http://xml.org/sax/features/lexical-handler/parameter-entities&lt;/code&gt;<a name="line.111"></a>
+<FONT color="green">112</FONT>         * feature to query or control the reporting of parameter entities.&lt;/p&gt;<a name="line.112"></a>
+<FONT color="green">113</FONT>         *<a name="line.113"></a>
+<FONT color="green">114</FONT>         * &lt;p&gt;General entities are reported with their regular names,<a name="line.114"></a>
+<FONT color="green">115</FONT>         * parameter entities have '%' prepended to their names, and <a name="line.115"></a>
+<FONT color="green">116</FONT>         * the external DTD subset has the pseudo-entity name "[dtd]".&lt;/p&gt;<a name="line.116"></a>
+<FONT color="green">117</FONT>         *<a name="line.117"></a>
+<FONT color="green">118</FONT>         * &lt;p&gt;When a SAX2 driver is providing these events, all other <a name="line.118"></a>
+<FONT color="green">119</FONT>         * events must be properly nested within start/end entity <a name="line.119"></a>
+<FONT color="green">120</FONT>         * events.  There is no additional requirement that events from <a name="line.120"></a>
+<FONT color="green">121</FONT>         * {@link org.xml.sax.ext.DeclHandler DeclHandler} or<a name="line.121"></a>
+<FONT color="green">122</FONT>         * {@link org.xml.sax.DTDHandler DTDHandler} be properly ordered.&lt;/p&gt;<a name="line.122"></a>
+<FONT color="green">123</FONT>         *<a name="line.123"></a>
+<FONT color="green">124</FONT>         * &lt;p&gt;Note that skipped entities will be reported through the<a name="line.124"></a>
+<FONT color="green">125</FONT>         * {@link org.xml.sax.ContentHandler#skippedEntity skippedEntity}<a name="line.125"></a>
+<FONT color="green">126</FONT>         * event, which is part of the ContentHandler interface.&lt;/p&gt;<a name="line.126"></a>
+<FONT color="green">127</FONT>         *<a name="line.127"></a>
+<FONT color="green">128</FONT>         * &lt;p&gt;Because of the streaming event model that SAX uses, some<a name="line.128"></a>
+<FONT color="green">129</FONT>         * entity boundaries cannot be reported under any <a name="line.129"></a>
+<FONT color="green">130</FONT>         * circumstances:&lt;/p&gt;<a name="line.130"></a>
+<FONT color="green">131</FONT>         *<a name="line.131"></a>
+<FONT color="green">132</FONT>         * &lt;ul&gt;<a name="line.132"></a>
+<FONT color="green">133</FONT>         * &lt;li&gt;general entities within attribute values&lt;/li&gt;<a name="line.133"></a>
+<FONT color="green">134</FONT>         * &lt;li&gt;parameter entities within declarations&lt;/li&gt;<a name="line.134"></a>
+<FONT color="green">135</FONT>         * &lt;/ul&gt;<a name="line.135"></a>
+<FONT color="green">136</FONT>         *<a name="line.136"></a>
+<FONT color="green">137</FONT>         * &lt;p&gt;These will be silently expanded, with no indication of where<a name="line.137"></a>
+<FONT color="green">138</FONT>         * the original entity boundaries were.&lt;/p&gt;<a name="line.138"></a>
+<FONT color="green">139</FONT>         *<a name="line.139"></a>
+<FONT color="green">140</FONT>         * &lt;p&gt;Note also that the boundaries of character references (which<a name="line.140"></a>
+<FONT color="green">141</FONT>         * are not really entities anyway) are not reported.&lt;/p&gt;<a name="line.141"></a>
+<FONT color="green">142</FONT>         *<a name="line.142"></a>
+<FONT color="green">143</FONT>         * &lt;p&gt;All start/endEntity events must be properly nested.<a name="line.143"></a>
+<FONT color="green">144</FONT>         *<a name="line.144"></a>
+<FONT color="green">145</FONT>         * @param name The name of the entity.  If it is a parameter<a name="line.145"></a>
+<FONT color="green">146</FONT>         *        entity, the name will begin with '%', and if it is the<a name="line.146"></a>
+<FONT color="green">147</FONT>         *        external DTD subset, it will be "[dtd]".<a name="line.147"></a>
+<FONT color="green">148</FONT>         * @exception SAXException The application may raise an exception.<a name="line.148"></a>
+<FONT color="green">149</FONT>         * @see #endEntity<a name="line.149"></a>
+<FONT color="green">150</FONT>         * @see org.xml.sax.ext.DeclHandler#internalEntityDecl<a name="line.150"></a>
+<FONT color="green">151</FONT>         * @see org.xml.sax.ext.DeclHandler#externalEntityDecl <a name="line.151"></a>
+<FONT color="green">152</FONT>         */<a name="line.152"></a>
+<FONT color="green">153</FONT>        public abstract void startEntity (String name)<a name="line.153"></a>
+<FONT color="green">154</FONT>        throws SAXException;<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Report the end of an entity.<a name="line.158"></a>
+<FONT color="green">159</FONT>         *<a name="line.159"></a>
+<FONT color="green">160</FONT>         * @param name The name of the entity that is ending.<a name="line.160"></a>
+<FONT color="green">161</FONT>         * @exception SAXException The application may raise an exception.<a name="line.161"></a>
+<FONT color="green">162</FONT>         * @see #startEntity<a name="line.162"></a>
+<FONT color="green">163</FONT>         */<a name="line.163"></a>
+<FONT color="green">164</FONT>        public abstract void endEntity (String name)<a name="line.164"></a>
+<FONT color="green">165</FONT>        throws SAXException;<a name="line.165"></a>
+<FONT color="green">166</FONT>    <a name="line.166"></a>
+<FONT color="green">167</FONT>    <a name="line.167"></a>
+<FONT color="green">168</FONT>        /**<a name="line.168"></a>
+<FONT color="green">169</FONT>         * Report the start of a CDATA section.<a name="line.169"></a>
+<FONT color="green">170</FONT>         *<a name="line.170"></a>
+<FONT color="green">171</FONT>         * &lt;p&gt;The contents of the CDATA section will be reported through<a name="line.171"></a>
+<FONT color="green">172</FONT>         * the regular {@link org.xml.sax.ContentHandler#characters<a name="line.172"></a>
+<FONT color="green">173</FONT>         * characters} event; this event is intended only to report<a name="line.173"></a>
+<FONT color="green">174</FONT>         * the boundary.&lt;/p&gt;<a name="line.174"></a>
+<FONT color="green">175</FONT>         *<a name="line.175"></a>
+<FONT color="green">176</FONT>         * @exception SAXException The application may raise an exception.<a name="line.176"></a>
+<FONT color="green">177</FONT>         * @see #endCDATA<a name="line.177"></a>
+<FONT color="green">178</FONT>         */<a name="line.178"></a>
+<FONT color="green">179</FONT>        public abstract void startCDATA ()<a name="line.179"></a>
+<FONT color="green">180</FONT>        throws SAXException;<a name="line.180"></a>
+<FONT color="green">181</FONT>    <a name="line.181"></a>
+<FONT color="green">182</FONT>    <a name="line.182"></a>
+<FONT color="green">183</FONT>        /**<a name="line.183"></a>
+<FONT color="green">184</FONT>         * Report the end of a CDATA section.<a name="line.184"></a>
+<FONT color="green">185</FONT>         *<a name="line.185"></a>
+<FONT color="green">186</FONT>         * @exception SAXException The application may raise an exception.<a name="line.186"></a>
+<FONT color="green">187</FONT>         * @see #startCDATA<a name="line.187"></a>
+<FONT color="green">188</FONT>         */<a name="line.188"></a>
+<FONT color="green">189</FONT>        public abstract void endCDATA ()<a name="line.189"></a>
+<FONT color="green">190</FONT>        throws SAXException;<a name="line.190"></a>
+<FONT color="green">191</FONT>    <a name="line.191"></a>
+<FONT color="green">192</FONT>    <a name="line.192"></a>
+<FONT color="green">193</FONT>        /**<a name="line.193"></a>
+<FONT color="green">194</FONT>         * Report an XML comment anywhere in the document.<a name="line.194"></a>
+<FONT color="green">195</FONT>         *<a name="line.195"></a>
+<FONT color="green">196</FONT>         * &lt;p&gt;This callback will be used for comments inside or outside the<a name="line.196"></a>
+<FONT color="green">197</FONT>         * document element, including comments in the external DTD<a name="line.197"></a>
+<FONT color="green">198</FONT>         * subset (if read).  Comments in the DTD must be properly<a name="line.198"></a>
+<FONT color="green">199</FONT>         * nested inside start/endDTD and start/endEntity events (if<a name="line.199"></a>
+<FONT color="green">200</FONT>         * used).&lt;/p&gt;<a name="line.200"></a>
+<FONT color="green">201</FONT>         *<a name="line.201"></a>
+<FONT color="green">202</FONT>         * @param ch An array holding the characters in the comment.<a name="line.202"></a>
+<FONT color="green">203</FONT>         * @param start The starting position in the array.<a name="line.203"></a>
+<FONT color="green">204</FONT>         * @param length The number of characters to use from the array.<a name="line.204"></a>
+<FONT color="green">205</FONT>         * @exception SAXException The application may raise an exception.<a name="line.205"></a>
+<FONT color="green">206</FONT>         */<a name="line.206"></a>
+<FONT color="green">207</FONT>        public abstract void comment (char ch[], int start, int length)<a name="line.207"></a>
+<FONT color="green">208</FONT>        throws SAXException;<a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>    }<a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>    // end of LexicalHandler.java<a name="line.212"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

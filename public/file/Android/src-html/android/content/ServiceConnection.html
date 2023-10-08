@@ -1,0 +1,119 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.content;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.os.IBinder;<a name="line.19"></a>
+<FONT color="green">020</FONT>    <a name="line.20"></a>
+<FONT color="green">021</FONT>    /**<a name="line.21"></a>
+<FONT color="green">022</FONT>     * Interface for monitoring the state of an application service.  See<a name="line.22"></a>
+<FONT color="green">023</FONT>     * {@link android.app.Service} and<a name="line.23"></a>
+<FONT color="green">024</FONT>     * {@link Context#bindService Context.bindService()} for more information.<a name="line.24"></a>
+<FONT color="green">025</FONT>     * &lt;p&gt;Like many callbacks from the system, the methods on this class are called<a name="line.25"></a>
+<FONT color="green">026</FONT>     * from the main thread of your process.<a name="line.26"></a>
+<FONT color="green">027</FONT>     */<a name="line.27"></a>
+<FONT color="green">028</FONT>    public interface ServiceConnection {<a name="line.28"></a>
+<FONT color="green">029</FONT>        /**<a name="line.29"></a>
+<FONT color="green">030</FONT>         * Called when a connection to the Service has been established, with<a name="line.30"></a>
+<FONT color="green">031</FONT>         * the {@link android.os.IBinder} of the communication channel to the<a name="line.31"></a>
+<FONT color="green">032</FONT>         * Service.<a name="line.32"></a>
+<FONT color="green">033</FONT>         *<a name="line.33"></a>
+<FONT color="green">034</FONT>         * @param name The concrete component name of the service that has<a name="line.34"></a>
+<FONT color="green">035</FONT>         * been connected.<a name="line.35"></a>
+<FONT color="green">036</FONT>         *<a name="line.36"></a>
+<FONT color="green">037</FONT>         * @param service The IBinder of the Service's communication channel,<a name="line.37"></a>
+<FONT color="green">038</FONT>         * which you can now make calls on.<a name="line.38"></a>
+<FONT color="green">039</FONT>         */<a name="line.39"></a>
+<FONT color="green">040</FONT>        public void onServiceConnected(ComponentName name, IBinder service);<a name="line.40"></a>
+<FONT color="green">041</FONT>    <a name="line.41"></a>
+<FONT color="green">042</FONT>        /**<a name="line.42"></a>
+<FONT color="green">043</FONT>         * Called when a connection to the Service has been lost.  This typically<a name="line.43"></a>
+<FONT color="green">044</FONT>         * happens when the process hosting the service has crashed or been killed.<a name="line.44"></a>
+<FONT color="green">045</FONT>         * This does &lt;em&gt;not&lt;/em&gt; remove the ServiceConnection itself -- this<a name="line.45"></a>
+<FONT color="green">046</FONT>         * binding to the service will remain active, and you will receive a call<a name="line.46"></a>
+<FONT color="green">047</FONT>         * to {@link #onServiceConnected} when the Service is next running.<a name="line.47"></a>
+<FONT color="green">048</FONT>         *<a name="line.48"></a>
+<FONT color="green">049</FONT>         * @param name The concrete component name of the service whose<a name="line.49"></a>
+<FONT color="green">050</FONT>         * connection has been lost.<a name="line.50"></a>
+<FONT color="green">051</FONT>         */<a name="line.51"></a>
+<FONT color="green">052</FONT>        public void onServiceDisconnected(ComponentName name);<a name="line.52"></a>
+<FONT color="green">053</FONT>    }<a name="line.53"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,1052 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     *  Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     *  contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     *  this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     *  The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     *  (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     *  the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     *<a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     *<a name="line.10"></a>
+<FONT color="green">011</FONT>     *  Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     *  distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     *  See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     *  limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    /**<a name="line.17"></a>
+<FONT color="green">018</FONT>    *******************************************************************************<a name="line.18"></a>
+<FONT color="green">019</FONT>    * Copyright (C) 1996-2008, International Business Machines Corporation and    *<a name="line.19"></a>
+<FONT color="green">020</FONT>    * others. All Rights Reserved.                                                *<a name="line.20"></a>
+<FONT color="green">021</FONT>    *******************************************************************************<a name="line.21"></a>
+<FONT color="green">022</FONT>    */<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    package java.util;<a name="line.24"></a>
+<FONT color="green">025</FONT>    <a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.io.IOException;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.io.ObjectInputStream;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.io.ObjectOutputStream;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.io.ObjectStreamField;<a name="line.29"></a>
+<FONT color="green">030</FONT>    <a name="line.30"></a>
+<FONT color="green">031</FONT>    import org.apache.harmony.luni.util.Msg;<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    // BEGIN android-note<a name="line.33"></a>
+<FONT color="green">034</FONT>    // The class javadoc and some of the method descriptions are copied from ICU4J<a name="line.34"></a>
+<FONT color="green">035</FONT>    // source files. Changes have been made to the copied descriptions.<a name="line.35"></a>
+<FONT color="green">036</FONT>    // The icu license header was added to this file. <a name="line.36"></a>
+<FONT color="green">037</FONT>    // END android-note<a name="line.37"></a>
+<FONT color="green">038</FONT>    /**<a name="line.38"></a>
+<FONT color="green">039</FONT>     * {@code SimpleTimeZone} is a concrete subclass of {@code TimeZone}<a name="line.39"></a>
+<FONT color="green">040</FONT>     * that represents a time zone for use with a Gregorian calendar. This class<a name="line.40"></a>
+<FONT color="green">041</FONT>     * does not handle historical changes.<a name="line.41"></a>
+<FONT color="green">042</FONT>     * &lt;P&gt;<a name="line.42"></a>
+<FONT color="green">043</FONT>     * Use a negative value for {@code dayOfWeekInMonth} to indicate that<a name="line.43"></a>
+<FONT color="green">044</FONT>     * {@code SimpleTimeZone} should count from the end of the month<a name="line.44"></a>
+<FONT color="green">045</FONT>     * backwards. For example, Daylight Savings Time ends at the last<a name="line.45"></a>
+<FONT color="green">046</FONT>     * (dayOfWeekInMonth = -1) Sunday in October, at 2 AM in standard time.<a name="line.46"></a>
+<FONT color="green">047</FONT>     * <a name="line.47"></a>
+<FONT color="green">048</FONT>     * @see Calendar<a name="line.48"></a>
+<FONT color="green">049</FONT>     * @see GregorianCalendar<a name="line.49"></a>
+<FONT color="green">050</FONT>     * @see TimeZone<a name="line.50"></a>
+<FONT color="green">051</FONT>     * @since Android 1.0<a name="line.51"></a>
+<FONT color="green">052</FONT>     */<a name="line.52"></a>
+<FONT color="green">053</FONT>    public class SimpleTimeZone extends TimeZone {<a name="line.53"></a>
+<FONT color="green">054</FONT>        <a name="line.54"></a>
+<FONT color="green">055</FONT>        private static final long serialVersionUID = -403250971215465050L;<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>        private int rawOffset;<a name="line.57"></a>
+<FONT color="green">058</FONT>    <a name="line.58"></a>
+<FONT color="green">059</FONT>        private int startYear, startMonth, startDay, startDayOfWeek, startTime;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        private int endMonth, endDay, endDayOfWeek, endTime;<a name="line.61"></a>
+<FONT color="green">062</FONT>    <a name="line.62"></a>
+<FONT color="green">063</FONT>        private int startMode, endMode;<a name="line.63"></a>
+<FONT color="green">064</FONT>    <a name="line.64"></a>
+<FONT color="green">065</FONT>        private static final int DOM_MODE = 1, DOW_IN_MONTH_MODE = 2,<a name="line.65"></a>
+<FONT color="green">066</FONT>                DOW_GE_DOM_MODE = 3, DOW_LE_DOM_MODE = 4;<a name="line.66"></a>
+<FONT color="green">067</FONT>    <a name="line.67"></a>
+<FONT color="green">068</FONT>        /**<a name="line.68"></a>
+<FONT color="green">069</FONT>         * The constant for representing a start or end time in GMT time mode.<a name="line.69"></a>
+<FONT color="green">070</FONT>         * <a name="line.70"></a>
+<FONT color="green">071</FONT>         * @since Android 1.0<a name="line.71"></a>
+<FONT color="green">072</FONT>         */<a name="line.72"></a>
+<FONT color="green">073</FONT>        public static final int UTC_TIME = 2;<a name="line.73"></a>
+<FONT color="green">074</FONT>    <a name="line.74"></a>
+<FONT color="green">075</FONT>        /**<a name="line.75"></a>
+<FONT color="green">076</FONT>         * The constant for representing a start or end time in standard local time mode,<a name="line.76"></a>
+<FONT color="green">077</FONT>         * based on timezone's raw offset from GMT; does not include Daylight<a name="line.77"></a>
+<FONT color="green">078</FONT>         * savings.<a name="line.78"></a>
+<FONT color="green">079</FONT>         * <a name="line.79"></a>
+<FONT color="green">080</FONT>         * @since Android 1.0<a name="line.80"></a>
+<FONT color="green">081</FONT>         */<a name="line.81"></a>
+<FONT color="green">082</FONT>        public static final int STANDARD_TIME = 1;<a name="line.82"></a>
+<FONT color="green">083</FONT>    <a name="line.83"></a>
+<FONT color="green">084</FONT>        /**<a name="line.84"></a>
+<FONT color="green">085</FONT>         * The constant for representing a start or end time in local wall clock time<a name="line.85"></a>
+<FONT color="green">086</FONT>         * mode, based on timezone's adjusted offset from GMT; includes<a name="line.86"></a>
+<FONT color="green">087</FONT>         * Daylight savings.<a name="line.87"></a>
+<FONT color="green">088</FONT>         * <a name="line.88"></a>
+<FONT color="green">089</FONT>         * @since Android 1.0<a name="line.89"></a>
+<FONT color="green">090</FONT>         */<a name="line.90"></a>
+<FONT color="green">091</FONT>        public static final int WALL_TIME = 0;<a name="line.91"></a>
+<FONT color="green">092</FONT>    <a name="line.92"></a>
+<FONT color="green">093</FONT>        private boolean useDaylight;<a name="line.93"></a>
+<FONT color="green">094</FONT>    <a name="line.94"></a>
+<FONT color="green">095</FONT>        private GregorianCalendar daylightSavings;<a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>        private int dstSavings = 3600000;<a name="line.97"></a>
+<FONT color="green">098</FONT>    <a name="line.98"></a>
+<FONT color="green">099</FONT>        /**<a name="line.99"></a>
+<FONT color="green">100</FONT>         * Constructs a {@code SimpleTimeZone} with the given base time zone offset from GMT<a name="line.100"></a>
+<FONT color="green">101</FONT>         * and time zone ID. Timezone IDs can be obtained from<a name="line.101"></a>
+<FONT color="green">102</FONT>         * {@code TimeZone.getAvailableIDs}. Normally you should use {@code TimeZone.getDefault} to<a name="line.102"></a>
+<FONT color="green">103</FONT>         * construct a {@code TimeZone}.<a name="line.103"></a>
+<FONT color="green">104</FONT>         * <a name="line.104"></a>
+<FONT color="green">105</FONT>         * @param offset<a name="line.105"></a>
+<FONT color="green">106</FONT>         *            the given base time zone offset to GMT.<a name="line.106"></a>
+<FONT color="green">107</FONT>         * @param name<a name="line.107"></a>
+<FONT color="green">108</FONT>         *            the time zone ID which is obtained from<a name="line.108"></a>
+<FONT color="green">109</FONT>         *            {@code TimeZone.getAvailableIDs}.<a name="line.109"></a>
+<FONT color="green">110</FONT>         * @since Android 1.0<a name="line.110"></a>
+<FONT color="green">111</FONT>         */<a name="line.111"></a>
+<FONT color="green">112</FONT>        public SimpleTimeZone(int offset, String name) {<a name="line.112"></a>
+<FONT color="green">113</FONT>            setID(name);<a name="line.113"></a>
+<FONT color="green">114</FONT>            rawOffset = offset;<a name="line.114"></a>
+<FONT color="green">115</FONT>        }<a name="line.115"></a>
+<FONT color="green">116</FONT>    <a name="line.116"></a>
+<FONT color="green">117</FONT>        /**<a name="line.117"></a>
+<FONT color="green">118</FONT>         * Constructs a {@code SimpleTimeZone} with the given base time zone offset from GMT,<a name="line.118"></a>
+<FONT color="green">119</FONT>         * time zone ID, and times to start and end the daylight savings time. Timezone IDs can<a name="line.119"></a>
+<FONT color="green">120</FONT>         * be obtained from {@code TimeZone.getAvailableIDs}. Normally you should use<a name="line.120"></a>
+<FONT color="green">121</FONT>         * {@code TimeZone.getDefault} to create a {@code TimeZone}. For a time zone that does not<a name="line.121"></a>
+<FONT color="green">122</FONT>         * use daylight saving time, do not use this constructor; instead you should<a name="line.122"></a>
+<FONT color="green">123</FONT>         * use {@code SimpleTimeZone(rawOffset, ID)}.<a name="line.123"></a>
+<FONT color="green">124</FONT>         * &lt;p&gt;<a name="line.124"></a>
+<FONT color="green">125</FONT>         * By default, this constructor specifies day-of-week-in-month rules. That<a name="line.125"></a>
+<FONT color="green">126</FONT>         * is, if the {@code startDay} is 1, and the {@code startDayOfWeek} is {@code SUNDAY}, then this<a name="line.126"></a>
+<FONT color="green">127</FONT>         * indicates the first Sunday in the {@code startMonth}. A {@code startDay} of -1 likewise<a name="line.127"></a>
+<FONT color="green">128</FONT>         * indicates the last Sunday. However, by using negative or zero values for<a name="line.128"></a>
+<FONT color="green">129</FONT>         * certain parameters, other types of rules can be specified.<a name="line.129"></a>
+<FONT color="green">130</FONT>         * &lt;p&gt;<a name="line.130"></a>
+<FONT color="green">131</FONT>         * Day of month: To specify an exact day of the month, such as March 1, set<a name="line.131"></a>
+<FONT color="green">132</FONT>         * {@code startDayOfWeek} to zero.<a name="line.132"></a>
+<FONT color="green">133</FONT>         * &lt;p&gt;<a name="line.133"></a>
+<FONT color="green">134</FONT>         * Day of week after day of month: To specify the first day of the week<a name="line.134"></a>
+<FONT color="green">135</FONT>         * occurring on or after an exact day of the month, make the day of the week<a name="line.135"></a>
+<FONT color="green">136</FONT>         * negative. For example, if {@code startDay} is 5 and {@code startDayOfWeek} is {@code -MONDAY},<a name="line.136"></a>
+<FONT color="green">137</FONT>         * this indicates the first Monday on or after the 5th day of the<a name="line.137"></a>
+<FONT color="green">138</FONT>         * {@code startMonth}.<a name="line.138"></a>
+<FONT color="green">139</FONT>         * &lt;p&gt;<a name="line.139"></a>
+<FONT color="green">140</FONT>         * Day of week before day of month: To specify the last day of the week<a name="line.140"></a>
+<FONT color="green">141</FONT>         * occurring on or before an exact day of the month, make the day of the<a name="line.141"></a>
+<FONT color="green">142</FONT>         * week and the day of the month negative. For example, if {@code startDay} is {@code -21}<a name="line.142"></a>
+<FONT color="green">143</FONT>         * and {@code startDayOfWeek} is {@code -WEDNESDAY}, this indicates the last Wednesday on or<a name="line.143"></a>
+<FONT color="green">144</FONT>         * before the 21st of the {@code startMonth}.<a name="line.144"></a>
+<FONT color="green">145</FONT>         * &lt;p&gt;<a name="line.145"></a>
+<FONT color="green">146</FONT>         * The above examples refer to the {@code startMonth}, {@code startDay}, and {@code startDayOfWeek};<a name="line.146"></a>
+<FONT color="green">147</FONT>         * the same applies for the {@code endMonth}, {@code endDay}, and {@code endDayOfWeek}.<a name="line.147"></a>
+<FONT color="green">148</FONT>         * &lt;p&gt;<a name="line.148"></a>
+<FONT color="green">149</FONT>         * The daylight savings time difference is set to the default value: one hour.          <a name="line.149"></a>
+<FONT color="green">150</FONT>         * <a name="line.150"></a>
+<FONT color="green">151</FONT>         * @param offset<a name="line.151"></a>
+<FONT color="green">152</FONT>         *            the given base time zone offset to GMT.<a name="line.152"></a>
+<FONT color="green">153</FONT>         * @param name<a name="line.153"></a>
+<FONT color="green">154</FONT>         *            the time zone ID which is obtained from<a name="line.154"></a>
+<FONT color="green">155</FONT>         *            {@code TimeZone.getAvailableIDs}.<a name="line.155"></a>
+<FONT color="green">156</FONT>         * @param startMonth<a name="line.156"></a>
+<FONT color="green">157</FONT>         *            the daylight savings starting month. The month indexing is 0-based. eg, 0<a name="line.157"></a>
+<FONT color="green">158</FONT>         *            for January.<a name="line.158"></a>
+<FONT color="green">159</FONT>         * @param startDay<a name="line.159"></a>
+<FONT color="green">160</FONT>         *            the daylight savings starting day-of-week-in-month. Please see<a name="line.160"></a>
+<FONT color="green">161</FONT>         *            the member description for an example.<a name="line.161"></a>
+<FONT color="green">162</FONT>         * @param startDayOfWeek<a name="line.162"></a>
+<FONT color="green">163</FONT>         *            the daylight savings starting day-of-week. Please see the<a name="line.163"></a>
+<FONT color="green">164</FONT>         *            member description for an example.<a name="line.164"></a>
+<FONT color="green">165</FONT>         * @param startTime<a name="line.165"></a>
+<FONT color="green">166</FONT>         *            the daylight savings starting time in local wall time, which<a name="line.166"></a>
+<FONT color="green">167</FONT>         *            is standard time in this case. Please see the member<a name="line.167"></a>
+<FONT color="green">168</FONT>         *            description for an example.<a name="line.168"></a>
+<FONT color="green">169</FONT>         * @param endMonth<a name="line.169"></a>
+<FONT color="green">170</FONT>         *            the daylight savings ending month. The month indexing is 0-based. eg, 0 for<a name="line.170"></a>
+<FONT color="green">171</FONT>         *            January.<a name="line.171"></a>
+<FONT color="green">172</FONT>         * @param endDay<a name="line.172"></a>
+<FONT color="green">173</FONT>         *            the daylight savings ending day-of-week-in-month. Please see<a name="line.173"></a>
+<FONT color="green">174</FONT>         *            the member description for an example.<a name="line.174"></a>
+<FONT color="green">175</FONT>         * @param endDayOfWeek<a name="line.175"></a>
+<FONT color="green">176</FONT>         *            the daylight savings ending day-of-week. Please see the member<a name="line.176"></a>
+<FONT color="green">177</FONT>         *            description for an example.<a name="line.177"></a>
+<FONT color="green">178</FONT>         * @param endTime<a name="line.178"></a>
+<FONT color="green">179</FONT>         *            the daylight savings ending time in local wall time, which is<a name="line.179"></a>
+<FONT color="green">180</FONT>         *            daylight time in this case. Please see the member description<a name="line.180"></a>
+<FONT color="green">181</FONT>         *            for an example.<a name="line.181"></a>
+<FONT color="green">182</FONT>         * @throws IllegalArgumentException<a name="line.182"></a>
+<FONT color="green">183</FONT>         *             if the month, day, dayOfWeek, or time parameters are out of<a name="line.183"></a>
+<FONT color="green">184</FONT>         *             range for the start or end rule.<a name="line.184"></a>
+<FONT color="green">185</FONT>         * @since Android 1.0<a name="line.185"></a>
+<FONT color="green">186</FONT>         */<a name="line.186"></a>
+<FONT color="green">187</FONT>        public SimpleTimeZone(int offset, String name, int startMonth,<a name="line.187"></a>
+<FONT color="green">188</FONT>                int startDay, int startDayOfWeek, int startTime, int endMonth,<a name="line.188"></a>
+<FONT color="green">189</FONT>                int endDay, int endDayOfWeek, int endTime) {<a name="line.189"></a>
+<FONT color="green">190</FONT>            this(offset, name, startMonth, startDay, startDayOfWeek, startTime,<a name="line.190"></a>
+<FONT color="green">191</FONT>                    endMonth, endDay, endDayOfWeek, endTime, 3600000);<a name="line.191"></a>
+<FONT color="green">192</FONT>        }<a name="line.192"></a>
+<FONT color="green">193</FONT>    <a name="line.193"></a>
+<FONT color="green">194</FONT>        /**<a name="line.194"></a>
+<FONT color="green">195</FONT>         * Constructs a {@code SimpleTimeZone} with the given base time zone offset from GMT,<a name="line.195"></a>
+<FONT color="green">196</FONT>         * time zone ID, times to start and end the daylight savings time, and <a name="line.196"></a>
+<FONT color="green">197</FONT>         * the daylight savings time difference in milliseconds<a name="line.197"></a>
+<FONT color="green">198</FONT>         * <a name="line.198"></a>
+<FONT color="green">199</FONT>         * @param offset<a name="line.199"></a>
+<FONT color="green">200</FONT>         *            the given base time zone offset to GMT.<a name="line.200"></a>
+<FONT color="green">201</FONT>         * @param name<a name="line.201"></a>
+<FONT color="green">202</FONT>         *            the time zone ID which is obtained from<a name="line.202"></a>
+<FONT color="green">203</FONT>         *            {@code TimeZone.getAvailableIDs}.<a name="line.203"></a>
+<FONT color="green">204</FONT>         * @param startMonth<a name="line.204"></a>
+<FONT color="green">205</FONT>         *            the daylight savings starting month. Month is 0-based. eg, 0<a name="line.205"></a>
+<FONT color="green">206</FONT>         *            for January.<a name="line.206"></a>
+<FONT color="green">207</FONT>         * @param startDay<a name="line.207"></a>
+<FONT color="green">208</FONT>         *            the daylight savings starting day-of-week-in-month. Please see<a name="line.208"></a>
+<FONT color="green">209</FONT>         *            the description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.209"></a>
+<FONT color="green">210</FONT>         * @param startDayOfWeek<a name="line.210"></a>
+<FONT color="green">211</FONT>         *            the daylight savings starting day-of-week. Please see the<a name="line.211"></a>
+<FONT color="green">212</FONT>         *            description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.212"></a>
+<FONT color="green">213</FONT>         * @param startTime<a name="line.213"></a>
+<FONT color="green">214</FONT>         *            The daylight savings starting time in local wall time, which<a name="line.214"></a>
+<FONT color="green">215</FONT>         *            is standard time in this case. Please see the description of <a name="line.215"></a>
+<FONT color="green">216</FONT>         *            {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.216"></a>
+<FONT color="green">217</FONT>         * @param endMonth<a name="line.217"></a>
+<FONT color="green">218</FONT>         *            the daylight savings ending month. Month is 0-based. eg, 0 for<a name="line.218"></a>
+<FONT color="green">219</FONT>         *            January.<a name="line.219"></a>
+<FONT color="green">220</FONT>         * @param endDay<a name="line.220"></a>
+<FONT color="green">221</FONT>         *            the daylight savings ending day-of-week-in-month. Please see<a name="line.221"></a>
+<FONT color="green">222</FONT>         *            the description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.222"></a>
+<FONT color="green">223</FONT>         * @param endDayOfWeek<a name="line.223"></a>
+<FONT color="green">224</FONT>         *            the daylight savings ending day-of-week. Please see the description of <a name="line.224"></a>
+<FONT color="green">225</FONT>         *            {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.225"></a>
+<FONT color="green">226</FONT>         * @param endTime<a name="line.226"></a>
+<FONT color="green">227</FONT>         *            the daylight savings ending time in local wall time, which is<a name="line.227"></a>
+<FONT color="green">228</FONT>         *            daylight time in this case. Please see the description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)}<a name="line.228"></a>
+<FONT color="green">229</FONT>         *            for an example.<a name="line.229"></a>
+<FONT color="green">230</FONT>         * @param daylightSavings<a name="line.230"></a>
+<FONT color="green">231</FONT>         *            the daylight savings time difference in milliseconds.<a name="line.231"></a>
+<FONT color="green">232</FONT>         * @exception IllegalArgumentException<a name="line.232"></a>
+<FONT color="green">233</FONT>         *                the month, day, dayOfWeek, or time parameters are out of<a name="line.233"></a>
+<FONT color="green">234</FONT>         *                range for the start or end rule.<a name="line.234"></a>
+<FONT color="green">235</FONT>         * @since Android 1.0<a name="line.235"></a>
+<FONT color="green">236</FONT>         */<a name="line.236"></a>
+<FONT color="green">237</FONT>        public SimpleTimeZone(int offset, String name, int startMonth,<a name="line.237"></a>
+<FONT color="green">238</FONT>                int startDay, int startDayOfWeek, int startTime, int endMonth,<a name="line.238"></a>
+<FONT color="green">239</FONT>                int endDay, int endDayOfWeek, int endTime, int daylightSavings) {<a name="line.239"></a>
+<FONT color="green">240</FONT>            this(offset, name);<a name="line.240"></a>
+<FONT color="green">241</FONT>            if (daylightSavings &lt;= 0) {<a name="line.241"></a>
+<FONT color="green">242</FONT>                throw new IllegalArgumentException(Msg.getString("K00e9", daylightSavings)); //$NON-NLS-1$<a name="line.242"></a>
+<FONT color="green">243</FONT>            }<a name="line.243"></a>
+<FONT color="green">244</FONT>            dstSavings = daylightSavings;<a name="line.244"></a>
+<FONT color="green">245</FONT>    <a name="line.245"></a>
+<FONT color="green">246</FONT>            setStartRule(startMonth, startDay, startDayOfWeek, startTime);<a name="line.246"></a>
+<FONT color="green">247</FONT>            setEndRule(endMonth, endDay, endDayOfWeek, endTime);<a name="line.247"></a>
+<FONT color="green">248</FONT>        }<a name="line.248"></a>
+<FONT color="green">249</FONT>    <a name="line.249"></a>
+<FONT color="green">250</FONT>        /**<a name="line.250"></a>
+<FONT color="green">251</FONT>         * Construct a {@code SimpleTimeZone} with the given base time zone offset from GMT,<a name="line.251"></a>
+<FONT color="green">252</FONT>         * time zone ID, times to start and end the daylight savings time including a <a name="line.252"></a>
+<FONT color="green">253</FONT>         * mode specifier, the daylight savings time difference in milliseconds.<a name="line.253"></a>
+<FONT color="green">254</FONT>         * The mode specifies either {@link #WALL_TIME}, {@link #STANDARD_TIME}, or<a name="line.254"></a>
+<FONT color="green">255</FONT>         * {@link #UTC_TIME}.<a name="line.255"></a>
+<FONT color="green">256</FONT>         * <a name="line.256"></a>
+<FONT color="green">257</FONT>         * @param offset<a name="line.257"></a>
+<FONT color="green">258</FONT>         *            the given base time zone offset to GMT.<a name="line.258"></a>
+<FONT color="green">259</FONT>         * @param name<a name="line.259"></a>
+<FONT color="green">260</FONT>         *            the time zone ID which is obtained from<a name="line.260"></a>
+<FONT color="green">261</FONT>         *            {@code TimeZone.getAvailableIDs}.<a name="line.261"></a>
+<FONT color="green">262</FONT>         * @param startMonth<a name="line.262"></a>
+<FONT color="green">263</FONT>         *            the daylight savings starting month. The month indexing is 0-based. eg, 0<a name="line.263"></a>
+<FONT color="green">264</FONT>         *            for January.<a name="line.264"></a>
+<FONT color="green">265</FONT>         * @param startDay<a name="line.265"></a>
+<FONT color="green">266</FONT>         *            the daylight savings starting day-of-week-in-month. Please see<a name="line.266"></a>
+<FONT color="green">267</FONT>         *            the description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.267"></a>
+<FONT color="green">268</FONT>         * @param startDayOfWeek<a name="line.268"></a>
+<FONT color="green">269</FONT>         *            the daylight savings starting day-of-week. Please see the<a name="line.269"></a>
+<FONT color="green">270</FONT>         *            description of {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @param startTime<a name="line.271"></a>
+<FONT color="green">272</FONT>         *            the time of day in milliseconds on which daylight savings <a name="line.272"></a>
+<FONT color="green">273</FONT>         *            time starts, based on the {@code startTimeMode}.<a name="line.273"></a>
+<FONT color="green">274</FONT>         * @param startTimeMode<a name="line.274"></a>
+<FONT color="green">275</FONT>         *            the mode (UTC, standard, or wall time) of the start time<a name="line.275"></a>
+<FONT color="green">276</FONT>         *            value.<a name="line.276"></a>
+<FONT color="green">277</FONT>         * @param endDay <a name="line.277"></a>
+<FONT color="green">278</FONT>         *            the day of the week on which daylight savings time ends. <a name="line.278"></a>
+<FONT color="green">279</FONT>         * @param endMonth<a name="line.279"></a>
+<FONT color="green">280</FONT>         *            the daylight savings ending month. The month indexing is 0-based. eg, 0 for<a name="line.280"></a>
+<FONT color="green">281</FONT>         *            January.<a name="line.281"></a>
+<FONT color="green">282</FONT>         * @param endDayOfWeek<a name="line.282"></a>
+<FONT color="green">283</FONT>         *            the daylight savings ending day-of-week. Please see the description of <a name="line.283"></a>
+<FONT color="green">284</FONT>         *            {@link #SimpleTimeZone(int, String, int, int, int, int, int, int, int, int)} for an example.<a name="line.284"></a>
+<FONT color="green">285</FONT>         * @param endTime<a name="line.285"></a>
+<FONT color="green">286</FONT>         *            the time of day in milliseconds on which daylight savings <a name="line.286"></a>
+<FONT color="green">287</FONT>         *            time ends, based on the {@code endTimeMode}.<a name="line.287"></a>
+<FONT color="green">288</FONT>         * @param endTimeMode<a name="line.288"></a>
+<FONT color="green">289</FONT>         *            the mode (UTC, standard, or wall time) of the end time value.<a name="line.289"></a>
+<FONT color="green">290</FONT>         * @param daylightSavings<a name="line.290"></a>
+<FONT color="green">291</FONT>         *            the daylight savings time difference in milliseconds.<a name="line.291"></a>
+<FONT color="green">292</FONT>         * @throws IllegalArgumentException<a name="line.292"></a>
+<FONT color="green">293</FONT>         *             if the month, day, dayOfWeek, or time parameters are out of<a name="line.293"></a>
+<FONT color="green">294</FONT>         *             range for the start or end rule.<a name="line.294"></a>
+<FONT color="green">295</FONT>         * @since Android 1.0<a name="line.295"></a>
+<FONT color="green">296</FONT>         */<a name="line.296"></a>
+<FONT color="green">297</FONT>        public SimpleTimeZone(int offset, String name, int startMonth,<a name="line.297"></a>
+<FONT color="green">298</FONT>                int startDay, int startDayOfWeek, int startTime, int startTimeMode,<a name="line.298"></a>
+<FONT color="green">299</FONT>                int endMonth, int endDay, int endDayOfWeek, int endTime,<a name="line.299"></a>
+<FONT color="green">300</FONT>                int endTimeMode, int daylightSavings) {<a name="line.300"></a>
+<FONT color="green">301</FONT>    <a name="line.301"></a>
+<FONT color="green">302</FONT>            this(offset, name, startMonth, startDay, startDayOfWeek, startTime,<a name="line.302"></a>
+<FONT color="green">303</FONT>                    endMonth, endDay, endDayOfWeek, endTime, daylightSavings);<a name="line.303"></a>
+<FONT color="green">304</FONT>            startMode = startTimeMode;<a name="line.304"></a>
+<FONT color="green">305</FONT>            endMode = endTimeMode;<a name="line.305"></a>
+<FONT color="green">306</FONT>        }<a name="line.306"></a>
+<FONT color="green">307</FONT>    <a name="line.307"></a>
+<FONT color="green">308</FONT>        /**<a name="line.308"></a>
+<FONT color="green">309</FONT>         * Returns a new {@code SimpleTimeZone} with the same ID, {@code rawOffset} and daylight<a name="line.309"></a>
+<FONT color="green">310</FONT>         * savings time rules as this SimpleTimeZone.<a name="line.310"></a>
+<FONT color="green">311</FONT>         * <a name="line.311"></a>
+<FONT color="green">312</FONT>         * @return a shallow copy of this {@code SimpleTimeZone}.<a name="line.312"></a>
+<FONT color="green">313</FONT>         * @see java.lang.Cloneable<a name="line.313"></a>
+<FONT color="green">314</FONT>         * @since Android 1.0<a name="line.314"></a>
+<FONT color="green">315</FONT>         */<a name="line.315"></a>
+<FONT color="green">316</FONT>        @Override<a name="line.316"></a>
+<FONT color="green">317</FONT>        public Object clone() {<a name="line.317"></a>
+<FONT color="green">318</FONT>            SimpleTimeZone zone = (SimpleTimeZone) super.clone();<a name="line.318"></a>
+<FONT color="green">319</FONT>            if (daylightSavings != null) {<a name="line.319"></a>
+<FONT color="green">320</FONT>                zone.daylightSavings = (GregorianCalendar) daylightSavings.clone();<a name="line.320"></a>
+<FONT color="green">321</FONT>            }<a name="line.321"></a>
+<FONT color="green">322</FONT>            return zone;<a name="line.322"></a>
+<FONT color="green">323</FONT>        }<a name="line.323"></a>
+<FONT color="green">324</FONT>    <a name="line.324"></a>
+<FONT color="green">325</FONT>        /**<a name="line.325"></a>
+<FONT color="green">326</FONT>         * Compares the specified object to this {@code SimpleTimeZone} and returns whether they<a name="line.326"></a>
+<FONT color="green">327</FONT>         * are equal. The object must be an instance of {@code SimpleTimeZone} and have the<a name="line.327"></a>
+<FONT color="green">328</FONT>         * same internal data.<a name="line.328"></a>
+<FONT color="green">329</FONT>         * <a name="line.329"></a>
+<FONT color="green">330</FONT>         * @param object<a name="line.330"></a>
+<FONT color="green">331</FONT>         *            the object to compare with this object.<a name="line.331"></a>
+<FONT color="green">332</FONT>         * @return {@code true} if the specified object is equal to this<a name="line.332"></a>
+<FONT color="green">333</FONT>         *         {@code SimpleTimeZone}, {@code false} otherwise.<a name="line.333"></a>
+<FONT color="green">334</FONT>         * @see #hashCode<a name="line.334"></a>
+<FONT color="green">335</FONT>         * @since Android 1.0<a name="line.335"></a>
+<FONT color="green">336</FONT>         */<a name="line.336"></a>
+<FONT color="green">337</FONT>        @Override<a name="line.337"></a>
+<FONT color="green">338</FONT>        public boolean equals(Object object) {<a name="line.338"></a>
+<FONT color="green">339</FONT>            if (!(object instanceof SimpleTimeZone)) {<a name="line.339"></a>
+<FONT color="green">340</FONT>                return false;<a name="line.340"></a>
+<FONT color="green">341</FONT>            }<a name="line.341"></a>
+<FONT color="green">342</FONT>            SimpleTimeZone tz = (SimpleTimeZone) object;<a name="line.342"></a>
+<FONT color="green">343</FONT>            return getID().equals(tz.getID())<a name="line.343"></a>
+<FONT color="green">344</FONT>                    &amp;&amp; rawOffset == tz.rawOffset<a name="line.344"></a>
+<FONT color="green">345</FONT>                    &amp;&amp; useDaylight == tz.useDaylight<a name="line.345"></a>
+<FONT color="green">346</FONT>                    &amp;&amp; (!useDaylight || (startYear == tz.startYear<a name="line.346"></a>
+<FONT color="green">347</FONT>                            &amp;&amp; startMonth == tz.startMonth<a name="line.347"></a>
+<FONT color="green">348</FONT>                            &amp;&amp; startDay == tz.startDay &amp;&amp; startMode == tz.startMode<a name="line.348"></a>
+<FONT color="green">349</FONT>                            &amp;&amp; startDayOfWeek == tz.startDayOfWeek<a name="line.349"></a>
+<FONT color="green">350</FONT>                            &amp;&amp; startTime == tz.startTime &amp;&amp; endMonth == tz.endMonth<a name="line.350"></a>
+<FONT color="green">351</FONT>                            &amp;&amp; endDay == tz.endDay<a name="line.351"></a>
+<FONT color="green">352</FONT>                            &amp;&amp; endDayOfWeek == tz.endDayOfWeek<a name="line.352"></a>
+<FONT color="green">353</FONT>                            &amp;&amp; endTime == tz.endTime &amp;&amp; endMode == tz.endMode &amp;&amp; dstSavings == tz.dstSavings));<a name="line.353"></a>
+<FONT color="green">354</FONT>        }<a name="line.354"></a>
+<FONT color="green">355</FONT>    <a name="line.355"></a>
+<FONT color="green">356</FONT>        @Override<a name="line.356"></a>
+<FONT color="green">357</FONT>        public int getDSTSavings() {<a name="line.357"></a>
+<FONT color="green">358</FONT>            if (!useDaylight) {<a name="line.358"></a>
+<FONT color="green">359</FONT>                return 0;<a name="line.359"></a>
+<FONT color="green">360</FONT>            }<a name="line.360"></a>
+<FONT color="green">361</FONT>            return dstSavings;<a name="line.361"></a>
+<FONT color="green">362</FONT>        }<a name="line.362"></a>
+<FONT color="green">363</FONT>    <a name="line.363"></a>
+<FONT color="green">364</FONT>        @Override<a name="line.364"></a>
+<FONT color="green">365</FONT>        public int getOffset(int era, int year, int month, int day, int dayOfWeek,<a name="line.365"></a>
+<FONT color="green">366</FONT>                int time) {<a name="line.366"></a>
+<FONT color="green">367</FONT>            if (era != GregorianCalendar.BC &amp;&amp; era != GregorianCalendar.AD) {<a name="line.367"></a>
+<FONT color="green">368</FONT>                throw new IllegalArgumentException(Msg.getString("K00ea", era)); //$NON-NLS-1$<a name="line.368"></a>
+<FONT color="green">369</FONT>            }<a name="line.369"></a>
+<FONT color="green">370</FONT>            checkRange(month, dayOfWeek, time);<a name="line.370"></a>
+<FONT color="green">371</FONT>            if (month != Calendar.FEBRUARY || day != 29 || !isLeapYear(year)) {<a name="line.371"></a>
+<FONT color="green">372</FONT>                checkDay(month, day);<a name="line.372"></a>
+<FONT color="green">373</FONT>            }<a name="line.373"></a>
+<FONT color="green">374</FONT>    <a name="line.374"></a>
+<FONT color="green">375</FONT>            if (!useDaylightTime() || era != GregorianCalendar.AD<a name="line.375"></a>
+<FONT color="green">376</FONT>                    || year &lt; startYear) {<a name="line.376"></a>
+<FONT color="green">377</FONT>                return rawOffset;<a name="line.377"></a>
+<FONT color="green">378</FONT>            }<a name="line.378"></a>
+<FONT color="green">379</FONT>            if (endMonth &lt; startMonth) {<a name="line.379"></a>
+<FONT color="green">380</FONT>                if (month &gt; endMonth &amp;&amp; month &lt; startMonth) {<a name="line.380"></a>
+<FONT color="green">381</FONT>                    return rawOffset;<a name="line.381"></a>
+<FONT color="green">382</FONT>                }<a name="line.382"></a>
+<FONT color="green">383</FONT>            } else {<a name="line.383"></a>
+<FONT color="green">384</FONT>                if (month &lt; startMonth || month &gt; endMonth) {<a name="line.384"></a>
+<FONT color="green">385</FONT>                    return rawOffset;<a name="line.385"></a>
+<FONT color="green">386</FONT>                }<a name="line.386"></a>
+<FONT color="green">387</FONT>            }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>            int ruleDay = 0, daysInMonth, firstDayOfMonth = mod7(dayOfWeek - day);<a name="line.389"></a>
+<FONT color="green">390</FONT>            if (month == startMonth) {<a name="line.390"></a>
+<FONT color="green">391</FONT>                switch (startMode) {<a name="line.391"></a>
+<FONT color="green">392</FONT>                case DOM_MODE:<a name="line.392"></a>
+<FONT color="green">393</FONT>                    ruleDay = startDay;<a name="line.393"></a>
+<FONT color="green">394</FONT>                    break;<a name="line.394"></a>
+<FONT color="green">395</FONT>                case DOW_IN_MONTH_MODE:<a name="line.395"></a>
+<FONT color="green">396</FONT>                    if (startDay &gt;= 0) {<a name="line.396"></a>
+<FONT color="green">397</FONT>                        ruleDay = mod7(startDayOfWeek - firstDayOfMonth) + 1<a name="line.397"></a>
+<FONT color="green">398</FONT>                                + (startDay - 1) * 7;<a name="line.398"></a>
+<FONT color="green">399</FONT>                    } else {<a name="line.399"></a>
+<FONT color="green">400</FONT>                        daysInMonth = GregorianCalendar.DaysInMonth[startMonth];<a name="line.400"></a>
+<FONT color="green">401</FONT>                        if (startMonth == Calendar.FEBRUARY &amp;&amp; isLeapYear(year)) {<a name="line.401"></a>
+<FONT color="green">402</FONT>                            daysInMonth += 1;<a name="line.402"></a>
+<FONT color="green">403</FONT>                        }<a name="line.403"></a>
+<FONT color="green">404</FONT>                        ruleDay = daysInMonth<a name="line.404"></a>
+<FONT color="green">405</FONT>                                + 1<a name="line.405"></a>
+<FONT color="green">406</FONT>                                + mod7(startDayOfWeek<a name="line.406"></a>
+<FONT color="green">407</FONT>                                        - (firstDayOfMonth + daysInMonth))<a name="line.407"></a>
+<FONT color="green">408</FONT>                                + startDay * 7;<a name="line.408"></a>
+<FONT color="green">409</FONT>                    }<a name="line.409"></a>
+<FONT color="green">410</FONT>                    break;<a name="line.410"></a>
+<FONT color="green">411</FONT>                case DOW_GE_DOM_MODE:<a name="line.411"></a>
+<FONT color="green">412</FONT>                    ruleDay = startDay<a name="line.412"></a>
+<FONT color="green">413</FONT>                            + mod7(startDayOfWeek<a name="line.413"></a>
+<FONT color="green">414</FONT>                                    - (firstDayOfMonth + startDay - 1));<a name="line.414"></a>
+<FONT color="green">415</FONT>                    break;<a name="line.415"></a>
+<FONT color="green">416</FONT>                case DOW_LE_DOM_MODE:<a name="line.416"></a>
+<FONT color="green">417</FONT>                    ruleDay = startDay<a name="line.417"></a>
+<FONT color="green">418</FONT>                            + mod7(startDayOfWeek<a name="line.418"></a>
+<FONT color="green">419</FONT>                                    - (firstDayOfMonth + startDay - 1));<a name="line.419"></a>
+<FONT color="green">420</FONT>                    if (ruleDay != startDay) {<a name="line.420"></a>
+<FONT color="green">421</FONT>                        ruleDay -= 7;<a name="line.421"></a>
+<FONT color="green">422</FONT>                    }<a name="line.422"></a>
+<FONT color="green">423</FONT>                    break;<a name="line.423"></a>
+<FONT color="green">424</FONT>                }<a name="line.424"></a>
+<FONT color="green">425</FONT>                if (ruleDay &gt; day || ruleDay == day &amp;&amp; time &lt; startTime) {<a name="line.425"></a>
+<FONT color="green">426</FONT>                    return rawOffset;<a name="line.426"></a>
+<FONT color="green">427</FONT>                }<a name="line.427"></a>
+<FONT color="green">428</FONT>            }<a name="line.428"></a>
+<FONT color="green">429</FONT>    <a name="line.429"></a>
+<FONT color="green">430</FONT>            int ruleTime = endTime - dstSavings;<a name="line.430"></a>
+<FONT color="green">431</FONT>            int nextMonth = (month + 1) % 12;<a name="line.431"></a>
+<FONT color="green">432</FONT>            if (month == endMonth || (ruleTime &lt; 0 &amp;&amp; nextMonth == endMonth)) {<a name="line.432"></a>
+<FONT color="green">433</FONT>                switch (endMode) {<a name="line.433"></a>
+<FONT color="green">434</FONT>                case DOM_MODE:<a name="line.434"></a>
+<FONT color="green">435</FONT>                    ruleDay = endDay;<a name="line.435"></a>
+<FONT color="green">436</FONT>                    break;<a name="line.436"></a>
+<FONT color="green">437</FONT>                case DOW_IN_MONTH_MODE:<a name="line.437"></a>
+<FONT color="green">438</FONT>                    if (endDay &gt;= 0) {<a name="line.438"></a>
+<FONT color="green">439</FONT>                        ruleDay = mod7(endDayOfWeek - firstDayOfMonth) + 1<a name="line.439"></a>
+<FONT color="green">440</FONT>                                + (endDay - 1) * 7;<a name="line.440"></a>
+<FONT color="green">441</FONT>                    } else {<a name="line.441"></a>
+<FONT color="green">442</FONT>                        daysInMonth = GregorianCalendar.DaysInMonth[endMonth];<a name="line.442"></a>
+<FONT color="green">443</FONT>                        if (endMonth == Calendar.FEBRUARY &amp;&amp; isLeapYear(year)) {<a name="line.443"></a>
+<FONT color="green">444</FONT>                            daysInMonth++;<a name="line.444"></a>
+<FONT color="green">445</FONT>                        }<a name="line.445"></a>
+<FONT color="green">446</FONT>                        ruleDay = daysInMonth<a name="line.446"></a>
+<FONT color="green">447</FONT>                                + 1<a name="line.447"></a>
+<FONT color="green">448</FONT>                                + mod7(endDayOfWeek<a name="line.448"></a>
+<FONT color="green">449</FONT>                                        - (firstDayOfMonth + daysInMonth)) + endDay<a name="line.449"></a>
+<FONT color="green">450</FONT>                                * 7;<a name="line.450"></a>
+<FONT color="green">451</FONT>                    }<a name="line.451"></a>
+<FONT color="green">452</FONT>                    break;<a name="line.452"></a>
+<FONT color="green">453</FONT>                case DOW_GE_DOM_MODE:<a name="line.453"></a>
+<FONT color="green">454</FONT>                    ruleDay = endDay<a name="line.454"></a>
+<FONT color="green">455</FONT>                            + mod7(endDayOfWeek - (firstDayOfMonth + endDay - 1));<a name="line.455"></a>
+<FONT color="green">456</FONT>                    break;<a name="line.456"></a>
+<FONT color="green">457</FONT>                case DOW_LE_DOM_MODE:<a name="line.457"></a>
+<FONT color="green">458</FONT>                    ruleDay = endDay<a name="line.458"></a>
+<FONT color="green">459</FONT>                            + mod7(endDayOfWeek - (firstDayOfMonth + endDay - 1));<a name="line.459"></a>
+<FONT color="green">460</FONT>                    if (ruleDay != endDay) {<a name="line.460"></a>
+<FONT color="green">461</FONT>                        ruleDay -= 7;<a name="line.461"></a>
+<FONT color="green">462</FONT>                    }<a name="line.462"></a>
+<FONT color="green">463</FONT>                    break;<a name="line.463"></a>
+<FONT color="green">464</FONT>                }<a name="line.464"></a>
+<FONT color="green">465</FONT>    <a name="line.465"></a>
+<FONT color="green">466</FONT>                int ruleMonth = endMonth;<a name="line.466"></a>
+<FONT color="green">467</FONT>                if (ruleTime &lt; 0) {<a name="line.467"></a>
+<FONT color="green">468</FONT>                    int changeDays = 1 - (ruleTime / 86400000);<a name="line.468"></a>
+<FONT color="green">469</FONT>                    ruleTime = (ruleTime % 86400000) + 86400000;<a name="line.469"></a>
+<FONT color="green">470</FONT>                    ruleDay -= changeDays;<a name="line.470"></a>
+<FONT color="green">471</FONT>                    if (ruleDay &lt;= 0) {<a name="line.471"></a>
+<FONT color="green">472</FONT>                        if (--ruleMonth &lt; Calendar.JANUARY) {<a name="line.472"></a>
+<FONT color="green">473</FONT>                            ruleMonth = Calendar.DECEMBER;<a name="line.473"></a>
+<FONT color="green">474</FONT>                        }<a name="line.474"></a>
+<FONT color="green">475</FONT>                        ruleDay += GregorianCalendar.DaysInMonth[ruleMonth];<a name="line.475"></a>
+<FONT color="green">476</FONT>                        if (ruleMonth == Calendar.FEBRUARY &amp;&amp; isLeapYear(year)) {<a name="line.476"></a>
+<FONT color="green">477</FONT>                            ruleDay++;<a name="line.477"></a>
+<FONT color="green">478</FONT>                        }<a name="line.478"></a>
+<FONT color="green">479</FONT>                    }<a name="line.479"></a>
+<FONT color="green">480</FONT>                }<a name="line.480"></a>
+<FONT color="green">481</FONT>    <a name="line.481"></a>
+<FONT color="green">482</FONT>                if (month == ruleMonth) {<a name="line.482"></a>
+<FONT color="green">483</FONT>                    if (ruleDay &lt; day || ruleDay == day &amp;&amp; time &gt;= ruleTime) {<a name="line.483"></a>
+<FONT color="green">484</FONT>                        return rawOffset;<a name="line.484"></a>
+<FONT color="green">485</FONT>                    }<a name="line.485"></a>
+<FONT color="green">486</FONT>                } else if (nextMonth != ruleMonth) {<a name="line.486"></a>
+<FONT color="green">487</FONT>                    return rawOffset;<a name="line.487"></a>
+<FONT color="green">488</FONT>                }<a name="line.488"></a>
+<FONT color="green">489</FONT>            }<a name="line.489"></a>
+<FONT color="green">490</FONT>            return rawOffset + dstSavings;<a name="line.490"></a>
+<FONT color="green">491</FONT>        }<a name="line.491"></a>
+<FONT color="green">492</FONT>    <a name="line.492"></a>
+<FONT color="green">493</FONT>        @Override<a name="line.493"></a>
+<FONT color="green">494</FONT>        public int getOffset(long time) {<a name="line.494"></a>
+<FONT color="green">495</FONT>            if (!useDaylightTime()) {<a name="line.495"></a>
+<FONT color="green">496</FONT>                return rawOffset;<a name="line.496"></a>
+<FONT color="green">497</FONT>            }<a name="line.497"></a>
+<FONT color="green">498</FONT>            if (daylightSavings == null) {<a name="line.498"></a>
+<FONT color="green">499</FONT>                daylightSavings = new GregorianCalendar(this);<a name="line.499"></a>
+<FONT color="green">500</FONT>            }<a name="line.500"></a>
+<FONT color="green">501</FONT>            return daylightSavings.getOffset(time + rawOffset);<a name="line.501"></a>
+<FONT color="green">502</FONT>        }<a name="line.502"></a>
+<FONT color="green">503</FONT>    <a name="line.503"></a>
+<FONT color="green">504</FONT>        @Override<a name="line.504"></a>
+<FONT color="green">505</FONT>        public int getRawOffset() {<a name="line.505"></a>
+<FONT color="green">506</FONT>            return rawOffset;<a name="line.506"></a>
+<FONT color="green">507</FONT>        }<a name="line.507"></a>
+<FONT color="green">508</FONT>    <a name="line.508"></a>
+<FONT color="green">509</FONT>        /**<a name="line.509"></a>
+<FONT color="green">510</FONT>         * Returns an integer hash code for the receiver. Objects which are equal<a name="line.510"></a>
+<FONT color="green">511</FONT>         * return the same value for this method.<a name="line.511"></a>
+<FONT color="green">512</FONT>         * <a name="line.512"></a>
+<FONT color="green">513</FONT>         * @return the receiver's hash.<a name="line.513"></a>
+<FONT color="green">514</FONT>         * @see #equals<a name="line.514"></a>
+<FONT color="green">515</FONT>         * @since Android 1.0<a name="line.515"></a>
+<FONT color="green">516</FONT>         */<a name="line.516"></a>
+<FONT color="green">517</FONT>        @Override<a name="line.517"></a>
+<FONT color="green">518</FONT>        public synchronized int hashCode() {<a name="line.518"></a>
+<FONT color="green">519</FONT>            int hashCode = getID().hashCode() + rawOffset;<a name="line.519"></a>
+<FONT color="green">520</FONT>            if (useDaylight) {<a name="line.520"></a>
+<FONT color="green">521</FONT>                hashCode += startYear + startMonth + startDay + startDayOfWeek<a name="line.521"></a>
+<FONT color="green">522</FONT>                        + startTime + startMode + endMonth + endDay + endDayOfWeek<a name="line.522"></a>
+<FONT color="green">523</FONT>                        + endTime + endMode + dstSavings;<a name="line.523"></a>
+<FONT color="green">524</FONT>            }<a name="line.524"></a>
+<FONT color="green">525</FONT>            return hashCode;<a name="line.525"></a>
+<FONT color="green">526</FONT>        }<a name="line.526"></a>
+<FONT color="green">527</FONT>    <a name="line.527"></a>
+<FONT color="green">528</FONT>        @Override<a name="line.528"></a>
+<FONT color="green">529</FONT>        public boolean hasSameRules(TimeZone zone) {<a name="line.529"></a>
+<FONT color="green">530</FONT>            if (!(zone instanceof SimpleTimeZone)) {<a name="line.530"></a>
+<FONT color="green">531</FONT>                return false;<a name="line.531"></a>
+<FONT color="green">532</FONT>            }<a name="line.532"></a>
+<FONT color="green">533</FONT>            SimpleTimeZone tz = (SimpleTimeZone) zone;<a name="line.533"></a>
+<FONT color="green">534</FONT>            if (useDaylight != tz.useDaylight) {<a name="line.534"></a>
+<FONT color="green">535</FONT>                return false;<a name="line.535"></a>
+<FONT color="green">536</FONT>            }<a name="line.536"></a>
+<FONT color="green">537</FONT>            if (!useDaylight) {<a name="line.537"></a>
+<FONT color="green">538</FONT>                return rawOffset == tz.rawOffset;<a name="line.538"></a>
+<FONT color="green">539</FONT>            }<a name="line.539"></a>
+<FONT color="green">540</FONT>            return rawOffset == tz.rawOffset &amp;&amp; dstSavings == tz.dstSavings<a name="line.540"></a>
+<FONT color="green">541</FONT>                    &amp;&amp; startYear == tz.startYear &amp;&amp; startMonth == tz.startMonth<a name="line.541"></a>
+<FONT color="green">542</FONT>                    &amp;&amp; startDay == tz.startDay &amp;&amp; startMode == tz.startMode<a name="line.542"></a>
+<FONT color="green">543</FONT>                    &amp;&amp; startDayOfWeek == tz.startDayOfWeek<a name="line.543"></a>
+<FONT color="green">544</FONT>                    &amp;&amp; startTime == tz.startTime &amp;&amp; endMonth == tz.endMonth<a name="line.544"></a>
+<FONT color="green">545</FONT>                    &amp;&amp; endDay == tz.endDay &amp;&amp; endDayOfWeek == tz.endDayOfWeek<a name="line.545"></a>
+<FONT color="green">546</FONT>                    &amp;&amp; endTime == tz.endTime &amp;&amp; endMode == tz.endMode;<a name="line.546"></a>
+<FONT color="green">547</FONT>        }<a name="line.547"></a>
+<FONT color="green">548</FONT>    <a name="line.548"></a>
+<FONT color="green">549</FONT>        @Override<a name="line.549"></a>
+<FONT color="green">550</FONT>        public boolean inDaylightTime(Date time) {<a name="line.550"></a>
+<FONT color="green">551</FONT>            // check for null pointer<a name="line.551"></a>
+<FONT color="green">552</FONT>            long millis = time.getTime();<a name="line.552"></a>
+<FONT color="green">553</FONT>            if (!useDaylightTime()) {<a name="line.553"></a>
+<FONT color="green">554</FONT>                return false;<a name="line.554"></a>
+<FONT color="green">555</FONT>            }<a name="line.555"></a>
+<FONT color="green">556</FONT>            if (daylightSavings == null) {<a name="line.556"></a>
+<FONT color="green">557</FONT>                daylightSavings = new GregorianCalendar(this);<a name="line.557"></a>
+<FONT color="green">558</FONT>            }<a name="line.558"></a>
+<FONT color="green">559</FONT>            return daylightSavings.getOffset(millis + rawOffset) != rawOffset;<a name="line.559"></a>
+<FONT color="green">560</FONT>        }<a name="line.560"></a>
+<FONT color="green">561</FONT>    <a name="line.561"></a>
+<FONT color="green">562</FONT>        private boolean isLeapYear(int year) {<a name="line.562"></a>
+<FONT color="green">563</FONT>            if (year &gt; 1582) {<a name="line.563"></a>
+<FONT color="green">564</FONT>                return year % 4 == 0 &amp;&amp; (year % 100 != 0 || year % 400 == 0);<a name="line.564"></a>
+<FONT color="green">565</FONT>            }<a name="line.565"></a>
+<FONT color="green">566</FONT>            return year % 4 == 0;<a name="line.566"></a>
+<FONT color="green">567</FONT>        }<a name="line.567"></a>
+<FONT color="green">568</FONT>    <a name="line.568"></a>
+<FONT color="green">569</FONT>        private int mod7(int num1) {<a name="line.569"></a>
+<FONT color="green">570</FONT>            int rem = num1 % 7;<a name="line.570"></a>
+<FONT color="green">571</FONT>            return (num1 &lt; 0 &amp;&amp; rem &lt; 0) ? 7 + rem : rem;<a name="line.571"></a>
+<FONT color="green">572</FONT>        }<a name="line.572"></a>
+<FONT color="green">573</FONT>    <a name="line.573"></a>
+<FONT color="green">574</FONT>        /**<a name="line.574"></a>
+<FONT color="green">575</FONT>         * Sets the daylight savings offset in milliseconds for this {@code SimpleTimeZone}.<a name="line.575"></a>
+<FONT color="green">576</FONT>         * <a name="line.576"></a>
+<FONT color="green">577</FONT>         * @param milliseconds<a name="line.577"></a>
+<FONT color="green">578</FONT>         *            the daylight savings offset in milliseconds.<a name="line.578"></a>
+<FONT color="green">579</FONT>         * @since Android 1.0<a name="line.579"></a>
+<FONT color="green">580</FONT>         */<a name="line.580"></a>
+<FONT color="green">581</FONT>        public void setDSTSavings(int milliseconds) {<a name="line.581"></a>
+<FONT color="green">582</FONT>            if (milliseconds &gt; 0) {<a name="line.582"></a>
+<FONT color="green">583</FONT>                dstSavings = milliseconds;<a name="line.583"></a>
+<FONT color="green">584</FONT>            } else {<a name="line.584"></a>
+<FONT color="green">585</FONT>                throw new IllegalArgumentException();<a name="line.585"></a>
+<FONT color="green">586</FONT>            }<a name="line.586"></a>
+<FONT color="green">587</FONT>        }<a name="line.587"></a>
+<FONT color="green">588</FONT>    <a name="line.588"></a>
+<FONT color="green">589</FONT>        private void checkRange(int month, int dayOfWeek, int time) {<a name="line.589"></a>
+<FONT color="green">590</FONT>            if (month &lt; Calendar.JANUARY || month &gt; Calendar.DECEMBER) {<a name="line.590"></a>
+<FONT color="green">591</FONT>                throw new IllegalArgumentException(Msg.getString("K00e5", month)); //$NON-NLS-1$<a name="line.591"></a>
+<FONT color="green">592</FONT>            }<a name="line.592"></a>
+<FONT color="green">593</FONT>            if (dayOfWeek &lt; Calendar.SUNDAY || dayOfWeek &gt; Calendar.SATURDAY) {<a name="line.593"></a>
+<FONT color="green">594</FONT>                throw new IllegalArgumentException(Msg.getString("K00e7", dayOfWeek)); //$NON-NLS-1$<a name="line.594"></a>
+<FONT color="green">595</FONT>            }<a name="line.595"></a>
+<FONT color="green">596</FONT>            if (time &lt; 0 || time &gt;= 24 * 3600000) {<a name="line.596"></a>
+<FONT color="green">597</FONT>                throw new IllegalArgumentException(Msg.getString("K00e8", time)); //$NON-NLS-1$<a name="line.597"></a>
+<FONT color="green">598</FONT>            }<a name="line.598"></a>
+<FONT color="green">599</FONT>        }<a name="line.599"></a>
+<FONT color="green">600</FONT>    <a name="line.600"></a>
+<FONT color="green">601</FONT>        private void checkDay(int month, int day) {<a name="line.601"></a>
+<FONT color="green">602</FONT>            if (day &lt;= 0 || day &gt; GregorianCalendar.DaysInMonth[month]) {<a name="line.602"></a>
+<FONT color="green">603</FONT>                throw new IllegalArgumentException(Msg.getString("K00e6", day)); //$NON-NLS-1$<a name="line.603"></a>
+<FONT color="green">604</FONT>            }<a name="line.604"></a>
+<FONT color="green">605</FONT>        }<a name="line.605"></a>
+<FONT color="green">606</FONT>    <a name="line.606"></a>
+<FONT color="green">607</FONT>        private void setEndMode() {<a name="line.607"></a>
+<FONT color="green">608</FONT>            if (endDayOfWeek == 0) {<a name="line.608"></a>
+<FONT color="green">609</FONT>                endMode = DOM_MODE;<a name="line.609"></a>
+<FONT color="green">610</FONT>            } else if (endDayOfWeek &lt; 0) {<a name="line.610"></a>
+<FONT color="green">611</FONT>                endDayOfWeek = -endDayOfWeek;<a name="line.611"></a>
+<FONT color="green">612</FONT>                if (endDay &lt; 0) {<a name="line.612"></a>
+<FONT color="green">613</FONT>                    endDay = -endDay;<a name="line.613"></a>
+<FONT color="green">614</FONT>                    endMode = DOW_LE_DOM_MODE;<a name="line.614"></a>
+<FONT color="green">615</FONT>                } else {<a name="line.615"></a>
+<FONT color="green">616</FONT>                    endMode = DOW_GE_DOM_MODE;<a name="line.616"></a>
+<FONT color="green">617</FONT>                }<a name="line.617"></a>
+<FONT color="green">618</FONT>            } else {<a name="line.618"></a>
+<FONT color="green">619</FONT>                endMode = DOW_IN_MONTH_MODE;<a name="line.619"></a>
+<FONT color="green">620</FONT>            }<a name="line.620"></a>
+<FONT color="green">621</FONT>            useDaylight = startDay != 0 &amp;&amp; endDay != 0;<a name="line.621"></a>
+<FONT color="green">622</FONT>            if (endDay != 0) {<a name="line.622"></a>
+<FONT color="green">623</FONT>                checkRange(endMonth, endMode == DOM_MODE ? 1 : endDayOfWeek,<a name="line.623"></a>
+<FONT color="green">624</FONT>                        endTime);<a name="line.624"></a>
+<FONT color="green">625</FONT>                if (endMode != DOW_IN_MONTH_MODE) {<a name="line.625"></a>
+<FONT color="green">626</FONT>                    checkDay(endMonth, endDay);<a name="line.626"></a>
+<FONT color="green">627</FONT>                } else {<a name="line.627"></a>
+<FONT color="green">628</FONT>                    if (endDay &lt; -5 || endDay &gt; 5) {<a name="line.628"></a>
+<FONT color="green">629</FONT>                        throw new IllegalArgumentException(Msg.getString("K00f8", endDay)); //$NON-NLS-1$<a name="line.629"></a>
+<FONT color="green">630</FONT>                    }<a name="line.630"></a>
+<FONT color="green">631</FONT>                }<a name="line.631"></a>
+<FONT color="green">632</FONT>            }<a name="line.632"></a>
+<FONT color="green">633</FONT>            if (endMode != DOM_MODE) {<a name="line.633"></a>
+<FONT color="green">634</FONT>                endDayOfWeek--;<a name="line.634"></a>
+<FONT color="green">635</FONT>            }<a name="line.635"></a>
+<FONT color="green">636</FONT>        }<a name="line.636"></a>
+<FONT color="green">637</FONT>    <a name="line.637"></a>
+<FONT color="green">638</FONT>        /**<a name="line.638"></a>
+<FONT color="green">639</FONT>         * Sets the rule which specifies the end of daylight savings time.<a name="line.639"></a>
+<FONT color="green">640</FONT>         * <a name="line.640"></a>
+<FONT color="green">641</FONT>         * @param month<a name="line.641"></a>
+<FONT color="green">642</FONT>         *            the {@code Calendar} month in which daylight savings time ends.<a name="line.642"></a>
+<FONT color="green">643</FONT>         * @param dayOfMonth<a name="line.643"></a>
+<FONT color="green">644</FONT>         *            the {@code Calendar} day of the month on which daylight savings time<a name="line.644"></a>
+<FONT color="green">645</FONT>         *            ends.<a name="line.645"></a>
+<FONT color="green">646</FONT>         * @param time<a name="line.646"></a>
+<FONT color="green">647</FONT>         *            the time of day in milliseconds standard time on which<a name="line.647"></a>
+<FONT color="green">648</FONT>         *            daylight savings time ends.<a name="line.648"></a>
+<FONT color="green">649</FONT>         * @since Android 1.0<a name="line.649"></a>
+<FONT color="green">650</FONT>         */<a name="line.650"></a>
+<FONT color="green">651</FONT>        public void setEndRule(int month, int dayOfMonth, int time) {<a name="line.651"></a>
+<FONT color="green">652</FONT>            endMonth = month;<a name="line.652"></a>
+<FONT color="green">653</FONT>            endDay = dayOfMonth;<a name="line.653"></a>
+<FONT color="green">654</FONT>            endDayOfWeek = 0; // Initialize this value for hasSameRules()<a name="line.654"></a>
+<FONT color="green">655</FONT>            endTime = time;<a name="line.655"></a>
+<FONT color="green">656</FONT>            setEndMode();<a name="line.656"></a>
+<FONT color="green">657</FONT>        }<a name="line.657"></a>
+<FONT color="green">658</FONT>    <a name="line.658"></a>
+<FONT color="green">659</FONT>        /**<a name="line.659"></a>
+<FONT color="green">660</FONT>         * Sets the rule which specifies the end of daylight savings time.<a name="line.660"></a>
+<FONT color="green">661</FONT>         * <a name="line.661"></a>
+<FONT color="green">662</FONT>         * @param month<a name="line.662"></a>
+<FONT color="green">663</FONT>         *            the {@code Calendar} month in which daylight savings time ends.<a name="line.663"></a>
+<FONT color="green">664</FONT>         * @param day<a name="line.664"></a>
+<FONT color="green">665</FONT>         *            the occurrence of the day of the week on which daylight<a name="line.665"></a>
+<FONT color="green">666</FONT>         *            savings time ends.<a name="line.666"></a>
+<FONT color="green">667</FONT>         * @param dayOfWeek<a name="line.667"></a>
+<FONT color="green">668</FONT>         *            the {@code Calendar} day of the week on which daylight savings time<a name="line.668"></a>
+<FONT color="green">669</FONT>         *            ends.<a name="line.669"></a>
+<FONT color="green">670</FONT>         * @param time<a name="line.670"></a>
+<FONT color="green">671</FONT>         *            the time of day in milliseconds standard time on which<a name="line.671"></a>
+<FONT color="green">672</FONT>         *            daylight savings time ends.<a name="line.672"></a>
+<FONT color="green">673</FONT>         * @since Android 1.0<a name="line.673"></a>
+<FONT color="green">674</FONT>         */<a name="line.674"></a>
+<FONT color="green">675</FONT>        public void setEndRule(int month, int day, int dayOfWeek, int time) {<a name="line.675"></a>
+<FONT color="green">676</FONT>            endMonth = month;<a name="line.676"></a>
+<FONT color="green">677</FONT>            endDay = day;<a name="line.677"></a>
+<FONT color="green">678</FONT>            endDayOfWeek = dayOfWeek;<a name="line.678"></a>
+<FONT color="green">679</FONT>            endTime = time;<a name="line.679"></a>
+<FONT color="green">680</FONT>            setEndMode();<a name="line.680"></a>
+<FONT color="green">681</FONT>        }<a name="line.681"></a>
+<FONT color="green">682</FONT>    <a name="line.682"></a>
+<FONT color="green">683</FONT>        /**<a name="line.683"></a>
+<FONT color="green">684</FONT>         * Sets the rule which specifies the end of daylight savings time.<a name="line.684"></a>
+<FONT color="green">685</FONT>         * <a name="line.685"></a>
+<FONT color="green">686</FONT>         * @param month<a name="line.686"></a>
+<FONT color="green">687</FONT>         *            the {@code Calendar} month in which daylight savings time ends.<a name="line.687"></a>
+<FONT color="green">688</FONT>         * @param day<a name="line.688"></a>
+<FONT color="green">689</FONT>         *            the {@code Calendar} day of the month.<a name="line.689"></a>
+<FONT color="green">690</FONT>         * @param dayOfWeek<a name="line.690"></a>
+<FONT color="green">691</FONT>         *            the {@code Calendar} day of the week on which daylight savings time<a name="line.691"></a>
+<FONT color="green">692</FONT>         *            ends.<a name="line.692"></a>
+<FONT color="green">693</FONT>         * @param time<a name="line.693"></a>
+<FONT color="green">694</FONT>         *            the time of day in milliseconds on which daylight savings time<a name="line.694"></a>
+<FONT color="green">695</FONT>         *            ends.<a name="line.695"></a>
+<FONT color="green">696</FONT>         * @param after<a name="line.696"></a>
+<FONT color="green">697</FONT>         *            selects the day after or before the day of month.<a name="line.697"></a>
+<FONT color="green">698</FONT>         * @since Android 1.0<a name="line.698"></a>
+<FONT color="green">699</FONT>         */<a name="line.699"></a>
+<FONT color="green">700</FONT>        public void setEndRule(int month, int day, int dayOfWeek, int time,<a name="line.700"></a>
+<FONT color="green">701</FONT>                boolean after) {<a name="line.701"></a>
+<FONT color="green">702</FONT>            endMonth = month;<a name="line.702"></a>
+<FONT color="green">703</FONT>            endDay = after ? day : -day;<a name="line.703"></a>
+<FONT color="green">704</FONT>            endDayOfWeek = -dayOfWeek;<a name="line.704"></a>
+<FONT color="green">705</FONT>            endTime = time;<a name="line.705"></a>
+<FONT color="green">706</FONT>            setEndMode();<a name="line.706"></a>
+<FONT color="green">707</FONT>        }<a name="line.707"></a>
+<FONT color="green">708</FONT>    <a name="line.708"></a>
+<FONT color="green">709</FONT>        /**<a name="line.709"></a>
+<FONT color="green">710</FONT>         * Sets the offset for standard time from GMT for this {@code SimpleTimeZone}.<a name="line.710"></a>
+<FONT color="green">711</FONT>         * <a name="line.711"></a>
+<FONT color="green">712</FONT>         * @param offset<a name="line.712"></a>
+<FONT color="green">713</FONT>         *            the offset from GMT of standard time in milliseconds.<a name="line.713"></a>
+<FONT color="green">714</FONT>         * @since Android 1.0<a name="line.714"></a>
+<FONT color="green">715</FONT>         */<a name="line.715"></a>
+<FONT color="green">716</FONT>        @Override<a name="line.716"></a>
+<FONT color="green">717</FONT>        public void setRawOffset(int offset) {<a name="line.717"></a>
+<FONT color="green">718</FONT>            rawOffset = offset;<a name="line.718"></a>
+<FONT color="green">719</FONT>        }<a name="line.719"></a>
+<FONT color="green">720</FONT>    <a name="line.720"></a>
+<FONT color="green">721</FONT>        private void setStartMode() {<a name="line.721"></a>
+<FONT color="green">722</FONT>            if (startDayOfWeek == 0) {<a name="line.722"></a>
+<FONT color="green">723</FONT>                startMode = DOM_MODE;<a name="line.723"></a>
+<FONT color="green">724</FONT>            } else if (startDayOfWeek &lt; 0) {<a name="line.724"></a>
+<FONT color="green">725</FONT>                startDayOfWeek = -startDayOfWeek;<a name="line.725"></a>
+<FONT color="green">726</FONT>                if (startDay &lt; 0) {<a name="line.726"></a>
+<FONT color="green">727</FONT>                    startDay = -startDay;<a name="line.727"></a>
+<FONT color="green">728</FONT>                    startMode = DOW_LE_DOM_MODE;<a name="line.728"></a>
+<FONT color="green">729</FONT>                } else {<a name="line.729"></a>
+<FONT color="green">730</FONT>                    startMode = DOW_GE_DOM_MODE;<a name="line.730"></a>
+<FONT color="green">731</FONT>                }<a name="line.731"></a>
+<FONT color="green">732</FONT>            } else {<a name="line.732"></a>
+<FONT color="green">733</FONT>                startMode = DOW_IN_MONTH_MODE;<a name="line.733"></a>
+<FONT color="green">734</FONT>            }<a name="line.734"></a>
+<FONT color="green">735</FONT>            useDaylight = startDay != 0 &amp;&amp; endDay != 0;<a name="line.735"></a>
+<FONT color="green">736</FONT>            if (startDay != 0) {<a name="line.736"></a>
+<FONT color="green">737</FONT>                checkRange(startMonth, startMode == DOM_MODE ? 1 : startDayOfWeek,<a name="line.737"></a>
+<FONT color="green">738</FONT>                        startTime);<a name="line.738"></a>
+<FONT color="green">739</FONT>                if (startMode != DOW_IN_MONTH_MODE) {<a name="line.739"></a>
+<FONT color="green">740</FONT>                    checkDay(startMonth, startDay);<a name="line.740"></a>
+<FONT color="green">741</FONT>                } else {<a name="line.741"></a>
+<FONT color="green">742</FONT>                    if (startDay &lt; -5 || startDay &gt; 5) {<a name="line.742"></a>
+<FONT color="green">743</FONT>                        throw new IllegalArgumentException(Msg.getString("K00f8", startDay)); //$NON-NLS-1$<a name="line.743"></a>
+<FONT color="green">744</FONT>                    }<a name="line.744"></a>
+<FONT color="green">745</FONT>                }<a name="line.745"></a>
+<FONT color="green">746</FONT>            }<a name="line.746"></a>
+<FONT color="green">747</FONT>            if (startMode != DOM_MODE) {<a name="line.747"></a>
+<FONT color="green">748</FONT>                startDayOfWeek--;<a name="line.748"></a>
+<FONT color="green">749</FONT>            }<a name="line.749"></a>
+<FONT color="green">750</FONT>        }<a name="line.750"></a>
+<FONT color="green">751</FONT>    <a name="line.751"></a>
+<FONT color="green">752</FONT>        /**<a name="line.752"></a>
+<FONT color="green">753</FONT>         * Sets the rule which specifies the start of daylight savings time.<a name="line.753"></a>
+<FONT color="green">754</FONT>         * <a name="line.754"></a>
+<FONT color="green">755</FONT>         * @param month<a name="line.755"></a>
+<FONT color="green">756</FONT>         *            the {@code Calendar} month in which daylight savings time starts.<a name="line.756"></a>
+<FONT color="green">757</FONT>         * @param dayOfMonth<a name="line.757"></a>
+<FONT color="green">758</FONT>         *            the {@code Calendar} day of the month on which daylight savings time<a name="line.758"></a>
+<FONT color="green">759</FONT>         *            starts.<a name="line.759"></a>
+<FONT color="green">760</FONT>         * @param time<a name="line.760"></a>
+<FONT color="green">761</FONT>         *            the time of day in milliseconds on which daylight savings time<a name="line.761"></a>
+<FONT color="green">762</FONT>         *            starts.<a name="line.762"></a>
+<FONT color="green">763</FONT>         * @since Android 1.0<a name="line.763"></a>
+<FONT color="green">764</FONT>         */<a name="line.764"></a>
+<FONT color="green">765</FONT>        public void setStartRule(int month, int dayOfMonth, int time) {<a name="line.765"></a>
+<FONT color="green">766</FONT>            startMonth = month;<a name="line.766"></a>
+<FONT color="green">767</FONT>            startDay = dayOfMonth;<a name="line.767"></a>
+<FONT color="green">768</FONT>            startDayOfWeek = 0; // Initialize this value for hasSameRules()<a name="line.768"></a>
+<FONT color="green">769</FONT>            startTime = time;<a name="line.769"></a>
+<FONT color="green">770</FONT>            setStartMode();<a name="line.770"></a>
+<FONT color="green">771</FONT>        }<a name="line.771"></a>
+<FONT color="green">772</FONT>    <a name="line.772"></a>
+<FONT color="green">773</FONT>        /**<a name="line.773"></a>
+<FONT color="green">774</FONT>         * Sets the rule which specifies the start of daylight savings time.<a name="line.774"></a>
+<FONT color="green">775</FONT>         * <a name="line.775"></a>
+<FONT color="green">776</FONT>         * @param month<a name="line.776"></a>
+<FONT color="green">777</FONT>         *            the {@code Calendar} month in which daylight savings time starts.<a name="line.777"></a>
+<FONT color="green">778</FONT>         * @param day<a name="line.778"></a>
+<FONT color="green">779</FONT>         *            the occurrence of the day of the week on which daylight<a name="line.779"></a>
+<FONT color="green">780</FONT>         *            savings time starts.<a name="line.780"></a>
+<FONT color="green">781</FONT>         * @param dayOfWeek<a name="line.781"></a>
+<FONT color="green">782</FONT>         *            the {@code Calendar} day of the week on which daylight savings time<a name="line.782"></a>
+<FONT color="green">783</FONT>         *            starts.<a name="line.783"></a>
+<FONT color="green">784</FONT>         * @param time<a name="line.784"></a>
+<FONT color="green">785</FONT>         *            the time of day in milliseconds on which daylight savings time<a name="line.785"></a>
+<FONT color="green">786</FONT>         *            starts.<a name="line.786"></a>
+<FONT color="green">787</FONT>         * @since Android 1.0<a name="line.787"></a>
+<FONT color="green">788</FONT>         */<a name="line.788"></a>
+<FONT color="green">789</FONT>        public void setStartRule(int month, int day, int dayOfWeek, int time) {<a name="line.789"></a>
+<FONT color="green">790</FONT>            startMonth = month;<a name="line.790"></a>
+<FONT color="green">791</FONT>            startDay = day;<a name="line.791"></a>
+<FONT color="green">792</FONT>            startDayOfWeek = dayOfWeek;<a name="line.792"></a>
+<FONT color="green">793</FONT>            startTime = time;<a name="line.793"></a>
+<FONT color="green">794</FONT>            setStartMode();<a name="line.794"></a>
+<FONT color="green">795</FONT>        }<a name="line.795"></a>
+<FONT color="green">796</FONT>    <a name="line.796"></a>
+<FONT color="green">797</FONT>        /**<a name="line.797"></a>
+<FONT color="green">798</FONT>         * Sets the rule which specifies the start of daylight savings time.<a name="line.798"></a>
+<FONT color="green">799</FONT>         * <a name="line.799"></a>
+<FONT color="green">800</FONT>         * @param month<a name="line.800"></a>
+<FONT color="green">801</FONT>         *            the {@code Calendar} month in which daylight savings time starts.<a name="line.801"></a>
+<FONT color="green">802</FONT>         * @param day<a name="line.802"></a>
+<FONT color="green">803</FONT>         *            the {@code Calendar} day of the month.<a name="line.803"></a>
+<FONT color="green">804</FONT>         * @param dayOfWeek<a name="line.804"></a>
+<FONT color="green">805</FONT>         *            the {@code Calendar} day of the week on which daylight savings time<a name="line.805"></a>
+<FONT color="green">806</FONT>         *            starts.<a name="line.806"></a>
+<FONT color="green">807</FONT>         * @param time<a name="line.807"></a>
+<FONT color="green">808</FONT>         *            the time of day in milliseconds on which daylight savings time<a name="line.808"></a>
+<FONT color="green">809</FONT>         *            starts.<a name="line.809"></a>
+<FONT color="green">810</FONT>         * @param after<a name="line.810"></a>
+<FONT color="green">811</FONT>         *            selects the day after or before the day of month.<a name="line.811"></a>
+<FONT color="green">812</FONT>         * @since Android 1.0<a name="line.812"></a>
+<FONT color="green">813</FONT>         */<a name="line.813"></a>
+<FONT color="green">814</FONT>        public void setStartRule(int month, int day, int dayOfWeek, int time,<a name="line.814"></a>
+<FONT color="green">815</FONT>                boolean after) {<a name="line.815"></a>
+<FONT color="green">816</FONT>            startMonth = month;<a name="line.816"></a>
+<FONT color="green">817</FONT>            startDay = after ? day : -day;<a name="line.817"></a>
+<FONT color="green">818</FONT>            startDayOfWeek = -dayOfWeek;<a name="line.818"></a>
+<FONT color="green">819</FONT>            startTime = time;<a name="line.819"></a>
+<FONT color="green">820</FONT>            setStartMode();<a name="line.820"></a>
+<FONT color="green">821</FONT>        }<a name="line.821"></a>
+<FONT color="green">822</FONT>    <a name="line.822"></a>
+<FONT color="green">823</FONT>        /**<a name="line.823"></a>
+<FONT color="green">824</FONT>         * Sets the starting year for daylight savings time in this {@code SimpleTimeZone}.<a name="line.824"></a>
+<FONT color="green">825</FONT>         * Years before this start year will always be in standard time.<a name="line.825"></a>
+<FONT color="green">826</FONT>         * <a name="line.826"></a>
+<FONT color="green">827</FONT>         * @param year<a name="line.827"></a>
+<FONT color="green">828</FONT>         *            the starting year.<a name="line.828"></a>
+<FONT color="green">829</FONT>         * @since Android 1.0<a name="line.829"></a>
+<FONT color="green">830</FONT>         */<a name="line.830"></a>
+<FONT color="green">831</FONT>        public void setStartYear(int year) {<a name="line.831"></a>
+<FONT color="green">832</FONT>            startYear = year;<a name="line.832"></a>
+<FONT color="green">833</FONT>            useDaylight = true;<a name="line.833"></a>
+<FONT color="green">834</FONT>        }<a name="line.834"></a>
+<FONT color="green">835</FONT>    <a name="line.835"></a>
+<FONT color="green">836</FONT>        /**<a name="line.836"></a>
+<FONT color="green">837</FONT>         * Returns the string representation of this {@code SimpleTimeZone}.<a name="line.837"></a>
+<FONT color="green">838</FONT>         * <a name="line.838"></a>
+<FONT color="green">839</FONT>         * @return the string representation of this {@code SimpleTimeZone}.<a name="line.839"></a>
+<FONT color="green">840</FONT>         * @since Android 1.0<a name="line.840"></a>
+<FONT color="green">841</FONT>         */<a name="line.841"></a>
+<FONT color="green">842</FONT>        @Override<a name="line.842"></a>
+<FONT color="green">843</FONT>        public String toString() {<a name="line.843"></a>
+<FONT color="green">844</FONT>            return getClass().getName()<a name="line.844"></a>
+<FONT color="green">845</FONT>                    + "[id=" //$NON-NLS-1$<a name="line.845"></a>
+<FONT color="green">846</FONT>                    + getID()<a name="line.846"></a>
+<FONT color="green">847</FONT>                    + ",offset=" //$NON-NLS-1$<a name="line.847"></a>
+<FONT color="green">848</FONT>                    + rawOffset<a name="line.848"></a>
+<FONT color="green">849</FONT>                    + ",dstSavings=" //$NON-NLS-1$<a name="line.849"></a>
+<FONT color="green">850</FONT>                    + dstSavings<a name="line.850"></a>
+<FONT color="green">851</FONT>                    + ",useDaylight=" //$NON-NLS-1$<a name="line.851"></a>
+<FONT color="green">852</FONT>                    + useDaylight<a name="line.852"></a>
+<FONT color="green">853</FONT>                    + ",startYear=" //$NON-NLS-1$<a name="line.853"></a>
+<FONT color="green">854</FONT>                    + startYear<a name="line.854"></a>
+<FONT color="green">855</FONT>                    + ",startMode=" //$NON-NLS-1$<a name="line.855"></a>
+<FONT color="green">856</FONT>                    + startMode<a name="line.856"></a>
+<FONT color="green">857</FONT>                    + ",startMonth=" //$NON-NLS-1$<a name="line.857"></a>
+<FONT color="green">858</FONT>                    + startMonth<a name="line.858"></a>
+<FONT color="green">859</FONT>                    + ",startDay=" //$NON-NLS-1$<a name="line.859"></a>
+<FONT color="green">860</FONT>                    + startDay<a name="line.860"></a>
+<FONT color="green">861</FONT>                    + ",startDayOfWeek=" //$NON-NLS-1$<a name="line.861"></a>
+<FONT color="green">862</FONT>                    + (useDaylight &amp;&amp; (startMode != DOM_MODE) ? startDayOfWeek + 1<a name="line.862"></a>
+<FONT color="green">863</FONT>                            : 0) + ",startTime=" + startTime + ",endMode=" //$NON-NLS-1$ //$NON-NLS-2$<a name="line.863"></a>
+<FONT color="green">864</FONT>                    + endMode + ",endMonth=" + endMonth + ",endDay=" + endDay //$NON-NLS-1$ //$NON-NLS-2$<a name="line.864"></a>
+<FONT color="green">865</FONT>                    + ",endDayOfWeek=" //$NON-NLS-1$<a name="line.865"></a>
+<FONT color="green">866</FONT>                    + (useDaylight &amp;&amp; (endMode != DOM_MODE) ? endDayOfWeek + 1 : 0)<a name="line.866"></a>
+<FONT color="green">867</FONT>                    + ",endTime=" + endTime + "]";  //$NON-NLS-1$//$NON-NLS-2$<a name="line.867"></a>
+<FONT color="green">868</FONT>        }<a name="line.868"></a>
+<FONT color="green">869</FONT>    <a name="line.869"></a>
+<FONT color="green">870</FONT>        @Override<a name="line.870"></a>
+<FONT color="green">871</FONT>        public boolean useDaylightTime() {<a name="line.871"></a>
+<FONT color="green">872</FONT>            return useDaylight;<a name="line.872"></a>
+<FONT color="green">873</FONT>        }<a name="line.873"></a>
+<FONT color="green">874</FONT>    <a name="line.874"></a>
+<FONT color="green">875</FONT>        private static final ObjectStreamField[] serialPersistentFields = {<a name="line.875"></a>
+<FONT color="green">876</FONT>                new ObjectStreamField("dstSavings", Integer.TYPE), //$NON-NLS-1$<a name="line.876"></a>
+<FONT color="green">877</FONT>                new ObjectStreamField("endDay", Integer.TYPE), //$NON-NLS-1$<a name="line.877"></a>
+<FONT color="green">878</FONT>                new ObjectStreamField("endDayOfWeek", Integer.TYPE), //$NON-NLS-1$<a name="line.878"></a>
+<FONT color="green">879</FONT>                new ObjectStreamField("endMode", Integer.TYPE), //$NON-NLS-1$<a name="line.879"></a>
+<FONT color="green">880</FONT>                new ObjectStreamField("endMonth", Integer.TYPE), //$NON-NLS-1$<a name="line.880"></a>
+<FONT color="green">881</FONT>                new ObjectStreamField("endTime", Integer.TYPE), //$NON-NLS-1$<a name="line.881"></a>
+<FONT color="green">882</FONT>                new ObjectStreamField("monthLength", byte[].class), //$NON-NLS-1$<a name="line.882"></a>
+<FONT color="green">883</FONT>                new ObjectStreamField("rawOffset", Integer.TYPE), //$NON-NLS-1$<a name="line.883"></a>
+<FONT color="green">884</FONT>                new ObjectStreamField("serialVersionOnStream", Integer.TYPE), //$NON-NLS-1$<a name="line.884"></a>
+<FONT color="green">885</FONT>                new ObjectStreamField("startDay", Integer.TYPE), //$NON-NLS-1$<a name="line.885"></a>
+<FONT color="green">886</FONT>                new ObjectStreamField("startDayOfWeek", Integer.TYPE), //$NON-NLS-1$<a name="line.886"></a>
+<FONT color="green">887</FONT>                new ObjectStreamField("startMode", Integer.TYPE), //$NON-NLS-1$<a name="line.887"></a>
+<FONT color="green">888</FONT>                new ObjectStreamField("startMonth", Integer.TYPE), //$NON-NLS-1$<a name="line.888"></a>
+<FONT color="green">889</FONT>                new ObjectStreamField("startTime", Integer.TYPE), //$NON-NLS-1$<a name="line.889"></a>
+<FONT color="green">890</FONT>                new ObjectStreamField("startYear", Integer.TYPE), //$NON-NLS-1$<a name="line.890"></a>
+<FONT color="green">891</FONT>                new ObjectStreamField("useDaylight", Boolean.TYPE), }; //$NON-NLS-1$<a name="line.891"></a>
+<FONT color="green">892</FONT>    <a name="line.892"></a>
+<FONT color="green">893</FONT>        private void writeObject(ObjectOutputStream stream) throws IOException {<a name="line.893"></a>
+<FONT color="green">894</FONT>            int sEndDay = endDay, sEndDayOfWeek = endDayOfWeek + 1, sStartDay = startDay, sStartDayOfWeek = startDayOfWeek + 1;<a name="line.894"></a>
+<FONT color="green">895</FONT>            if (useDaylight<a name="line.895"></a>
+<FONT color="green">896</FONT>                    &amp;&amp; (startMode != DOW_IN_MONTH_MODE || endMode != DOW_IN_MONTH_MODE)) {<a name="line.896"></a>
+<FONT color="green">897</FONT>                Calendar cal = new GregorianCalendar(this);<a name="line.897"></a>
+<FONT color="green">898</FONT>                if (endMode != DOW_IN_MONTH_MODE) {<a name="line.898"></a>
+<FONT color="green">899</FONT>                    cal.set(Calendar.MONTH, endMonth);<a name="line.899"></a>
+<FONT color="green">900</FONT>                    cal.set(Calendar.DATE, endDay);<a name="line.900"></a>
+<FONT color="green">901</FONT>                    sEndDay = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH);<a name="line.901"></a>
+<FONT color="green">902</FONT>                    if (endMode == DOM_MODE) {<a name="line.902"></a>
+<FONT color="green">903</FONT>                        sEndDayOfWeek = cal.getFirstDayOfWeek();<a name="line.903"></a>
+<FONT color="green">904</FONT>                    }<a name="line.904"></a>
+<FONT color="green">905</FONT>                }<a name="line.905"></a>
+<FONT color="green">906</FONT>                if (startMode != DOW_IN_MONTH_MODE) {<a name="line.906"></a>
+<FONT color="green">907</FONT>                    cal.set(Calendar.MONTH, startMonth);<a name="line.907"></a>
+<FONT color="green">908</FONT>                    cal.set(Calendar.DATE, startDay);<a name="line.908"></a>
+<FONT color="green">909</FONT>                    sStartDay = cal.get(Calendar.DAY_OF_WEEK_IN_MONTH);<a name="line.909"></a>
+<FONT color="green">910</FONT>                    if (startMode == DOM_MODE) {<a name="line.910"></a>
+<FONT color="green">911</FONT>                        sStartDayOfWeek = cal.getFirstDayOfWeek();<a name="line.911"></a>
+<FONT color="green">912</FONT>                    }<a name="line.912"></a>
+<FONT color="green">913</FONT>                }<a name="line.913"></a>
+<FONT color="green">914</FONT>            }<a name="line.914"></a>
+<FONT color="green">915</FONT>            ObjectOutputStream.PutField fields = stream.putFields();<a name="line.915"></a>
+<FONT color="green">916</FONT>            fields.put("dstSavings", dstSavings); //$NON-NLS-1$<a name="line.916"></a>
+<FONT color="green">917</FONT>            fields.put("endDay", sEndDay); //$NON-NLS-1$<a name="line.917"></a>
+<FONT color="green">918</FONT>            fields.put("endDayOfWeek", sEndDayOfWeek); //$NON-NLS-1$<a name="line.918"></a>
+<FONT color="green">919</FONT>            fields.put("endMode", endMode); //$NON-NLS-1$<a name="line.919"></a>
+<FONT color="green">920</FONT>            fields.put("endMonth", endMonth); //$NON-NLS-1$<a name="line.920"></a>
+<FONT color="green">921</FONT>            fields.put("endTime", endTime); //$NON-NLS-1$<a name="line.921"></a>
+<FONT color="green">922</FONT>            fields.put("monthLength", GregorianCalendar.DaysInMonth); //$NON-NLS-1$<a name="line.922"></a>
+<FONT color="green">923</FONT>            fields.put("rawOffset", rawOffset); //$NON-NLS-1$<a name="line.923"></a>
+<FONT color="green">924</FONT>            fields.put("serialVersionOnStream", 1); //$NON-NLS-1$<a name="line.924"></a>
+<FONT color="green">925</FONT>            fields.put("startDay", sStartDay); //$NON-NLS-1$<a name="line.925"></a>
+<FONT color="green">926</FONT>            fields.put("startDayOfWeek", sStartDayOfWeek); //$NON-NLS-1$<a name="line.926"></a>
+<FONT color="green">927</FONT>            fields.put("startMode", startMode); //$NON-NLS-1$<a name="line.927"></a>
+<FONT color="green">928</FONT>            fields.put("startMonth", startMonth); //$NON-NLS-1$<a name="line.928"></a>
+<FONT color="green">929</FONT>            fields.put("startTime", startTime); //$NON-NLS-1$<a name="line.929"></a>
+<FONT color="green">930</FONT>            fields.put("startYear", startYear); //$NON-NLS-1$<a name="line.930"></a>
+<FONT color="green">931</FONT>            fields.put("useDaylight", useDaylight); //$NON-NLS-1$<a name="line.931"></a>
+<FONT color="green">932</FONT>            stream.writeFields();<a name="line.932"></a>
+<FONT color="green">933</FONT>            stream.writeInt(4);<a name="line.933"></a>
+<FONT color="green">934</FONT>            byte[] values = new byte[4];<a name="line.934"></a>
+<FONT color="green">935</FONT>            values[0] = (byte) startDay;<a name="line.935"></a>
+<FONT color="green">936</FONT>            values[1] = (byte) (startMode == DOM_MODE ? 0 : startDayOfWeek + 1);<a name="line.936"></a>
+<FONT color="green">937</FONT>            values[2] = (byte) endDay;<a name="line.937"></a>
+<FONT color="green">938</FONT>            values[3] = (byte) (endMode == DOM_MODE ? 0 : endDayOfWeek + 1);<a name="line.938"></a>
+<FONT color="green">939</FONT>            stream.write(values);<a name="line.939"></a>
+<FONT color="green">940</FONT>        }<a name="line.940"></a>
+<FONT color="green">941</FONT>    <a name="line.941"></a>
+<FONT color="green">942</FONT>        private void readObject(ObjectInputStream stream) throws IOException,<a name="line.942"></a>
+<FONT color="green">943</FONT>                ClassNotFoundException {<a name="line.943"></a>
+<FONT color="green">944</FONT>            ObjectInputStream.GetField fields = stream.readFields();<a name="line.944"></a>
+<FONT color="green">945</FONT>            rawOffset = fields.get("rawOffset", 0); //$NON-NLS-1$<a name="line.945"></a>
+<FONT color="green">946</FONT>            useDaylight = fields.get("useDaylight", false); //$NON-NLS-1$<a name="line.946"></a>
+<FONT color="green">947</FONT>            if (useDaylight) {<a name="line.947"></a>
+<FONT color="green">948</FONT>                endMonth = fields.get("endMonth", 0); //$NON-NLS-1$<a name="line.948"></a>
+<FONT color="green">949</FONT>                endTime = fields.get("endTime", 0); //$NON-NLS-1$<a name="line.949"></a>
+<FONT color="green">950</FONT>                startMonth = fields.get("startMonth", 0); //$NON-NLS-1$<a name="line.950"></a>
+<FONT color="green">951</FONT>                startTime = fields.get("startTime", 0); //$NON-NLS-1$<a name="line.951"></a>
+<FONT color="green">952</FONT>                startYear = fields.get("startYear", 0); //$NON-NLS-1$<a name="line.952"></a>
+<FONT color="green">953</FONT>            }<a name="line.953"></a>
+<FONT color="green">954</FONT>            if (fields.get("serialVersionOnStream", 0) == 0) { //$NON-NLS-1$<a name="line.954"></a>
+<FONT color="green">955</FONT>                if (useDaylight) {<a name="line.955"></a>
+<FONT color="green">956</FONT>                    startMode = endMode = DOW_IN_MONTH_MODE;<a name="line.956"></a>
+<FONT color="green">957</FONT>                    endDay = fields.get("endDay", 0); //$NON-NLS-1$<a name="line.957"></a>
+<FONT color="green">958</FONT>                    endDayOfWeek = fields.get("endDayOfWeek", 0) - 1; //$NON-NLS-1$<a name="line.958"></a>
+<FONT color="green">959</FONT>                    startDay = fields.get("startDay", 0); //$NON-NLS-1$<a name="line.959"></a>
+<FONT color="green">960</FONT>                    startDayOfWeek = fields.get("startDayOfWeek", 0) - 1; //$NON-NLS-1$<a name="line.960"></a>
+<FONT color="green">961</FONT>                }<a name="line.961"></a>
+<FONT color="green">962</FONT>            } else {<a name="line.962"></a>
+<FONT color="green">963</FONT>                dstSavings = fields.get("dstSavings", 0); //$NON-NLS-1$<a name="line.963"></a>
+<FONT color="green">964</FONT>                if (useDaylight) {<a name="line.964"></a>
+<FONT color="green">965</FONT>                    endMode = fields.get("endMode", 0); //$NON-NLS-1$<a name="line.965"></a>
+<FONT color="green">966</FONT>                    startMode = fields.get("startMode", 0); //$NON-NLS-1$<a name="line.966"></a>
+<FONT color="green">967</FONT>                    int length = stream.readInt();<a name="line.967"></a>
+<FONT color="green">968</FONT>                    byte[] values = new byte[length];<a name="line.968"></a>
+<FONT color="green">969</FONT>                    stream.readFully(values);<a name="line.969"></a>
+<FONT color="green">970</FONT>                    if (length &gt;= 4) {<a name="line.970"></a>
+<FONT color="green">971</FONT>                        startDay = values[0];<a name="line.971"></a>
+<FONT color="green">972</FONT>                        startDayOfWeek = values[1];<a name="line.972"></a>
+<FONT color="green">973</FONT>                        if (startMode != DOM_MODE) {<a name="line.973"></a>
+<FONT color="green">974</FONT>                            startDayOfWeek--;<a name="line.974"></a>
+<FONT color="green">975</FONT>                        }<a name="line.975"></a>
+<FONT color="green">976</FONT>                        endDay = values[2];<a name="line.976"></a>
+<FONT color="green">977</FONT>                        endDayOfWeek = values[3];<a name="line.977"></a>
+<FONT color="green">978</FONT>                        if (endMode != DOM_MODE) {<a name="line.978"></a>
+<FONT color="green">979</FONT>                            endDayOfWeek--;<a name="line.979"></a>
+<FONT color="green">980</FONT>                        }<a name="line.980"></a>
+<FONT color="green">981</FONT>                    }<a name="line.981"></a>
+<FONT color="green">982</FONT>                }<a name="line.982"></a>
+<FONT color="green">983</FONT>            }<a name="line.983"></a>
+<FONT color="green">984</FONT>        }<a name="line.984"></a>
+<FONT color="green">985</FONT>    <a name="line.985"></a>
+<FONT color="green">986</FONT>    }<a name="line.986"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,139 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     *  Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     *  contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     *  this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     *  The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     *  (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     *  the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     *<a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     *<a name="line.10"></a>
+<FONT color="green">011</FONT>     *  Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     *  distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     *  See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     *  limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    package java.util;<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    /**<a name="line.20"></a>
+<FONT color="green">021</FONT>     * A {@code Comparator} is used to compare two objects to determine their ordering with<a name="line.21"></a>
+<FONT color="green">022</FONT>     * respect to each other. On a given {@code Collection}, a {@code Comparator} can be used to<a name="line.22"></a>
+<FONT color="green">023</FONT>     * obtain a sorted {@code Collection} which is &lt;i&gt;totally ordered&lt;/i&gt;. For a {@code Comparator}<a name="line.23"></a>
+<FONT color="green">024</FONT>     * to be &lt;i&gt;consistent with equals&lt;/i&gt;, its {code #compare(Object, Object)}<a name="line.24"></a>
+<FONT color="green">025</FONT>     * method has to return zero for each pair of elements (a,b) where a.equals(b)<a name="line.25"></a>
+<FONT color="green">026</FONT>     * holds true. It is recommended that a {@code Comparator} implements<a name="line.26"></a>
+<FONT color="green">027</FONT>     * {@link java.io.Serializable}.<a name="line.27"></a>
+<FONT color="green">028</FONT>     *  <a name="line.28"></a>
+<FONT color="green">029</FONT>     * @since Android 1.0<a name="line.29"></a>
+<FONT color="green">030</FONT>     */<a name="line.30"></a>
+<FONT color="green">031</FONT>    public interface Comparator&lt;T&gt; {<a name="line.31"></a>
+<FONT color="green">032</FONT>        /**<a name="line.32"></a>
+<FONT color="green">033</FONT>         * Compares the two specified objects to determine their relative ordering. The ordering<a name="line.33"></a>
+<FONT color="green">034</FONT>         * implied by the return value of this method for all possible pairs of<a name="line.34"></a>
+<FONT color="green">035</FONT>         * {@code (object1, object2)} should form an &lt;i&gt;equivalence relation&lt;/i&gt;.<a name="line.35"></a>
+<FONT color="green">036</FONT>         * This means that<a name="line.36"></a>
+<FONT color="green">037</FONT>         * &lt;ul&gt;<a name="line.37"></a>
+<FONT color="green">038</FONT>         * &lt;li&gt;{@code compare(a,a)} returns zero for all {@code a}&lt;/li&gt;<a name="line.38"></a>
+<FONT color="green">039</FONT>         * &lt;li&gt;the sign of {@code compare(a,b)} must be the opposite of the sign of {@code<a name="line.39"></a>
+<FONT color="green">040</FONT>         * compare(b,a)} for all pairs of (a,b)&lt;/li&gt;<a name="line.40"></a>
+<FONT color="green">041</FONT>         * &lt;li&gt;From {@code compare(a,b) &gt; 0} and {@code compare(b,c) &gt; 0} it must<a name="line.41"></a>
+<FONT color="green">042</FONT>         * follow {@code compare(a,c) &gt; 0} for all possible combinations of {@code<a name="line.42"></a>
+<FONT color="green">043</FONT>         * (a,b,c)}&lt;/li&gt;<a name="line.43"></a>
+<FONT color="green">044</FONT>         * &lt;/ul&gt;<a name="line.44"></a>
+<FONT color="green">045</FONT>         * <a name="line.45"></a>
+<FONT color="green">046</FONT>         * @param object1<a name="line.46"></a>
+<FONT color="green">047</FONT>         *            an {@code Object}.<a name="line.47"></a>
+<FONT color="green">048</FONT>         * @param object2<a name="line.48"></a>
+<FONT color="green">049</FONT>         *            a second {@code Object} to compare with {@code object1}.<a name="line.49"></a>
+<FONT color="green">050</FONT>         * @return an integer &lt; 0 if {@code object1} is less than {@code object2}, 0 if they are<a name="line.50"></a>
+<FONT color="green">051</FONT>         *         equal, and &gt; 0 if {@code object1} is greater than {@code object2}.<a name="line.51"></a>
+<FONT color="green">052</FONT>         * @exception ClassCastException<a name="line.52"></a>
+<FONT color="green">053</FONT>         *                when objects are not of the correct type.<a name="line.53"></a>
+<FONT color="green">054</FONT>         */<a name="line.54"></a>
+<FONT color="green">055</FONT>        public int compare(T object1, T object2);<a name="line.55"></a>
+<FONT color="green">056</FONT>    <a name="line.56"></a>
+<FONT color="green">057</FONT>        /**<a name="line.57"></a>
+<FONT color="green">058</FONT>         * Compares this {@code Comparator} with the specified {@code Object} and indicates whether they<a name="line.58"></a>
+<FONT color="green">059</FONT>         * are equal. In order to be equal, {@code object} must represent the same object<a name="line.59"></a>
+<FONT color="green">060</FONT>         * as this instance using a class-specific comparison.<a name="line.60"></a>
+<FONT color="green">061</FONT>         * &lt;p&gt;<a name="line.61"></a>
+<FONT color="green">062</FONT>         * A {@code Comparator} never needs to override this method, but may choose so for<a name="line.62"></a>
+<FONT color="green">063</FONT>         * performance reasons.<a name="line.63"></a>
+<FONT color="green">064</FONT>         * <a name="line.64"></a>
+<FONT color="green">065</FONT>         * @param object<a name="line.65"></a>
+<FONT color="green">066</FONT>         *            the {@code Object} to compare with this comparator.<a name="line.66"></a>
+<FONT color="green">067</FONT>         * @return boolean {@code true} if specified {@code Object} is the same as this<a name="line.67"></a>
+<FONT color="green">068</FONT>         *         {@code Object}, and {@code false} otherwise.<a name="line.68"></a>
+<FONT color="green">069</FONT>         * @see Object#hashCode<a name="line.69"></a>
+<FONT color="green">070</FONT>         * @see Object#equals<a name="line.70"></a>
+<FONT color="green">071</FONT>         */<a name="line.71"></a>
+<FONT color="green">072</FONT>        public boolean equals(Object object);<a name="line.72"></a>
+<FONT color="green">073</FONT>    }<a name="line.73"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

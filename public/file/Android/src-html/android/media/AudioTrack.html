@@ -1,0 +1,1131 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.media;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import java.lang.ref.WeakReference;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import java.lang.IllegalArgumentException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import java.lang.IllegalStateException;<a name="line.21"></a>
+<FONT color="green">022</FONT>    <a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.os.Handler;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.os.Looper;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.os.Message;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import android.media.AudioManager;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import android.util.Log;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    <a name="line.29"></a>
+<FONT color="green">030</FONT>    /**<a name="line.30"></a>
+<FONT color="green">031</FONT>     * The AudioTrack class manages and plays a single audio resource for Java applications.<a name="line.31"></a>
+<FONT color="green">032</FONT>     * It allows to stream PCM audio buffers to the audio hardware for playback. This is<a name="line.32"></a>
+<FONT color="green">033</FONT>     * achieved by "pushing" the data to the AudioTrack object using one of the<a name="line.33"></a>
+<FONT color="green">034</FONT>     *  {@link #write(byte[], int, int)} and {@link #write(short[], int, int)} methods.<a name="line.34"></a>
+<FONT color="green">035</FONT>     *  <a name="line.35"></a>
+<FONT color="green">036</FONT>     * &lt;p&gt;An AudioTrack instance can operate under two modes: static or streaming.&lt;br&gt;<a name="line.36"></a>
+<FONT color="green">037</FONT>     * In Streaming mode, the application writes a continuous stream of data to the AudioTrack, using<a name="line.37"></a>
+<FONT color="green">038</FONT>     * one of the write() methods. These are blocking and return when the data has been transferred<a name="line.38"></a>
+<FONT color="green">039</FONT>     * from the Java layer to the native layer and queued for playback. The streaming mode<a name="line.39"></a>
+<FONT color="green">040</FONT>     *  is most useful when playing blocks of audio data that for instance are:<a name="line.40"></a>
+<FONT color="green">041</FONT>     * &lt;ul&gt;<a name="line.41"></a>
+<FONT color="green">042</FONT>     *   &lt;li&gt;too big to fit in memory because of the duration of the sound to play,&lt;/li&gt;<a name="line.42"></a>
+<FONT color="green">043</FONT>     *   &lt;li&gt;too big to fit in memory because of the characteristics of the audio data<a name="line.43"></a>
+<FONT color="green">044</FONT>     *         (high sampling rate, bits per sample ...)&lt;/li&gt;<a name="line.44"></a>
+<FONT color="green">045</FONT>     *   &lt;li&gt;received or generated while previously queued audio is playing.&lt;/li&gt;<a name="line.45"></a>
+<FONT color="green">046</FONT>     * &lt;/ul&gt;<a name="line.46"></a>
+<FONT color="green">047</FONT>     * The static mode is to be chosen when dealing with short sounds that fit in memory and<a name="line.47"></a>
+<FONT color="green">048</FONT>     * that need to be played with the smallest latency possible. AudioTrack instances in static mode<a name="line.48"></a>
+<FONT color="green">049</FONT>     * can play the sound without the need to transfer the audio data from Java to native layer<a name="line.49"></a>
+<FONT color="green">050</FONT>     * each time the sound is to be played. The static mode will therefore be preferred for UI and<a name="line.50"></a>
+<FONT color="green">051</FONT>     * game sounds that are played often, and with the smallest overhead possible.<a name="line.51"></a>
+<FONT color="green">052</FONT>     * <a name="line.52"></a>
+<FONT color="green">053</FONT>     * &lt;p&gt;Upon creation, an AudioTrack object initializes its associated audio buffer.<a name="line.53"></a>
+<FONT color="green">054</FONT>     * The size of this buffer, specified during the construction, determines how long an AudioTrack<a name="line.54"></a>
+<FONT color="green">055</FONT>     * can play before running out of data.&lt;br&gt;<a name="line.55"></a>
+<FONT color="green">056</FONT>     * For an AudioTrack using the static mode, this size is the maximum size of the sound that can<a name="line.56"></a>
+<FONT color="green">057</FONT>     * be played from it.&lt;br&gt;<a name="line.57"></a>
+<FONT color="green">058</FONT>     * For the streaming mode, data will be written to the hardware in chunks of<a name="line.58"></a>
+<FONT color="green">059</FONT>     * sizes inferior to the total buffer size.<a name="line.59"></a>
+<FONT color="green">060</FONT>     */<a name="line.60"></a>
+<FONT color="green">061</FONT>    public class AudioTrack<a name="line.61"></a>
+<FONT color="green">062</FONT>    {<a name="line.62"></a>
+<FONT color="green">063</FONT>        //---------------------------------------------------------<a name="line.63"></a>
+<FONT color="green">064</FONT>        // Constants<a name="line.64"></a>
+<FONT color="green">065</FONT>        //--------------------<a name="line.65"></a>
+<FONT color="green">066</FONT>        /** Minimum value for a channel volume */<a name="line.66"></a>
+<FONT color="green">067</FONT>        private static final float VOLUME_MIN = 0.0f;<a name="line.67"></a>
+<FONT color="green">068</FONT>        /** Maximum value for a channel volume */<a name="line.68"></a>
+<FONT color="green">069</FONT>        private static final float VOLUME_MAX = 1.0f;<a name="line.69"></a>
+<FONT color="green">070</FONT>    <a name="line.70"></a>
+<FONT color="green">071</FONT>        /** indicates AudioTrack state is stopped */<a name="line.71"></a>
+<FONT color="green">072</FONT>        public static final int PLAYSTATE_STOPPED = 1;  // matches SL_PLAYSTATE_STOPPED<a name="line.72"></a>
+<FONT color="green">073</FONT>        /** indicates AudioTrack state is paused */<a name="line.73"></a>
+<FONT color="green">074</FONT>        public static final int PLAYSTATE_PAUSED  = 2;  // matches SL_PLAYSTATE_PAUSED<a name="line.74"></a>
+<FONT color="green">075</FONT>        /** indicates AudioTrack state is playing */<a name="line.75"></a>
+<FONT color="green">076</FONT>        public static final int PLAYSTATE_PLAYING = 3;  // matches SL_PLAYSTATE_PLAYING<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>        /**<a name="line.78"></a>
+<FONT color="green">079</FONT>         * Creation mode where audio data is transferred from Java to the native layer<a name="line.79"></a>
+<FONT color="green">080</FONT>         * only once before the audio starts playing.<a name="line.80"></a>
+<FONT color="green">081</FONT>         */<a name="line.81"></a>
+<FONT color="green">082</FONT>        public static final int MODE_STATIC = 0;<a name="line.82"></a>
+<FONT color="green">083</FONT>        /**<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Creation mode where audio data is streamed from Java to the native layer<a name="line.84"></a>
+<FONT color="green">085</FONT>         * as the audio is playing.<a name="line.85"></a>
+<FONT color="green">086</FONT>         */<a name="line.86"></a>
+<FONT color="green">087</FONT>        public static final int MODE_STREAM = 1;<a name="line.87"></a>
+<FONT color="green">088</FONT>    <a name="line.88"></a>
+<FONT color="green">089</FONT>        /**<a name="line.89"></a>
+<FONT color="green">090</FONT>         * State of an AudioTrack that was not successfully initialized upon creation.<a name="line.90"></a>
+<FONT color="green">091</FONT>         */<a name="line.91"></a>
+<FONT color="green">092</FONT>        public static final int STATE_UNINITIALIZED = 0;<a name="line.92"></a>
+<FONT color="green">093</FONT>        /**<a name="line.93"></a>
+<FONT color="green">094</FONT>         * State of an AudioTrack that is ready to be used.<a name="line.94"></a>
+<FONT color="green">095</FONT>         */<a name="line.95"></a>
+<FONT color="green">096</FONT>        public static final int STATE_INITIALIZED   = 1;<a name="line.96"></a>
+<FONT color="green">097</FONT>        /**<a name="line.97"></a>
+<FONT color="green">098</FONT>         * State of a successfully initialized AudioTrack that uses static data,<a name="line.98"></a>
+<FONT color="green">099</FONT>         * but that hasn't received that data yet.<a name="line.99"></a>
+<FONT color="green">100</FONT>         */<a name="line.100"></a>
+<FONT color="green">101</FONT>        public static final int STATE_NO_STATIC_DATA = 2;<a name="line.101"></a>
+<FONT color="green">102</FONT>    <a name="line.102"></a>
+<FONT color="green">103</FONT>        // Error codes:<a name="line.103"></a>
+<FONT color="green">104</FONT>        // to keep in sync with frameworks/base/core/jni/android_media_AudioTrack.cpp<a name="line.104"></a>
+<FONT color="green">105</FONT>        /**<a name="line.105"></a>
+<FONT color="green">106</FONT>         * Denotes a successful operation.<a name="line.106"></a>
+<FONT color="green">107</FONT>         */<a name="line.107"></a>
+<FONT color="green">108</FONT>        public  static final int SUCCESS                               = 0;<a name="line.108"></a>
+<FONT color="green">109</FONT>        /**<a name="line.109"></a>
+<FONT color="green">110</FONT>         * Denotes a generic operation failure.<a name="line.110"></a>
+<FONT color="green">111</FONT>         */<a name="line.111"></a>
+<FONT color="green">112</FONT>        public  static final int ERROR                                 = -1;<a name="line.112"></a>
+<FONT color="green">113</FONT>        /**<a name="line.113"></a>
+<FONT color="green">114</FONT>         * Denotes a failure due to the use of an invalid value.<a name="line.114"></a>
+<FONT color="green">115</FONT>         */<a name="line.115"></a>
+<FONT color="green">116</FONT>        public  static final int ERROR_BAD_VALUE                       = -2;<a name="line.116"></a>
+<FONT color="green">117</FONT>        /**<a name="line.117"></a>
+<FONT color="green">118</FONT>         * Denotes a failure due to the improper use of a method.<a name="line.118"></a>
+<FONT color="green">119</FONT>         */<a name="line.119"></a>
+<FONT color="green">120</FONT>        public  static final int ERROR_INVALID_OPERATION               = -3;<a name="line.120"></a>
+<FONT color="green">121</FONT>    <a name="line.121"></a>
+<FONT color="green">122</FONT>        private static final int ERROR_NATIVESETUP_AUDIOSYSTEM         = -16;<a name="line.122"></a>
+<FONT color="green">123</FONT>        private static final int ERROR_NATIVESETUP_INVALIDCHANNELCOUNT = -17;<a name="line.123"></a>
+<FONT color="green">124</FONT>        private static final int ERROR_NATIVESETUP_INVALIDFORMAT       = -18;<a name="line.124"></a>
+<FONT color="green">125</FONT>        private static final int ERROR_NATIVESETUP_INVALIDSTREAMTYPE   = -19;<a name="line.125"></a>
+<FONT color="green">126</FONT>        private static final int ERROR_NATIVESETUP_NATIVEINITFAILED    = -20;<a name="line.126"></a>
+<FONT color="green">127</FONT>    <a name="line.127"></a>
+<FONT color="green">128</FONT>        // Events:<a name="line.128"></a>
+<FONT color="green">129</FONT>        // to keep in sync with frameworks/base/include/media/AudioTrack.h<a name="line.129"></a>
+<FONT color="green">130</FONT>        /**<a name="line.130"></a>
+<FONT color="green">131</FONT>         * Event id denotes when playback head has reached a previously set marker.<a name="line.131"></a>
+<FONT color="green">132</FONT>         */<a name="line.132"></a>
+<FONT color="green">133</FONT>        private static final int NATIVE_EVENT_MARKER  = 3;<a name="line.133"></a>
+<FONT color="green">134</FONT>        /**<a name="line.134"></a>
+<FONT color="green">135</FONT>         * Event id denotes when previously set update period has elapsed during playback.<a name="line.135"></a>
+<FONT color="green">136</FONT>         */<a name="line.136"></a>
+<FONT color="green">137</FONT>        private static final int NATIVE_EVENT_NEW_POS = 4;<a name="line.137"></a>
+<FONT color="green">138</FONT>    <a name="line.138"></a>
+<FONT color="green">139</FONT>        private final static String TAG = "AudioTrack-Java";<a name="line.139"></a>
+<FONT color="green">140</FONT>    <a name="line.140"></a>
+<FONT color="green">141</FONT>    <a name="line.141"></a>
+<FONT color="green">142</FONT>        //--------------------------------------------------------------------------<a name="line.142"></a>
+<FONT color="green">143</FONT>        // Member variables<a name="line.143"></a>
+<FONT color="green">144</FONT>        //--------------------<a name="line.144"></a>
+<FONT color="green">145</FONT>        /**<a name="line.145"></a>
+<FONT color="green">146</FONT>         * Indicates the state of the AudioTrack instance.<a name="line.146"></a>
+<FONT color="green">147</FONT>         */<a name="line.147"></a>
+<FONT color="green">148</FONT>        private int mState = STATE_UNINITIALIZED;<a name="line.148"></a>
+<FONT color="green">149</FONT>        /**<a name="line.149"></a>
+<FONT color="green">150</FONT>         * Indicates the play state of the AudioTrack instance.<a name="line.150"></a>
+<FONT color="green">151</FONT>         */<a name="line.151"></a>
+<FONT color="green">152</FONT>        private int mPlayState = PLAYSTATE_STOPPED;<a name="line.152"></a>
+<FONT color="green">153</FONT>        /**<a name="line.153"></a>
+<FONT color="green">154</FONT>         * Lock to make sure mPlayState updates are reflecting the actual state of the object.<a name="line.154"></a>
+<FONT color="green">155</FONT>         */<a name="line.155"></a>
+<FONT color="green">156</FONT>        private final Object mPlayStateLock = new Object();<a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * The listener the AudioTrack notifies when the playback position reaches a marker<a name="line.158"></a>
+<FONT color="green">159</FONT>         * or for periodic updates during the progression of the playback head.<a name="line.159"></a>
+<FONT color="green">160</FONT>         *  @see #setPlaybackPositionUpdateListener(OnPlaybackPositionUpdateListener)<a name="line.160"></a>
+<FONT color="green">161</FONT>         */<a name="line.161"></a>
+<FONT color="green">162</FONT>        private OnPlaybackPositionUpdateListener mPositionListener = null;<a name="line.162"></a>
+<FONT color="green">163</FONT>        /**<a name="line.163"></a>
+<FONT color="green">164</FONT>         * Lock to protect event listener updates against event notifications.<a name="line.164"></a>
+<FONT color="green">165</FONT>         */<a name="line.165"></a>
+<FONT color="green">166</FONT>        private final Object mPositionListenerLock = new Object();<a name="line.166"></a>
+<FONT color="green">167</FONT>        /**<a name="line.167"></a>
+<FONT color="green">168</FONT>         * Size of the native audio buffer.<a name="line.168"></a>
+<FONT color="green">169</FONT>         */<a name="line.169"></a>
+<FONT color="green">170</FONT>        private int mNativeBufferSizeInBytes = 0;<a name="line.170"></a>
+<FONT color="green">171</FONT>        /**<a name="line.171"></a>
+<FONT color="green">172</FONT>         * Handler for marker events coming from the native code.<a name="line.172"></a>
+<FONT color="green">173</FONT>         */<a name="line.173"></a>
+<FONT color="green">174</FONT>        private NativeEventHandlerDelegate mEventHandlerDelegate = null;<a name="line.174"></a>
+<FONT color="green">175</FONT>        /**<a name="line.175"></a>
+<FONT color="green">176</FONT>         * Looper associated with the thread that creates the AudioTrack instance.<a name="line.176"></a>
+<FONT color="green">177</FONT>         */<a name="line.177"></a>
+<FONT color="green">178</FONT>        private Looper mInitializationLooper = null;<a name="line.178"></a>
+<FONT color="green">179</FONT>        /**<a name="line.179"></a>
+<FONT color="green">180</FONT>         * The audio data sampling rate in Hz.<a name="line.180"></a>
+<FONT color="green">181</FONT>         */<a name="line.181"></a>
+<FONT color="green">182</FONT>        private int mSampleRate = 22050;<a name="line.182"></a>
+<FONT color="green">183</FONT>        /**<a name="line.183"></a>
+<FONT color="green">184</FONT>         * The number of input audio channels (1 is mono, 2 is stereo).<a name="line.184"></a>
+<FONT color="green">185</FONT>         */<a name="line.185"></a>
+<FONT color="green">186</FONT>        private int mChannelCount = 1;<a name="line.186"></a>
+<FONT color="green">187</FONT>        /**<a name="line.187"></a>
+<FONT color="green">188</FONT>         * The type of the audio stream to play. See<a name="line.188"></a>
+<FONT color="green">189</FONT>         *   {@link AudioManager#STREAM_VOICE_CALL}, {@link AudioManager#STREAM_SYSTEM},<a name="line.189"></a>
+<FONT color="green">190</FONT>         *   {@link AudioManager#STREAM_RING}, {@link AudioManager#STREAM_MUSIC} and<a name="line.190"></a>
+<FONT color="green">191</FONT>         *   {@link AudioManager#STREAM_ALARM}<a name="line.191"></a>
+<FONT color="green">192</FONT>         */<a name="line.192"></a>
+<FONT color="green">193</FONT>        private int mStreamType = AudioManager.STREAM_MUSIC;<a name="line.193"></a>
+<FONT color="green">194</FONT>        /**<a name="line.194"></a>
+<FONT color="green">195</FONT>         * The way audio is consumed by the hardware, streaming or static.<a name="line.195"></a>
+<FONT color="green">196</FONT>         */<a name="line.196"></a>
+<FONT color="green">197</FONT>        private int mDataLoadMode = MODE_STREAM;<a name="line.197"></a>
+<FONT color="green">198</FONT>        /**<a name="line.198"></a>
+<FONT color="green">199</FONT>         * The current audio channel configuration.<a name="line.199"></a>
+<FONT color="green">200</FONT>         */<a name="line.200"></a>
+<FONT color="green">201</FONT>        private int mChannelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_MONO;<a name="line.201"></a>
+<FONT color="green">202</FONT>        /**<a name="line.202"></a>
+<FONT color="green">203</FONT>         * The encoding of the audio samples.<a name="line.203"></a>
+<FONT color="green">204</FONT>         * @see AudioFormat#ENCODING_PCM_8BIT<a name="line.204"></a>
+<FONT color="green">205</FONT>         * @see AudioFormat#ENCODING_PCM_16BIT<a name="line.205"></a>
+<FONT color="green">206</FONT>         */<a name="line.206"></a>
+<FONT color="green">207</FONT>        private int mAudioFormat = AudioFormat.ENCODING_PCM_16BIT;<a name="line.207"></a>
+<FONT color="green">208</FONT>    <a name="line.208"></a>
+<FONT color="green">209</FONT>    <a name="line.209"></a>
+<FONT color="green">210</FONT>        //--------------------------------<a name="line.210"></a>
+<FONT color="green">211</FONT>        // Used exclusively by native code<a name="line.211"></a>
+<FONT color="green">212</FONT>        //--------------------<a name="line.212"></a>
+<FONT color="green">213</FONT>        /**<a name="line.213"></a>
+<FONT color="green">214</FONT>         * Accessed by native methods: provides access to C++ AudioTrack object.<a name="line.214"></a>
+<FONT color="green">215</FONT>         */<a name="line.215"></a>
+<FONT color="green">216</FONT>        @SuppressWarnings("unused")<a name="line.216"></a>
+<FONT color="green">217</FONT>        private int mNativeTrackInJavaObj;<a name="line.217"></a>
+<FONT color="green">218</FONT>        /**<a name="line.218"></a>
+<FONT color="green">219</FONT>         * Accessed by native methods: provides access to the JNI data (i.e. resources used by<a name="line.219"></a>
+<FONT color="green">220</FONT>         * the native AudioTrack object, but not stored in it).<a name="line.220"></a>
+<FONT color="green">221</FONT>         */<a name="line.221"></a>
+<FONT color="green">222</FONT>        @SuppressWarnings("unused")<a name="line.222"></a>
+<FONT color="green">223</FONT>        private int mJniData;<a name="line.223"></a>
+<FONT color="green">224</FONT>    <a name="line.224"></a>
+<FONT color="green">225</FONT>    <a name="line.225"></a>
+<FONT color="green">226</FONT>        //--------------------------------------------------------------------------<a name="line.226"></a>
+<FONT color="green">227</FONT>        // Constructor, Finalize<a name="line.227"></a>
+<FONT color="green">228</FONT>        //--------------------<a name="line.228"></a>
+<FONT color="green">229</FONT>        /**<a name="line.229"></a>
+<FONT color="green">230</FONT>         * Class constructor.<a name="line.230"></a>
+<FONT color="green">231</FONT>         * @param streamType the type of the audio stream. See<a name="line.231"></a>
+<FONT color="green">232</FONT>         *   {@link AudioManager#STREAM_VOICE_CALL}, {@link AudioManager#STREAM_SYSTEM},<a name="line.232"></a>
+<FONT color="green">233</FONT>         *   {@link AudioManager#STREAM_RING}, {@link AudioManager#STREAM_MUSIC} and<a name="line.233"></a>
+<FONT color="green">234</FONT>         *   {@link AudioManager#STREAM_ALARM}<a name="line.234"></a>
+<FONT color="green">235</FONT>         * @param sampleRateInHz the sample rate expressed in Hertz. Examples of rates are (but<a name="line.235"></a>
+<FONT color="green">236</FONT>         *   not limited to) 44100, 22050 and 11025.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * @param channelConfig describes the configuration of the audio channels.<a name="line.237"></a>
+<FONT color="green">238</FONT>         *   See {@link AudioFormat#CHANNEL_CONFIGURATION_MONO} and<a name="line.238"></a>
+<FONT color="green">239</FONT>         *   {@link AudioFormat#CHANNEL_CONFIGURATION_STEREO}<a name="line.239"></a>
+<FONT color="green">240</FONT>         * @param audioFormat the format in which the audio data is represented.<a name="line.240"></a>
+<FONT color="green">241</FONT>         *   See {@link AudioFormat#ENCODING_PCM_16BIT} and<a name="line.241"></a>
+<FONT color="green">242</FONT>         *   {@link AudioFormat#ENCODING_PCM_8BIT}<a name="line.242"></a>
+<FONT color="green">243</FONT>         * @param bufferSizeInBytes the total size (in bytes) of the buffer where audio data is read<a name="line.243"></a>
+<FONT color="green">244</FONT>         *   from for playback. If using the AudioTrack in streaming mode, you can write data into<a name="line.244"></a>
+<FONT color="green">245</FONT>         *   this buffer in smaller chunks than this size. If using the AudioTrack in static mode,<a name="line.245"></a>
+<FONT color="green">246</FONT>         *   this is the maximum size of the sound that will be played for this instance.<a name="line.246"></a>
+<FONT color="green">247</FONT>         *   See {@link #getMinBufferSize(int, int, int)} to determine the minimum required buffer size<a name="line.247"></a>
+<FONT color="green">248</FONT>         *   for the successful creation of an AudioTrack instance in streaming mode. Using values<a name="line.248"></a>
+<FONT color="green">249</FONT>         *   smaller than getMinBufferSize() will result in an initialization failure.<a name="line.249"></a>
+<FONT color="green">250</FONT>         * @param mode streaming or static buffer. See {@link #MODE_STATIC} and {@link #MODE_STREAM}<a name="line.250"></a>
+<FONT color="green">251</FONT>         * @throws java.lang.IllegalArgumentException<a name="line.251"></a>
+<FONT color="green">252</FONT>         */<a name="line.252"></a>
+<FONT color="green">253</FONT>        public AudioTrack(int streamType, int sampleRateInHz, int channelConfig, int audioFormat,<a name="line.253"></a>
+<FONT color="green">254</FONT>                int bufferSizeInBytes, int mode)<a name="line.254"></a>
+<FONT color="green">255</FONT>        throws IllegalArgumentException {<a name="line.255"></a>
+<FONT color="green">256</FONT>            mState = STATE_UNINITIALIZED;<a name="line.256"></a>
+<FONT color="green">257</FONT>            <a name="line.257"></a>
+<FONT color="green">258</FONT>            // remember which looper is associated with the AudioTrack instanciation<a name="line.258"></a>
+<FONT color="green">259</FONT>            if ((mInitializationLooper = Looper.myLooper()) == null) {<a name="line.259"></a>
+<FONT color="green">260</FONT>                mInitializationLooper = Looper.getMainLooper();<a name="line.260"></a>
+<FONT color="green">261</FONT>            }<a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>            audioParamCheck(streamType, sampleRateInHz, channelConfig, audioFormat, mode);<a name="line.263"></a>
+<FONT color="green">264</FONT>    <a name="line.264"></a>
+<FONT color="green">265</FONT>            audioBuffSizeCheck(bufferSizeInBytes);<a name="line.265"></a>
+<FONT color="green">266</FONT>    <a name="line.266"></a>
+<FONT color="green">267</FONT>            // native initialization<a name="line.267"></a>
+<FONT color="green">268</FONT>            int initResult = native_setup(new WeakReference&lt;AudioTrack&gt;(this),<a name="line.268"></a>
+<FONT color="green">269</FONT>                    mStreamType, mSampleRate, mChannelCount, mAudioFormat,<a name="line.269"></a>
+<FONT color="green">270</FONT>                    mNativeBufferSizeInBytes, mDataLoadMode);<a name="line.270"></a>
+<FONT color="green">271</FONT>            if (initResult != SUCCESS) {<a name="line.271"></a>
+<FONT color="green">272</FONT>                loge("Error code "+initResult+" when initializing AudioTrack.");<a name="line.272"></a>
+<FONT color="green">273</FONT>                return; // with mState == STATE_UNINITIALIZED<a name="line.273"></a>
+<FONT color="green">274</FONT>            }<a name="line.274"></a>
+<FONT color="green">275</FONT>    <a name="line.275"></a>
+<FONT color="green">276</FONT>            if (mDataLoadMode == MODE_STATIC) {<a name="line.276"></a>
+<FONT color="green">277</FONT>                mState = STATE_NO_STATIC_DATA;<a name="line.277"></a>
+<FONT color="green">278</FONT>            } else {<a name="line.278"></a>
+<FONT color="green">279</FONT>                mState = STATE_INITIALIZED;<a name="line.279"></a>
+<FONT color="green">280</FONT>            }<a name="line.280"></a>
+<FONT color="green">281</FONT>        }<a name="line.281"></a>
+<FONT color="green">282</FONT>    <a name="line.282"></a>
+<FONT color="green">283</FONT>    <a name="line.283"></a>
+<FONT color="green">284</FONT>        // Convenience method for the constructor's parameter checks.<a name="line.284"></a>
+<FONT color="green">285</FONT>        // This is where constructor IllegalArgumentException-s are thrown<a name="line.285"></a>
+<FONT color="green">286</FONT>        // postconditions:<a name="line.286"></a>
+<FONT color="green">287</FONT>        //    mStreamType is valid<a name="line.287"></a>
+<FONT color="green">288</FONT>        //    mChannelCount is valid<a name="line.288"></a>
+<FONT color="green">289</FONT>        //    mAudioFormat is valid<a name="line.289"></a>
+<FONT color="green">290</FONT>        //    mSampleRate is valid<a name="line.290"></a>
+<FONT color="green">291</FONT>        //    mDataLoadMode is valid<a name="line.291"></a>
+<FONT color="green">292</FONT>        private void audioParamCheck(int streamType, int sampleRateInHz,<a name="line.292"></a>
+<FONT color="green">293</FONT>                                     int channelConfig, int audioFormat, int mode) {<a name="line.293"></a>
+<FONT color="green">294</FONT>    <a name="line.294"></a>
+<FONT color="green">295</FONT>            //--------------<a name="line.295"></a>
+<FONT color="green">296</FONT>            // stream type<a name="line.296"></a>
+<FONT color="green">297</FONT>            if( (streamType != AudioManager.STREAM_ALARM) &amp;&amp; (streamType != AudioManager.STREAM_MUSIC)<a name="line.297"></a>
+<FONT color="green">298</FONT>               &amp;&amp; (streamType != AudioManager.STREAM_RING) &amp;&amp; (streamType != AudioManager.STREAM_SYSTEM)<a name="line.298"></a>
+<FONT color="green">299</FONT>               &amp;&amp; (streamType != AudioManager.STREAM_VOICE_CALL)<a name="line.299"></a>
+<FONT color="green">300</FONT>               &amp;&amp; (streamType != AudioManager.STREAM_NOTIFICATION)<a name="line.300"></a>
+<FONT color="green">301</FONT>               &amp;&amp; (streamType != AudioManager.STREAM_BLUETOOTH_SCO)) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                throw (new IllegalArgumentException("Invalid stream type."));<a name="line.302"></a>
+<FONT color="green">303</FONT>            } else {<a name="line.303"></a>
+<FONT color="green">304</FONT>                mStreamType = streamType;<a name="line.304"></a>
+<FONT color="green">305</FONT>            }<a name="line.305"></a>
+<FONT color="green">306</FONT>    <a name="line.306"></a>
+<FONT color="green">307</FONT>            //--------------<a name="line.307"></a>
+<FONT color="green">308</FONT>            // sample rate<a name="line.308"></a>
+<FONT color="green">309</FONT>            if ( (sampleRateInHz &lt; 4000) || (sampleRateInHz &gt; 48000) ) {<a name="line.309"></a>
+<FONT color="green">310</FONT>                throw (new IllegalArgumentException(sampleRateInHz<a name="line.310"></a>
+<FONT color="green">311</FONT>                        + "Hz is not a supported sample rate."));<a name="line.311"></a>
+<FONT color="green">312</FONT>            } else {<a name="line.312"></a>
+<FONT color="green">313</FONT>                mSampleRate = sampleRateInHz;<a name="line.313"></a>
+<FONT color="green">314</FONT>            }<a name="line.314"></a>
+<FONT color="green">315</FONT>    <a name="line.315"></a>
+<FONT color="green">316</FONT>            //--------------<a name="line.316"></a>
+<FONT color="green">317</FONT>            // channel config<a name="line.317"></a>
+<FONT color="green">318</FONT>            switch (channelConfig) {<a name="line.318"></a>
+<FONT color="green">319</FONT>            case AudioFormat.CHANNEL_CONFIGURATION_DEFAULT:<a name="line.319"></a>
+<FONT color="green">320</FONT>            case AudioFormat.CHANNEL_CONFIGURATION_MONO:<a name="line.320"></a>
+<FONT color="green">321</FONT>                mChannelCount = 1;<a name="line.321"></a>
+<FONT color="green">322</FONT>                mChannelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_MONO;<a name="line.322"></a>
+<FONT color="green">323</FONT>                break;<a name="line.323"></a>
+<FONT color="green">324</FONT>            case AudioFormat.CHANNEL_CONFIGURATION_STEREO:<a name="line.324"></a>
+<FONT color="green">325</FONT>                mChannelCount = 2;<a name="line.325"></a>
+<FONT color="green">326</FONT>                mChannelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_STEREO;<a name="line.326"></a>
+<FONT color="green">327</FONT>                break;<a name="line.327"></a>
+<FONT color="green">328</FONT>            default:<a name="line.328"></a>
+<FONT color="green">329</FONT>                mChannelCount = 0;<a name="line.329"></a>
+<FONT color="green">330</FONT>                mChannelConfiguration = AudioFormat.CHANNEL_CONFIGURATION_INVALID;<a name="line.330"></a>
+<FONT color="green">331</FONT>                throw(new IllegalArgumentException("Unsupported channel configuration."));<a name="line.331"></a>
+<FONT color="green">332</FONT>            }<a name="line.332"></a>
+<FONT color="green">333</FONT>    <a name="line.333"></a>
+<FONT color="green">334</FONT>            //--------------<a name="line.334"></a>
+<FONT color="green">335</FONT>            // audio format<a name="line.335"></a>
+<FONT color="green">336</FONT>            switch (audioFormat) {<a name="line.336"></a>
+<FONT color="green">337</FONT>            case AudioFormat.ENCODING_DEFAULT:<a name="line.337"></a>
+<FONT color="green">338</FONT>                mAudioFormat = AudioFormat.ENCODING_PCM_16BIT;<a name="line.338"></a>
+<FONT color="green">339</FONT>                break;<a name="line.339"></a>
+<FONT color="green">340</FONT>            case AudioFormat.ENCODING_PCM_16BIT:<a name="line.340"></a>
+<FONT color="green">341</FONT>            case AudioFormat.ENCODING_PCM_8BIT:<a name="line.341"></a>
+<FONT color="green">342</FONT>                mAudioFormat = audioFormat;<a name="line.342"></a>
+<FONT color="green">343</FONT>                break;<a name="line.343"></a>
+<FONT color="green">344</FONT>            default:<a name="line.344"></a>
+<FONT color="green">345</FONT>                mAudioFormat = AudioFormat.ENCODING_INVALID;<a name="line.345"></a>
+<FONT color="green">346</FONT>                throw(new IllegalArgumentException("Unsupported sample encoding."<a name="line.346"></a>
+<FONT color="green">347</FONT>                    + " Should be ENCODING_PCM_8BIT or ENCODING_PCM_16BIT."));<a name="line.347"></a>
+<FONT color="green">348</FONT>            }<a name="line.348"></a>
+<FONT color="green">349</FONT>    <a name="line.349"></a>
+<FONT color="green">350</FONT>            //--------------<a name="line.350"></a>
+<FONT color="green">351</FONT>            // audio load mode<a name="line.351"></a>
+<FONT color="green">352</FONT>            if ( (mode != MODE_STREAM) &amp;&amp; (mode != MODE_STATIC) ) {<a name="line.352"></a>
+<FONT color="green">353</FONT>                throw(new IllegalArgumentException("Invalid mode."));<a name="line.353"></a>
+<FONT color="green">354</FONT>            } else {<a name="line.354"></a>
+<FONT color="green">355</FONT>                mDataLoadMode = mode;<a name="line.355"></a>
+<FONT color="green">356</FONT>            }<a name="line.356"></a>
+<FONT color="green">357</FONT>        }<a name="line.357"></a>
+<FONT color="green">358</FONT>    <a name="line.358"></a>
+<FONT color="green">359</FONT>    <a name="line.359"></a>
+<FONT color="green">360</FONT>        // Convenience method for the contructor's audio buffer size check.<a name="line.360"></a>
+<FONT color="green">361</FONT>        // preconditions:<a name="line.361"></a>
+<FONT color="green">362</FONT>        //    mChannelCount is valid<a name="line.362"></a>
+<FONT color="green">363</FONT>        //    mAudioFormat is valid<a name="line.363"></a>
+<FONT color="green">364</FONT>        // postcondition:<a name="line.364"></a>
+<FONT color="green">365</FONT>        //    mNativeBufferSizeInBytes is valid (multiple of frame size, positive)<a name="line.365"></a>
+<FONT color="green">366</FONT>        private void audioBuffSizeCheck(int audioBufferSize) {<a name="line.366"></a>
+<FONT color="green">367</FONT>            // NB: this section is only valid with PCM data.<a name="line.367"></a>
+<FONT color="green">368</FONT>            //     To update when supporting compressed formats<a name="line.368"></a>
+<FONT color="green">369</FONT>            int frameSizeInBytes = mChannelCount<a name="line.369"></a>
+<FONT color="green">370</FONT>                    * (mAudioFormat == AudioFormat.ENCODING_PCM_8BIT ? 1 : 2);<a name="line.370"></a>
+<FONT color="green">371</FONT>            if ((audioBufferSize % frameSizeInBytes != 0) || (audioBufferSize &lt; 1)) {<a name="line.371"></a>
+<FONT color="green">372</FONT>                throw (new IllegalArgumentException("Invalid audio buffer size."));<a name="line.372"></a>
+<FONT color="green">373</FONT>            }<a name="line.373"></a>
+<FONT color="green">374</FONT>    <a name="line.374"></a>
+<FONT color="green">375</FONT>            mNativeBufferSizeInBytes = audioBufferSize;<a name="line.375"></a>
+<FONT color="green">376</FONT>        }<a name="line.376"></a>
+<FONT color="green">377</FONT>    <a name="line.377"></a>
+<FONT color="green">378</FONT>    <a name="line.378"></a>
+<FONT color="green">379</FONT>        /**<a name="line.379"></a>
+<FONT color="green">380</FONT>         * Releases the native AudioTrack resources.<a name="line.380"></a>
+<FONT color="green">381</FONT>         */<a name="line.381"></a>
+<FONT color="green">382</FONT>        public void release() {<a name="line.382"></a>
+<FONT color="green">383</FONT>            // even though native_release() stops the native AudioTrack, we need to stop<a name="line.383"></a>
+<FONT color="green">384</FONT>            // AudioTrack subclasses too.<a name="line.384"></a>
+<FONT color="green">385</FONT>            try {<a name="line.385"></a>
+<FONT color="green">386</FONT>                stop();<a name="line.386"></a>
+<FONT color="green">387</FONT>            } catch(IllegalStateException ise) { <a name="line.387"></a>
+<FONT color="green">388</FONT>                // don't raise an exception, we're releasing the resources.<a name="line.388"></a>
+<FONT color="green">389</FONT>            }<a name="line.389"></a>
+<FONT color="green">390</FONT>            native_release();<a name="line.390"></a>
+<FONT color="green">391</FONT>            mState = STATE_UNINITIALIZED;<a name="line.391"></a>
+<FONT color="green">392</FONT>        }<a name="line.392"></a>
+<FONT color="green">393</FONT>    <a name="line.393"></a>
+<FONT color="green">394</FONT>        @Override<a name="line.394"></a>
+<FONT color="green">395</FONT>        protected void finalize() {<a name="line.395"></a>
+<FONT color="green">396</FONT>            native_finalize();<a name="line.396"></a>
+<FONT color="green">397</FONT>        }<a name="line.397"></a>
+<FONT color="green">398</FONT>    <a name="line.398"></a>
+<FONT color="green">399</FONT>        //--------------------------------------------------------------------------<a name="line.399"></a>
+<FONT color="green">400</FONT>        // Getters<a name="line.400"></a>
+<FONT color="green">401</FONT>        //--------------------<a name="line.401"></a>
+<FONT color="green">402</FONT>        /**<a name="line.402"></a>
+<FONT color="green">403</FONT>         * Returns the minimum valid volume value. Volume values set under this one will<a name="line.403"></a>
+<FONT color="green">404</FONT>         * be clamped at this value.<a name="line.404"></a>
+<FONT color="green">405</FONT>         * @return the minimum volume expressed as a linear attenuation.<a name="line.405"></a>
+<FONT color="green">406</FONT>         */<a name="line.406"></a>
+<FONT color="green">407</FONT>        static public float getMinVolume() {<a name="line.407"></a>
+<FONT color="green">408</FONT>            return AudioTrack.VOLUME_MIN;<a name="line.408"></a>
+<FONT color="green">409</FONT>        }<a name="line.409"></a>
+<FONT color="green">410</FONT>    <a name="line.410"></a>
+<FONT color="green">411</FONT>        /**<a name="line.411"></a>
+<FONT color="green">412</FONT>         * Returns the maximum valid volume value. Volume values set above this one will<a name="line.412"></a>
+<FONT color="green">413</FONT>         * be clamped at this value.<a name="line.413"></a>
+<FONT color="green">414</FONT>         * @return the maximum volume expressed as a linear attenuation.<a name="line.414"></a>
+<FONT color="green">415</FONT>         */<a name="line.415"></a>
+<FONT color="green">416</FONT>        static public float getMaxVolume() {<a name="line.416"></a>
+<FONT color="green">417</FONT>            return AudioTrack.VOLUME_MAX;<a name="line.417"></a>
+<FONT color="green">418</FONT>        }<a name="line.418"></a>
+<FONT color="green">419</FONT>    <a name="line.419"></a>
+<FONT color="green">420</FONT>        /**<a name="line.420"></a>
+<FONT color="green">421</FONT>         * Returns the configured audio data sample rate in Hz<a name="line.421"></a>
+<FONT color="green">422</FONT>         */<a name="line.422"></a>
+<FONT color="green">423</FONT>        public int getSampleRate() {<a name="line.423"></a>
+<FONT color="green">424</FONT>            return mSampleRate;<a name="line.424"></a>
+<FONT color="green">425</FONT>        }<a name="line.425"></a>
+<FONT color="green">426</FONT>        <a name="line.426"></a>
+<FONT color="green">427</FONT>        /**<a name="line.427"></a>
+<FONT color="green">428</FONT>         * Returns the current playback rate in Hz. Note that this rate may differ from the one set<a name="line.428"></a>
+<FONT color="green">429</FONT>         * with {@link #setPlaybackRate(int)} as the value effectively used is implementation-dependent.<a name="line.429"></a>
+<FONT color="green">430</FONT>         */<a name="line.430"></a>
+<FONT color="green">431</FONT>        public int getPlaybackRate() {<a name="line.431"></a>
+<FONT color="green">432</FONT>            return native_get_playback_rate();<a name="line.432"></a>
+<FONT color="green">433</FONT>        }<a name="line.433"></a>
+<FONT color="green">434</FONT>    <a name="line.434"></a>
+<FONT color="green">435</FONT>        /**<a name="line.435"></a>
+<FONT color="green">436</FONT>         * Returns the configured audio data format. See {@link AudioFormat#ENCODING_PCM_16BIT}<a name="line.436"></a>
+<FONT color="green">437</FONT>         * and {@link AudioFormat#ENCODING_PCM_8BIT}.<a name="line.437"></a>
+<FONT color="green">438</FONT>         */<a name="line.438"></a>
+<FONT color="green">439</FONT>        public int getAudioFormat() {<a name="line.439"></a>
+<FONT color="green">440</FONT>            return mAudioFormat;<a name="line.440"></a>
+<FONT color="green">441</FONT>        }<a name="line.441"></a>
+<FONT color="green">442</FONT>    <a name="line.442"></a>
+<FONT color="green">443</FONT>        /**<a name="line.443"></a>
+<FONT color="green">444</FONT>         * Returns the type of audio stream this AudioTrack is configured for.<a name="line.444"></a>
+<FONT color="green">445</FONT>         * Compare the result against {@link AudioManager#STREAM_VOICE_CALL},<a name="line.445"></a>
+<FONT color="green">446</FONT>         * {@link AudioManager#STREAM_SYSTEM}, {@link AudioManager#STREAM_RING},<a name="line.446"></a>
+<FONT color="green">447</FONT>         * {@link AudioManager#STREAM_MUSIC} or {@link AudioManager#STREAM_ALARM}<a name="line.447"></a>
+<FONT color="green">448</FONT>         */<a name="line.448"></a>
+<FONT color="green">449</FONT>        public int getStreamType() {<a name="line.449"></a>
+<FONT color="green">450</FONT>            return mStreamType;<a name="line.450"></a>
+<FONT color="green">451</FONT>        }<a name="line.451"></a>
+<FONT color="green">452</FONT>    <a name="line.452"></a>
+<FONT color="green">453</FONT>        /**<a name="line.453"></a>
+<FONT color="green">454</FONT>         * Returns the configured channel configuration.<a name="line.454"></a>
+<FONT color="green">455</FONT>    <a name="line.455"></a>
+<FONT color="green">456</FONT>         * See {@link AudioFormat#CHANNEL_CONFIGURATION_MONO}<a name="line.456"></a>
+<FONT color="green">457</FONT>         * and {@link AudioFormat#CHANNEL_CONFIGURATION_STEREO}.<a name="line.457"></a>
+<FONT color="green">458</FONT>         */<a name="line.458"></a>
+<FONT color="green">459</FONT>        public int getChannelConfiguration() {<a name="line.459"></a>
+<FONT color="green">460</FONT>            return mChannelConfiguration;<a name="line.460"></a>
+<FONT color="green">461</FONT>        }<a name="line.461"></a>
+<FONT color="green">462</FONT>    <a name="line.462"></a>
+<FONT color="green">463</FONT>        /**<a name="line.463"></a>
+<FONT color="green">464</FONT>         * Returns the configured number of channels.<a name="line.464"></a>
+<FONT color="green">465</FONT>         */<a name="line.465"></a>
+<FONT color="green">466</FONT>        public int getChannelCount() {<a name="line.466"></a>
+<FONT color="green">467</FONT>            return mChannelCount;<a name="line.467"></a>
+<FONT color="green">468</FONT>        }<a name="line.468"></a>
+<FONT color="green">469</FONT>    <a name="line.469"></a>
+<FONT color="green">470</FONT>        /**<a name="line.470"></a>
+<FONT color="green">471</FONT>         * Returns the state of the AudioTrack instance. This is useful after the<a name="line.471"></a>
+<FONT color="green">472</FONT>         * AudioTrack instance has been created to check if it was initialized<a name="line.472"></a>
+<FONT color="green">473</FONT>         * properly. This ensures that the appropriate hardware resources have been<a name="line.473"></a>
+<FONT color="green">474</FONT>         * acquired.<a name="line.474"></a>
+<FONT color="green">475</FONT>         * @see #STATE_INITIALIZED<a name="line.475"></a>
+<FONT color="green">476</FONT>         * @see #STATE_NO_STATIC_DATA<a name="line.476"></a>
+<FONT color="green">477</FONT>         * @see #STATE_UNINITIALIZED<a name="line.477"></a>
+<FONT color="green">478</FONT>         */<a name="line.478"></a>
+<FONT color="green">479</FONT>        public int getState() {<a name="line.479"></a>
+<FONT color="green">480</FONT>            return mState;<a name="line.480"></a>
+<FONT color="green">481</FONT>        }<a name="line.481"></a>
+<FONT color="green">482</FONT>    <a name="line.482"></a>
+<FONT color="green">483</FONT>        /**<a name="line.483"></a>
+<FONT color="green">484</FONT>         * Returns the playback state of the AudioTrack instance.<a name="line.484"></a>
+<FONT color="green">485</FONT>         * @see #PLAYSTATE_STOPPED<a name="line.485"></a>
+<FONT color="green">486</FONT>         * @see #PLAYSTATE_PAUSED<a name="line.486"></a>
+<FONT color="green">487</FONT>         * @see #PLAYSTATE_PLAYING<a name="line.487"></a>
+<FONT color="green">488</FONT>         */<a name="line.488"></a>
+<FONT color="green">489</FONT>        public int getPlayState() {<a name="line.489"></a>
+<FONT color="green">490</FONT>            return mPlayState;<a name="line.490"></a>
+<FONT color="green">491</FONT>        }<a name="line.491"></a>
+<FONT color="green">492</FONT>    <a name="line.492"></a>
+<FONT color="green">493</FONT>        /**<a name="line.493"></a>
+<FONT color="green">494</FONT>         *  Returns the native frame count used by the hardware.<a name="line.494"></a>
+<FONT color="green">495</FONT>         */<a name="line.495"></a>
+<FONT color="green">496</FONT>        protected int getNativeFrameCount() {<a name="line.496"></a>
+<FONT color="green">497</FONT>            return native_get_native_frame_count();<a name="line.497"></a>
+<FONT color="green">498</FONT>        }<a name="line.498"></a>
+<FONT color="green">499</FONT>    <a name="line.499"></a>
+<FONT color="green">500</FONT>        /**<a name="line.500"></a>
+<FONT color="green">501</FONT>         * Returns marker position expressed in frames.<a name="line.501"></a>
+<FONT color="green">502</FONT>         */<a name="line.502"></a>
+<FONT color="green">503</FONT>        public int getNotificationMarkerPosition() {<a name="line.503"></a>
+<FONT color="green">504</FONT>            return native_get_marker_pos();<a name="line.504"></a>
+<FONT color="green">505</FONT>        }<a name="line.505"></a>
+<FONT color="green">506</FONT>    <a name="line.506"></a>
+<FONT color="green">507</FONT>        /**<a name="line.507"></a>
+<FONT color="green">508</FONT>         * Returns the notification update period expressed in frames.<a name="line.508"></a>
+<FONT color="green">509</FONT>         */<a name="line.509"></a>
+<FONT color="green">510</FONT>        public int getPositionNotificationPeriod() {<a name="line.510"></a>
+<FONT color="green">511</FONT>            return native_get_pos_update_period();<a name="line.511"></a>
+<FONT color="green">512</FONT>        }<a name="line.512"></a>
+<FONT color="green">513</FONT>    <a name="line.513"></a>
+<FONT color="green">514</FONT>        /**<a name="line.514"></a>
+<FONT color="green">515</FONT>         * Returns the playback head position expressed in frames<a name="line.515"></a>
+<FONT color="green">516</FONT>         */<a name="line.516"></a>
+<FONT color="green">517</FONT>        public int getPlaybackHeadPosition() {<a name="line.517"></a>
+<FONT color="green">518</FONT>            return native_get_position();<a name="line.518"></a>
+<FONT color="green">519</FONT>        }<a name="line.519"></a>
+<FONT color="green">520</FONT>    <a name="line.520"></a>
+<FONT color="green">521</FONT>        /**<a name="line.521"></a>
+<FONT color="green">522</FONT>         *  Returns the hardware output sample rate<a name="line.522"></a>
+<FONT color="green">523</FONT>         */<a name="line.523"></a>
+<FONT color="green">524</FONT>        static public int getNativeOutputSampleRate(int streamType) {<a name="line.524"></a>
+<FONT color="green">525</FONT>            return native_get_output_sample_rate(streamType);<a name="line.525"></a>
+<FONT color="green">526</FONT>        }<a name="line.526"></a>
+<FONT color="green">527</FONT>        <a name="line.527"></a>
+<FONT color="green">528</FONT>        /**<a name="line.528"></a>
+<FONT color="green">529</FONT>         * Returns the minimum buffer size required for the successful creation of an AudioTrack<a name="line.529"></a>
+<FONT color="green">530</FONT>         * object to be created in the {@link #MODE_STREAM} mode. Note that this size doesn't<a name="line.530"></a>
+<FONT color="green">531</FONT>         * guarantee a smooth playback under load, and higher values should be chosen according to<a name="line.531"></a>
+<FONT color="green">532</FONT>         * the expected frequency at which the buffer will be refilled with additional data to play. <a name="line.532"></a>
+<FONT color="green">533</FONT>         * @param sampleRateInHz the sample rate expressed in Hertz.<a name="line.533"></a>
+<FONT color="green">534</FONT>         * @param channelConfig describes the configuration of the audio channels. <a name="line.534"></a>
+<FONT color="green">535</FONT>         *   See {@link AudioFormat#CHANNEL_CONFIGURATION_MONO} and<a name="line.535"></a>
+<FONT color="green">536</FONT>         *   {@link AudioFormat#CHANNEL_CONFIGURATION_STEREO}<a name="line.536"></a>
+<FONT color="green">537</FONT>         * @param audioFormat the format in which the audio data is represented. <a name="line.537"></a>
+<FONT color="green">538</FONT>         *   See {@link AudioFormat#ENCODING_PCM_16BIT} and <a name="line.538"></a>
+<FONT color="green">539</FONT>         *   {@link AudioFormat#ENCODING_PCM_8BIT}<a name="line.539"></a>
+<FONT color="green">540</FONT>         * @return {@link #ERROR_BAD_VALUE} if an invalid parameter was passed,<a name="line.540"></a>
+<FONT color="green">541</FONT>         *   or {@link #ERROR} if the implementation was unable to query the hardware for its output <a name="line.541"></a>
+<FONT color="green">542</FONT>         *     properties, <a name="line.542"></a>
+<FONT color="green">543</FONT>         *   or the minimum buffer size expressed in bytes.<a name="line.543"></a>
+<FONT color="green">544</FONT>         */<a name="line.544"></a>
+<FONT color="green">545</FONT>        static public int getMinBufferSize(int sampleRateInHz, int channelConfig, int audioFormat) {<a name="line.545"></a>
+<FONT color="green">546</FONT>            int channelCount = 0;<a name="line.546"></a>
+<FONT color="green">547</FONT>            switch(channelConfig) {<a name="line.547"></a>
+<FONT color="green">548</FONT>            case AudioFormat.CHANNEL_CONFIGURATION_MONO:<a name="line.548"></a>
+<FONT color="green">549</FONT>                channelCount = 1;<a name="line.549"></a>
+<FONT color="green">550</FONT>                break;<a name="line.550"></a>
+<FONT color="green">551</FONT>            case AudioFormat.CHANNEL_CONFIGURATION_STEREO:<a name="line.551"></a>
+<FONT color="green">552</FONT>                channelCount = 2;<a name="line.552"></a>
+<FONT color="green">553</FONT>                break;<a name="line.553"></a>
+<FONT color="green">554</FONT>            default:<a name="line.554"></a>
+<FONT color="green">555</FONT>                loge("getMinBufferSize(): Invalid channel configuration.");<a name="line.555"></a>
+<FONT color="green">556</FONT>                return AudioTrack.ERROR_BAD_VALUE;<a name="line.556"></a>
+<FONT color="green">557</FONT>            }<a name="line.557"></a>
+<FONT color="green">558</FONT>            <a name="line.558"></a>
+<FONT color="green">559</FONT>            if ((audioFormat != AudioFormat.ENCODING_PCM_16BIT) <a name="line.559"></a>
+<FONT color="green">560</FONT>                &amp;&amp; (audioFormat != AudioFormat.ENCODING_PCM_8BIT)) {<a name="line.560"></a>
+<FONT color="green">561</FONT>                loge("getMinBufferSize(): Invalid audio format.");<a name="line.561"></a>
+<FONT color="green">562</FONT>                return AudioTrack.ERROR_BAD_VALUE;<a name="line.562"></a>
+<FONT color="green">563</FONT>            }<a name="line.563"></a>
+<FONT color="green">564</FONT>            <a name="line.564"></a>
+<FONT color="green">565</FONT>            if ( (sampleRateInHz &lt; 4000) || (sampleRateInHz &gt; 48000) ) {<a name="line.565"></a>
+<FONT color="green">566</FONT>                loge("getMinBufferSize(): " + sampleRateInHz +"Hz is not a supported sample rate.");<a name="line.566"></a>
+<FONT color="green">567</FONT>                return AudioTrack.ERROR_BAD_VALUE;<a name="line.567"></a>
+<FONT color="green">568</FONT>            }<a name="line.568"></a>
+<FONT color="green">569</FONT>            <a name="line.569"></a>
+<FONT color="green">570</FONT>            int size = native_get_min_buff_size(sampleRateInHz, channelCount, audioFormat);<a name="line.570"></a>
+<FONT color="green">571</FONT>            if ((size == -1) || (size == 0)) {<a name="line.571"></a>
+<FONT color="green">572</FONT>                loge("getMinBufferSize(): error querying hardware");<a name="line.572"></a>
+<FONT color="green">573</FONT>                return AudioTrack.ERROR;<a name="line.573"></a>
+<FONT color="green">574</FONT>            }<a name="line.574"></a>
+<FONT color="green">575</FONT>            else {<a name="line.575"></a>
+<FONT color="green">576</FONT>                return size;<a name="line.576"></a>
+<FONT color="green">577</FONT>            }<a name="line.577"></a>
+<FONT color="green">578</FONT>        }<a name="line.578"></a>
+<FONT color="green">579</FONT>    <a name="line.579"></a>
+<FONT color="green">580</FONT>    <a name="line.580"></a>
+<FONT color="green">581</FONT>        //--------------------------------------------------------------------------<a name="line.581"></a>
+<FONT color="green">582</FONT>        // Initialization / configuration<a name="line.582"></a>
+<FONT color="green">583</FONT>        //--------------------<a name="line.583"></a>
+<FONT color="green">584</FONT>        /**<a name="line.584"></a>
+<FONT color="green">585</FONT>         * Sets the listener the AudioTrack notifies when a previously set marker is reached or<a name="line.585"></a>
+<FONT color="green">586</FONT>         * for each periodic playback head position update.<a name="line.586"></a>
+<FONT color="green">587</FONT>         * Notifications will be received in the same thread as the one in which the AudioTrack<a name="line.587"></a>
+<FONT color="green">588</FONT>         * instance was created.<a name="line.588"></a>
+<FONT color="green">589</FONT>         * @param listener<a name="line.589"></a>
+<FONT color="green">590</FONT>         */<a name="line.590"></a>
+<FONT color="green">591</FONT>        public void setPlaybackPositionUpdateListener(OnPlaybackPositionUpdateListener listener) {<a name="line.591"></a>
+<FONT color="green">592</FONT>            setPlaybackPositionUpdateListener(listener, null);<a name="line.592"></a>
+<FONT color="green">593</FONT>        }<a name="line.593"></a>
+<FONT color="green">594</FONT>        <a name="line.594"></a>
+<FONT color="green">595</FONT>        /**<a name="line.595"></a>
+<FONT color="green">596</FONT>         * Sets the listener the AudioTrack notifies when a previously set marker is reached or<a name="line.596"></a>
+<FONT color="green">597</FONT>         * for each periodic playback head position update.<a name="line.597"></a>
+<FONT color="green">598</FONT>         * Use this method to receive AudioTrack events in the Handler associated with another<a name="line.598"></a>
+<FONT color="green">599</FONT>         * thread than the one in which you created the AudioTrack instance.<a name="line.599"></a>
+<FONT color="green">600</FONT>         * @param listener<a name="line.600"></a>
+<FONT color="green">601</FONT>         * @param handler the Handler that will receive the event notification messages.<a name="line.601"></a>
+<FONT color="green">602</FONT>         */<a name="line.602"></a>
+<FONT color="green">603</FONT>        public void setPlaybackPositionUpdateListener(OnPlaybackPositionUpdateListener listener, <a name="line.603"></a>
+<FONT color="green">604</FONT>                                                        Handler handler) {<a name="line.604"></a>
+<FONT color="green">605</FONT>            synchronized (mPositionListenerLock) {<a name="line.605"></a>
+<FONT color="green">606</FONT>                mPositionListener = listener;<a name="line.606"></a>
+<FONT color="green">607</FONT>            }<a name="line.607"></a>
+<FONT color="green">608</FONT>            if (listener != null) {<a name="line.608"></a>
+<FONT color="green">609</FONT>                mEventHandlerDelegate = new NativeEventHandlerDelegate(this, handler);<a name="line.609"></a>
+<FONT color="green">610</FONT>            }<a name="line.610"></a>
+<FONT color="green">611</FONT>            <a name="line.611"></a>
+<FONT color="green">612</FONT>        }<a name="line.612"></a>
+<FONT color="green">613</FONT>    <a name="line.613"></a>
+<FONT color="green">614</FONT>    <a name="line.614"></a>
+<FONT color="green">615</FONT>    <a name="line.615"></a>
+<FONT color="green">616</FONT>         /**<a name="line.616"></a>
+<FONT color="green">617</FONT>         * Sets the specified left/right output volume values on the AudioTrack. Values are clamped<a name="line.617"></a>
+<FONT color="green">618</FONT>         * to the ({@link #getMinVolume()}, {@link #getMaxVolume()}) interval if outside this range.<a name="line.618"></a>
+<FONT color="green">619</FONT>         * @param leftVolume output attenuation for the left channel. A value of 0.0f is silence,<a name="line.619"></a>
+<FONT color="green">620</FONT>         *      a value of 1.0f is no attenuation.<a name="line.620"></a>
+<FONT color="green">621</FONT>         * @param rightVolume output attenuation for the right channel<a name="line.621"></a>
+<FONT color="green">622</FONT>         * @return error code or success, see {@link #SUCCESS},<a name="line.622"></a>
+<FONT color="green">623</FONT>         *    {@link #ERROR_INVALID_OPERATION}<a name="line.623"></a>
+<FONT color="green">624</FONT>         */<a name="line.624"></a>
+<FONT color="green">625</FONT>        public int setStereoVolume(float leftVolume, float rightVolume) {<a name="line.625"></a>
+<FONT color="green">626</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.626"></a>
+<FONT color="green">627</FONT>                return ERROR_INVALID_OPERATION;<a name="line.627"></a>
+<FONT color="green">628</FONT>            }<a name="line.628"></a>
+<FONT color="green">629</FONT>    <a name="line.629"></a>
+<FONT color="green">630</FONT>            // clamp the volumes<a name="line.630"></a>
+<FONT color="green">631</FONT>            if (leftVolume &lt; getMinVolume()) {<a name="line.631"></a>
+<FONT color="green">632</FONT>                leftVolume = getMinVolume();<a name="line.632"></a>
+<FONT color="green">633</FONT>            }<a name="line.633"></a>
+<FONT color="green">634</FONT>            if (leftVolume &gt; getMaxVolume()) {<a name="line.634"></a>
+<FONT color="green">635</FONT>                leftVolume = getMaxVolume();<a name="line.635"></a>
+<FONT color="green">636</FONT>            }<a name="line.636"></a>
+<FONT color="green">637</FONT>            if (rightVolume &lt; getMinVolume()) {<a name="line.637"></a>
+<FONT color="green">638</FONT>                rightVolume = getMinVolume();<a name="line.638"></a>
+<FONT color="green">639</FONT>            }<a name="line.639"></a>
+<FONT color="green">640</FONT>            if (rightVolume &gt; getMaxVolume()) {<a name="line.640"></a>
+<FONT color="green">641</FONT>                rightVolume = getMaxVolume();<a name="line.641"></a>
+<FONT color="green">642</FONT>            }<a name="line.642"></a>
+<FONT color="green">643</FONT>    <a name="line.643"></a>
+<FONT color="green">644</FONT>            native_setVolume(leftVolume, rightVolume);<a name="line.644"></a>
+<FONT color="green">645</FONT>    <a name="line.645"></a>
+<FONT color="green">646</FONT>            return SUCCESS;<a name="line.646"></a>
+<FONT color="green">647</FONT>        }<a name="line.647"></a>
+<FONT color="green">648</FONT>    <a name="line.648"></a>
+<FONT color="green">649</FONT>    <a name="line.649"></a>
+<FONT color="green">650</FONT>        /**<a name="line.650"></a>
+<FONT color="green">651</FONT>         * Sets the playback sample rate for this track. This sets the sampling rate at which<a name="line.651"></a>
+<FONT color="green">652</FONT>         * the audio data will be consumed and played back, not the original sampling rate of the<a name="line.652"></a>
+<FONT color="green">653</FONT>         * content. Setting it to half the sample rate of the content will cause the playback to<a name="line.653"></a>
+<FONT color="green">654</FONT>         * last twice as long, but will also result result in a negative pitch shift.<a name="line.654"></a>
+<FONT color="green">655</FONT>         * The current implementation supports a maximum sample rate of 64kHz.<a name="line.655"></a>
+<FONT color="green">656</FONT>         * Use {@link #getSampleRate()} to check the rate actually used in hardware after <a name="line.656"></a>
+<FONT color="green">657</FONT>         * potential clamping.<a name="line.657"></a>
+<FONT color="green">658</FONT>         * @param sampleRateInHz the sample rate expressed in Hz<a name="line.658"></a>
+<FONT color="green">659</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_BAD_VALUE},<a name="line.659"></a>
+<FONT color="green">660</FONT>         *    {@link #ERROR_INVALID_OPERATION}<a name="line.660"></a>
+<FONT color="green">661</FONT>         */<a name="line.661"></a>
+<FONT color="green">662</FONT>        // FIXME: the implementation should support twice the hardware output sample rate<a name="line.662"></a>
+<FONT color="green">663</FONT>        //   (see {@link #getNativeOutputSampleRate(int)}), but currently<a name="line.663"></a>
+<FONT color="green">664</FONT>        //  due to the representation of the sample rate in the native layer, the sample rate<a name="line.664"></a>
+<FONT color="green">665</FONT>        //  is limited to 65535Hz<a name="line.665"></a>
+<FONT color="green">666</FONT>        public int setPlaybackRate(int sampleRateInHz) {<a name="line.666"></a>
+<FONT color="green">667</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.667"></a>
+<FONT color="green">668</FONT>                return ERROR_INVALID_OPERATION;<a name="line.668"></a>
+<FONT color="green">669</FONT>            }<a name="line.669"></a>
+<FONT color="green">670</FONT>            if (sampleRateInHz &lt;= 0) {<a name="line.670"></a>
+<FONT color="green">671</FONT>                return ERROR_BAD_VALUE;<a name="line.671"></a>
+<FONT color="green">672</FONT>            }<a name="line.672"></a>
+<FONT color="green">673</FONT>            native_set_playback_rate(sampleRateInHz);<a name="line.673"></a>
+<FONT color="green">674</FONT>            return SUCCESS;<a name="line.674"></a>
+<FONT color="green">675</FONT>        }<a name="line.675"></a>
+<FONT color="green">676</FONT>    <a name="line.676"></a>
+<FONT color="green">677</FONT>    <a name="line.677"></a>
+<FONT color="green">678</FONT>        /**<a name="line.678"></a>
+<FONT color="green">679</FONT>         * Sets the position of the notification marker.<a name="line.679"></a>
+<FONT color="green">680</FONT>         * @param markerInFrames marker in frames<a name="line.680"></a>
+<FONT color="green">681</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_BAD_VALUE},<a name="line.681"></a>
+<FONT color="green">682</FONT>         *  {@link #ERROR_INVALID_OPERATION}<a name="line.682"></a>
+<FONT color="green">683</FONT>         */<a name="line.683"></a>
+<FONT color="green">684</FONT>        public int setNotificationMarkerPosition(int markerInFrames) {<a name="line.684"></a>
+<FONT color="green">685</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.685"></a>
+<FONT color="green">686</FONT>                return ERROR_INVALID_OPERATION;<a name="line.686"></a>
+<FONT color="green">687</FONT>            }<a name="line.687"></a>
+<FONT color="green">688</FONT>            return native_set_marker_pos(markerInFrames);<a name="line.688"></a>
+<FONT color="green">689</FONT>        }<a name="line.689"></a>
+<FONT color="green">690</FONT>    <a name="line.690"></a>
+<FONT color="green">691</FONT>    <a name="line.691"></a>
+<FONT color="green">692</FONT>        /**<a name="line.692"></a>
+<FONT color="green">693</FONT>         * Sets the period for the periodic notification event.<a name="line.693"></a>
+<FONT color="green">694</FONT>         * @param periodInFrames update period expressed in frames<a name="line.694"></a>
+<FONT color="green">695</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_INVALID_OPERATION}<a name="line.695"></a>
+<FONT color="green">696</FONT>         */<a name="line.696"></a>
+<FONT color="green">697</FONT>        public int setPositionNotificationPeriod(int periodInFrames) {<a name="line.697"></a>
+<FONT color="green">698</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.698"></a>
+<FONT color="green">699</FONT>                return ERROR_INVALID_OPERATION;<a name="line.699"></a>
+<FONT color="green">700</FONT>            }<a name="line.700"></a>
+<FONT color="green">701</FONT>            return native_set_pos_update_period(periodInFrames);<a name="line.701"></a>
+<FONT color="green">702</FONT>        }<a name="line.702"></a>
+<FONT color="green">703</FONT>    <a name="line.703"></a>
+<FONT color="green">704</FONT>    <a name="line.704"></a>
+<FONT color="green">705</FONT>        /**<a name="line.705"></a>
+<FONT color="green">706</FONT>         * Sets the playback head position. The track must be stopped for the position to be changed.<a name="line.706"></a>
+<FONT color="green">707</FONT>         * @param positionInFrames playback head position expressed in frames<a name="line.707"></a>
+<FONT color="green">708</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_BAD_VALUE},<a name="line.708"></a>
+<FONT color="green">709</FONT>         *    {@link #ERROR_INVALID_OPERATION}<a name="line.709"></a>
+<FONT color="green">710</FONT>         */<a name="line.710"></a>
+<FONT color="green">711</FONT>        public int setPlaybackHeadPosition(int positionInFrames) {<a name="line.711"></a>
+<FONT color="green">712</FONT>            synchronized(mPlayStateLock) {<a name="line.712"></a>
+<FONT color="green">713</FONT>                if ((mPlayState == PLAYSTATE_STOPPED) || (mPlayState == PLAYSTATE_PAUSED)) {<a name="line.713"></a>
+<FONT color="green">714</FONT>                    return native_set_position(positionInFrames);<a name="line.714"></a>
+<FONT color="green">715</FONT>                } else {<a name="line.715"></a>
+<FONT color="green">716</FONT>                    return ERROR_INVALID_OPERATION;<a name="line.716"></a>
+<FONT color="green">717</FONT>                }<a name="line.717"></a>
+<FONT color="green">718</FONT>            }<a name="line.718"></a>
+<FONT color="green">719</FONT>        }<a name="line.719"></a>
+<FONT color="green">720</FONT>    <a name="line.720"></a>
+<FONT color="green">721</FONT>        /**<a name="line.721"></a>
+<FONT color="green">722</FONT>         * Sets the loop points and the loop count. The loop can be infinite.<a name="line.722"></a>
+<FONT color="green">723</FONT>         * @param startInFrames loop start marker expressed in frames<a name="line.723"></a>
+<FONT color="green">724</FONT>         * @param endInFrames loop end marker expressed in frames<a name="line.724"></a>
+<FONT color="green">725</FONT>         * @param loopCount the number of times the loop is looped.<a name="line.725"></a>
+<FONT color="green">726</FONT>         *    A value of -1 means infinite looping.<a name="line.726"></a>
+<FONT color="green">727</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_BAD_VALUE},<a name="line.727"></a>
+<FONT color="green">728</FONT>         *    {@link #ERROR_INVALID_OPERATION}<a name="line.728"></a>
+<FONT color="green">729</FONT>         */<a name="line.729"></a>
+<FONT color="green">730</FONT>        public int setLoopPoints(int startInFrames, int endInFrames, int loopCount) {<a name="line.730"></a>
+<FONT color="green">731</FONT>            if (mDataLoadMode == MODE_STREAM) {<a name="line.731"></a>
+<FONT color="green">732</FONT>                return ERROR_INVALID_OPERATION;<a name="line.732"></a>
+<FONT color="green">733</FONT>            }<a name="line.733"></a>
+<FONT color="green">734</FONT>            return native_set_loop(startInFrames, endInFrames, loopCount);<a name="line.734"></a>
+<FONT color="green">735</FONT>        }<a name="line.735"></a>
+<FONT color="green">736</FONT>    <a name="line.736"></a>
+<FONT color="green">737</FONT>        /**<a name="line.737"></a>
+<FONT color="green">738</FONT>         * Sets the initialization state of the instance. To be used in an AudioTrack subclass<a name="line.738"></a>
+<FONT color="green">739</FONT>         * constructor to set a subclass-specific post-initialization state.<a name="line.739"></a>
+<FONT color="green">740</FONT>         * @param state the state of the AudioTrack instance<a name="line.740"></a>
+<FONT color="green">741</FONT>         */<a name="line.741"></a>
+<FONT color="green">742</FONT>        protected void setState(int state) {<a name="line.742"></a>
+<FONT color="green">743</FONT>            mState = state;<a name="line.743"></a>
+<FONT color="green">744</FONT>        }<a name="line.744"></a>
+<FONT color="green">745</FONT>    <a name="line.745"></a>
+<FONT color="green">746</FONT>    <a name="line.746"></a>
+<FONT color="green">747</FONT>        //---------------------------------------------------------<a name="line.747"></a>
+<FONT color="green">748</FONT>        // Transport control methods<a name="line.748"></a>
+<FONT color="green">749</FONT>        //--------------------<a name="line.749"></a>
+<FONT color="green">750</FONT>        /**<a name="line.750"></a>
+<FONT color="green">751</FONT>         * Starts playing an AudioTrack.<a name="line.751"></a>
+<FONT color="green">752</FONT>         * @throws IllegalStateException<a name="line.752"></a>
+<FONT color="green">753</FONT>         */<a name="line.753"></a>
+<FONT color="green">754</FONT>        public void play()<a name="line.754"></a>
+<FONT color="green">755</FONT>        throws IllegalStateException {<a name="line.755"></a>
+<FONT color="green">756</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.756"></a>
+<FONT color="green">757</FONT>                throw(new IllegalStateException("play() called on uninitialized AudioTrack."));<a name="line.757"></a>
+<FONT color="green">758</FONT>            }<a name="line.758"></a>
+<FONT color="green">759</FONT>    <a name="line.759"></a>
+<FONT color="green">760</FONT>            synchronized(mPlayStateLock) {<a name="line.760"></a>
+<FONT color="green">761</FONT>                native_start();<a name="line.761"></a>
+<FONT color="green">762</FONT>                mPlayState = PLAYSTATE_PLAYING;<a name="line.762"></a>
+<FONT color="green">763</FONT>            }<a name="line.763"></a>
+<FONT color="green">764</FONT>        }<a name="line.764"></a>
+<FONT color="green">765</FONT>    <a name="line.765"></a>
+<FONT color="green">766</FONT>        /**<a name="line.766"></a>
+<FONT color="green">767</FONT>         * Stops playing the audio data.<a name="line.767"></a>
+<FONT color="green">768</FONT>         * @throws IllegalStateException<a name="line.768"></a>
+<FONT color="green">769</FONT>         */<a name="line.769"></a>
+<FONT color="green">770</FONT>        public void stop()<a name="line.770"></a>
+<FONT color="green">771</FONT>        throws IllegalStateException {<a name="line.771"></a>
+<FONT color="green">772</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.772"></a>
+<FONT color="green">773</FONT>                throw(new IllegalStateException("stop() called on uninitialized AudioTrack."));<a name="line.773"></a>
+<FONT color="green">774</FONT>            }<a name="line.774"></a>
+<FONT color="green">775</FONT>    <a name="line.775"></a>
+<FONT color="green">776</FONT>            // stop playing<a name="line.776"></a>
+<FONT color="green">777</FONT>            synchronized(mPlayStateLock) {<a name="line.777"></a>
+<FONT color="green">778</FONT>                native_stop();<a name="line.778"></a>
+<FONT color="green">779</FONT>                mPlayState = PLAYSTATE_STOPPED;<a name="line.779"></a>
+<FONT color="green">780</FONT>            }<a name="line.780"></a>
+<FONT color="green">781</FONT>        }<a name="line.781"></a>
+<FONT color="green">782</FONT>    <a name="line.782"></a>
+<FONT color="green">783</FONT>        /**<a name="line.783"></a>
+<FONT color="green">784</FONT>         * Pauses the playback of the audio data.<a name="line.784"></a>
+<FONT color="green">785</FONT>         * @throws IllegalStateException<a name="line.785"></a>
+<FONT color="green">786</FONT>         */<a name="line.786"></a>
+<FONT color="green">787</FONT>        public void pause()<a name="line.787"></a>
+<FONT color="green">788</FONT>        throws IllegalStateException {<a name="line.788"></a>
+<FONT color="green">789</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.789"></a>
+<FONT color="green">790</FONT>                throw(new IllegalStateException("pause() called on uninitialized AudioTrack."));<a name="line.790"></a>
+<FONT color="green">791</FONT>            }<a name="line.791"></a>
+<FONT color="green">792</FONT>            //logd("pause()");<a name="line.792"></a>
+<FONT color="green">793</FONT>    <a name="line.793"></a>
+<FONT color="green">794</FONT>            // pause playback<a name="line.794"></a>
+<FONT color="green">795</FONT>            synchronized(mPlayStateLock) {<a name="line.795"></a>
+<FONT color="green">796</FONT>                native_pause();<a name="line.796"></a>
+<FONT color="green">797</FONT>                mPlayState = PLAYSTATE_PAUSED;<a name="line.797"></a>
+<FONT color="green">798</FONT>            }<a name="line.798"></a>
+<FONT color="green">799</FONT>        }<a name="line.799"></a>
+<FONT color="green">800</FONT>    <a name="line.800"></a>
+<FONT color="green">801</FONT>    <a name="line.801"></a>
+<FONT color="green">802</FONT>        //---------------------------------------------------------<a name="line.802"></a>
+<FONT color="green">803</FONT>        // Audio data supply<a name="line.803"></a>
+<FONT color="green">804</FONT>        //--------------------<a name="line.804"></a>
+<FONT color="green">805</FONT>    <a name="line.805"></a>
+<FONT color="green">806</FONT>        /**<a name="line.806"></a>
+<FONT color="green">807</FONT>         * Flushes the audio data currently queued for playback.<a name="line.807"></a>
+<FONT color="green">808</FONT>         */<a name="line.808"></a>
+<FONT color="green">809</FONT>    <a name="line.809"></a>
+<FONT color="green">810</FONT>        public void flush() {<a name="line.810"></a>
+<FONT color="green">811</FONT>            if (mState == STATE_INITIALIZED) {<a name="line.811"></a>
+<FONT color="green">812</FONT>                // flush the data in native layer<a name="line.812"></a>
+<FONT color="green">813</FONT>                native_flush();<a name="line.813"></a>
+<FONT color="green">814</FONT>            }<a name="line.814"></a>
+<FONT color="green">815</FONT>    <a name="line.815"></a>
+<FONT color="green">816</FONT>        }<a name="line.816"></a>
+<FONT color="green">817</FONT>    <a name="line.817"></a>
+<FONT color="green">818</FONT>        /**<a name="line.818"></a>
+<FONT color="green">819</FONT>         * Writes the audio data to the audio hardware for playback.<a name="line.819"></a>
+<FONT color="green">820</FONT>         * @param audioData the array that holds the data to play.<a name="line.820"></a>
+<FONT color="green">821</FONT>         * @param offsetInBytes the offset expressed in bytes in audioData where the data to play <a name="line.821"></a>
+<FONT color="green">822</FONT>         *    starts.<a name="line.822"></a>
+<FONT color="green">823</FONT>         * @param sizeInBytes the number of bytes to read in audioData after the offset.<a name="line.823"></a>
+<FONT color="green">824</FONT>         * @return the number of bytes that were written or {@link #ERROR_INVALID_OPERATION}<a name="line.824"></a>
+<FONT color="green">825</FONT>         *    if the object wasn't properly initialized, or {@link #ERROR_BAD_VALUE} if<a name="line.825"></a>
+<FONT color="green">826</FONT>         *    the parameters don't resolve to valid data and indexes.<a name="line.826"></a>
+<FONT color="green">827</FONT>         */<a name="line.827"></a>
+<FONT color="green">828</FONT>    <a name="line.828"></a>
+<FONT color="green">829</FONT>        public int write(byte[] audioData,int offsetInBytes, int sizeInBytes) {<a name="line.829"></a>
+<FONT color="green">830</FONT>            if ((mDataLoadMode == MODE_STATIC)<a name="line.830"></a>
+<FONT color="green">831</FONT>                    &amp;&amp; (mState == STATE_NO_STATIC_DATA)<a name="line.831"></a>
+<FONT color="green">832</FONT>                    &amp;&amp; (sizeInBytes &gt; 0)) {<a name="line.832"></a>
+<FONT color="green">833</FONT>                mState = STATE_INITIALIZED;<a name="line.833"></a>
+<FONT color="green">834</FONT>            }<a name="line.834"></a>
+<FONT color="green">835</FONT>    <a name="line.835"></a>
+<FONT color="green">836</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.836"></a>
+<FONT color="green">837</FONT>                return ERROR_INVALID_OPERATION;<a name="line.837"></a>
+<FONT color="green">838</FONT>            }<a name="line.838"></a>
+<FONT color="green">839</FONT>    <a name="line.839"></a>
+<FONT color="green">840</FONT>            if ( (audioData == null) || (offsetInBytes &lt; 0 ) || (sizeInBytes &lt; 0) <a name="line.840"></a>
+<FONT color="green">841</FONT>                    || (offsetInBytes + sizeInBytes &gt; audioData.length)) {<a name="line.841"></a>
+<FONT color="green">842</FONT>                return ERROR_BAD_VALUE;<a name="line.842"></a>
+<FONT color="green">843</FONT>            }<a name="line.843"></a>
+<FONT color="green">844</FONT>    <a name="line.844"></a>
+<FONT color="green">845</FONT>            return native_write_byte(audioData, offsetInBytes, sizeInBytes, mAudioFormat);<a name="line.845"></a>
+<FONT color="green">846</FONT>        }<a name="line.846"></a>
+<FONT color="green">847</FONT>    <a name="line.847"></a>
+<FONT color="green">848</FONT>    <a name="line.848"></a>
+<FONT color="green">849</FONT>        /**<a name="line.849"></a>
+<FONT color="green">850</FONT>         * Writes the audio data to the audio hardware for playback.<a name="line.850"></a>
+<FONT color="green">851</FONT>         * @param audioData the array that holds the data to play.<a name="line.851"></a>
+<FONT color="green">852</FONT>         * @param offsetInShorts the offset expressed in shorts in audioData where the data to play<a name="line.852"></a>
+<FONT color="green">853</FONT>         *     starts.<a name="line.853"></a>
+<FONT color="green">854</FONT>         * @param sizeInShorts the number of bytes to read in audioData after the offset.<a name="line.854"></a>
+<FONT color="green">855</FONT>         * @return the number of shorts that were written or {@link #ERROR_INVALID_OPERATION}<a name="line.855"></a>
+<FONT color="green">856</FONT>          *    if the object wasn't properly initialized, or {@link #ERROR_BAD_VALUE} if<a name="line.856"></a>
+<FONT color="green">857</FONT>          *    the parameters don't resolve to valid data and indexes.<a name="line.857"></a>
+<FONT color="green">858</FONT>         */<a name="line.858"></a>
+<FONT color="green">859</FONT>    <a name="line.859"></a>
+<FONT color="green">860</FONT>        public int write(short[] audioData, int offsetInShorts, int sizeInShorts) {<a name="line.860"></a>
+<FONT color="green">861</FONT>            if ((mDataLoadMode == MODE_STATIC)<a name="line.861"></a>
+<FONT color="green">862</FONT>                    &amp;&amp; (mState == STATE_NO_STATIC_DATA)<a name="line.862"></a>
+<FONT color="green">863</FONT>                    &amp;&amp; (sizeInShorts &gt; 0)) {<a name="line.863"></a>
+<FONT color="green">864</FONT>                mState = STATE_INITIALIZED;<a name="line.864"></a>
+<FONT color="green">865</FONT>            }<a name="line.865"></a>
+<FONT color="green">866</FONT>            <a name="line.866"></a>
+<FONT color="green">867</FONT>            if (mState != STATE_INITIALIZED) {<a name="line.867"></a>
+<FONT color="green">868</FONT>                return ERROR_INVALID_OPERATION;<a name="line.868"></a>
+<FONT color="green">869</FONT>            }<a name="line.869"></a>
+<FONT color="green">870</FONT>    <a name="line.870"></a>
+<FONT color="green">871</FONT>            if ( (audioData == null) || (offsetInShorts &lt; 0 ) || (sizeInShorts &lt; 0) <a name="line.871"></a>
+<FONT color="green">872</FONT>                    || (offsetInShorts + sizeInShorts &gt; audioData.length)) {<a name="line.872"></a>
+<FONT color="green">873</FONT>                return ERROR_BAD_VALUE;<a name="line.873"></a>
+<FONT color="green">874</FONT>            }<a name="line.874"></a>
+<FONT color="green">875</FONT>    <a name="line.875"></a>
+<FONT color="green">876</FONT>            return native_write_short(audioData, offsetInShorts, sizeInShorts, mAudioFormat);<a name="line.876"></a>
+<FONT color="green">877</FONT>        }<a name="line.877"></a>
+<FONT color="green">878</FONT>    <a name="line.878"></a>
+<FONT color="green">879</FONT>    <a name="line.879"></a>
+<FONT color="green">880</FONT>        /**<a name="line.880"></a>
+<FONT color="green">881</FONT>         * Notifies the native resource to reuse the audio data already loaded in the native<a name="line.881"></a>
+<FONT color="green">882</FONT>         * layer. This call is only valid with AudioTrack instances that don't use the streaming<a name="line.882"></a>
+<FONT color="green">883</FONT>         * model.<a name="line.883"></a>
+<FONT color="green">884</FONT>         * @return error code or success, see {@link #SUCCESS}, {@link #ERROR_BAD_VALUE},<a name="line.884"></a>
+<FONT color="green">885</FONT>         *  {@link #ERROR_INVALID_OPERATION}<a name="line.885"></a>
+<FONT color="green">886</FONT>         */<a name="line.886"></a>
+<FONT color="green">887</FONT>        public int reloadStaticData() {<a name="line.887"></a>
+<FONT color="green">888</FONT>            if (mDataLoadMode == MODE_STREAM) {<a name="line.888"></a>
+<FONT color="green">889</FONT>                return ERROR_INVALID_OPERATION;<a name="line.889"></a>
+<FONT color="green">890</FONT>            }<a name="line.890"></a>
+<FONT color="green">891</FONT>            return native_reload_static();<a name="line.891"></a>
+<FONT color="green">892</FONT>        }<a name="line.892"></a>
+<FONT color="green">893</FONT>    <a name="line.893"></a>
+<FONT color="green">894</FONT>    <a name="line.894"></a>
+<FONT color="green">895</FONT>        //---------------------------------------------------------<a name="line.895"></a>
+<FONT color="green">896</FONT>        // Interface definitions<a name="line.896"></a>
+<FONT color="green">897</FONT>        //--------------------<a name="line.897"></a>
+<FONT color="green">898</FONT>        /**<a name="line.898"></a>
+<FONT color="green">899</FONT>         * Interface definition for a callback to be invoked when the playback head position of<a name="line.899"></a>
+<FONT color="green">900</FONT>         * an AudioTrack has reached a notification marker or has increased by a certain period.<a name="line.900"></a>
+<FONT color="green">901</FONT>         */<a name="line.901"></a>
+<FONT color="green">902</FONT>        public interface OnPlaybackPositionUpdateListener  {<a name="line.902"></a>
+<FONT color="green">903</FONT>            /**<a name="line.903"></a>
+<FONT color="green">904</FONT>             * Called on the listener to notify it that the previously set marker has been reached<a name="line.904"></a>
+<FONT color="green">905</FONT>             * by the playback head.<a name="line.905"></a>
+<FONT color="green">906</FONT>             */<a name="line.906"></a>
+<FONT color="green">907</FONT>            void onMarkerReached(AudioTrack track);<a name="line.907"></a>
+<FONT color="green">908</FONT>            <a name="line.908"></a>
+<FONT color="green">909</FONT>            /**<a name="line.909"></a>
+<FONT color="green">910</FONT>             * Called on the listener to periodically notify it that the playback head has reached<a name="line.910"></a>
+<FONT color="green">911</FONT>             * a multiple of the notification period.<a name="line.911"></a>
+<FONT color="green">912</FONT>             */<a name="line.912"></a>
+<FONT color="green">913</FONT>            void onPeriodicNotification(AudioTrack track);<a name="line.913"></a>
+<FONT color="green">914</FONT>        }<a name="line.914"></a>
+<FONT color="green">915</FONT>    <a name="line.915"></a>
+<FONT color="green">916</FONT>    <a name="line.916"></a>
+<FONT color="green">917</FONT>        //---------------------------------------------------------<a name="line.917"></a>
+<FONT color="green">918</FONT>        // Inner classes<a name="line.918"></a>
+<FONT color="green">919</FONT>        //--------------------<a name="line.919"></a>
+<FONT color="green">920</FONT>        /**<a name="line.920"></a>
+<FONT color="green">921</FONT>         * Helper class to handle the forwarding of native events to the appropriate listener<a name="line.921"></a>
+<FONT color="green">922</FONT>         * (potentially) handled in a different thread<a name="line.922"></a>
+<FONT color="green">923</FONT>         */  <a name="line.923"></a>
+<FONT color="green">924</FONT>        private class NativeEventHandlerDelegate {<a name="line.924"></a>
+<FONT color="green">925</FONT>            private final AudioTrack mAudioTrack;<a name="line.925"></a>
+<FONT color="green">926</FONT>            private final Handler mHandler;<a name="line.926"></a>
+<FONT color="green">927</FONT>            <a name="line.927"></a>
+<FONT color="green">928</FONT>            NativeEventHandlerDelegate(AudioTrack track, Handler handler) {<a name="line.928"></a>
+<FONT color="green">929</FONT>                mAudioTrack = track;<a name="line.929"></a>
+<FONT color="green">930</FONT>                // find the looper for our new event handler<a name="line.930"></a>
+<FONT color="green">931</FONT>                Looper looper;<a name="line.931"></a>
+<FONT color="green">932</FONT>                if (handler != null) {<a name="line.932"></a>
+<FONT color="green">933</FONT>                    looper = handler.getLooper();<a name="line.933"></a>
+<FONT color="green">934</FONT>                } else {<a name="line.934"></a>
+<FONT color="green">935</FONT>                    // no given handler, use the looper the AudioTrack was created in<a name="line.935"></a>
+<FONT color="green">936</FONT>                    looper = mInitializationLooper;<a name="line.936"></a>
+<FONT color="green">937</FONT>                }<a name="line.937"></a>
+<FONT color="green">938</FONT>                <a name="line.938"></a>
+<FONT color="green">939</FONT>                // construct the event handler with this looper<a name="line.939"></a>
+<FONT color="green">940</FONT>                if (looper != null) {<a name="line.940"></a>
+<FONT color="green">941</FONT>                    // implement the event handler delegate<a name="line.941"></a>
+<FONT color="green">942</FONT>                    mHandler = new Handler(looper) {<a name="line.942"></a>
+<FONT color="green">943</FONT>                        @Override<a name="line.943"></a>
+<FONT color="green">944</FONT>                        public void handleMessage(Message msg) {<a name="line.944"></a>
+<FONT color="green">945</FONT>                            if (mAudioTrack == null) {<a name="line.945"></a>
+<FONT color="green">946</FONT>                                return;<a name="line.946"></a>
+<FONT color="green">947</FONT>                            }<a name="line.947"></a>
+<FONT color="green">948</FONT>                            OnPlaybackPositionUpdateListener listener = null;<a name="line.948"></a>
+<FONT color="green">949</FONT>                            synchronized (mPositionListenerLock) {<a name="line.949"></a>
+<FONT color="green">950</FONT>                                listener = mAudioTrack.mPositionListener;<a name="line.950"></a>
+<FONT color="green">951</FONT>                            }<a name="line.951"></a>
+<FONT color="green">952</FONT>                            switch(msg.what) {<a name="line.952"></a>
+<FONT color="green">953</FONT>                            case NATIVE_EVENT_MARKER:<a name="line.953"></a>
+<FONT color="green">954</FONT>                                if (listener != null) {<a name="line.954"></a>
+<FONT color="green">955</FONT>                                    listener.onMarkerReached(mAudioTrack);<a name="line.955"></a>
+<FONT color="green">956</FONT>                                }<a name="line.956"></a>
+<FONT color="green">957</FONT>                                break;<a name="line.957"></a>
+<FONT color="green">958</FONT>                            case NATIVE_EVENT_NEW_POS:<a name="line.958"></a>
+<FONT color="green">959</FONT>                                if (listener != null) {<a name="line.959"></a>
+<FONT color="green">960</FONT>                                    listener.onPeriodicNotification(mAudioTrack);<a name="line.960"></a>
+<FONT color="green">961</FONT>                                }<a name="line.961"></a>
+<FONT color="green">962</FONT>                                break;<a name="line.962"></a>
+<FONT color="green">963</FONT>                            default:<a name="line.963"></a>
+<FONT color="green">964</FONT>                                Log.e(TAG, "[ android.media.AudioTrack.NativeEventHandler ] " +<a name="line.964"></a>
+<FONT color="green">965</FONT>                                        "Unknown event type: " + msg.what);<a name="line.965"></a>
+<FONT color="green">966</FONT>                                break;<a name="line.966"></a>
+<FONT color="green">967</FONT>                            }<a name="line.967"></a>
+<FONT color="green">968</FONT>                        }<a name="line.968"></a>
+<FONT color="green">969</FONT>                    };<a name="line.969"></a>
+<FONT color="green">970</FONT>                } else {<a name="line.970"></a>
+<FONT color="green">971</FONT>                    mHandler = null;<a name="line.971"></a>
+<FONT color="green">972</FONT>                } <a name="line.972"></a>
+<FONT color="green">973</FONT>            }<a name="line.973"></a>
+<FONT color="green">974</FONT>            <a name="line.974"></a>
+<FONT color="green">975</FONT>            Handler getHandler() {<a name="line.975"></a>
+<FONT color="green">976</FONT>                return mHandler;<a name="line.976"></a>
+<FONT color="green">977</FONT>            }<a name="line.977"></a>
+<FONT color="green">978</FONT>        }<a name="line.978"></a>
+<FONT color="green">979</FONT>    <a name="line.979"></a>
+<FONT color="green">980</FONT>    <a name="line.980"></a>
+<FONT color="green">981</FONT>        //---------------------------------------------------------<a name="line.981"></a>
+<FONT color="green">982</FONT>        // Java methods called from the native side<a name="line.982"></a>
+<FONT color="green">983</FONT>        //--------------------<a name="line.983"></a>
+<FONT color="green">984</FONT>        @SuppressWarnings("unused")<a name="line.984"></a>
+<FONT color="green">985</FONT>        private static void postEventFromNative(Object audiotrack_ref,<a name="line.985"></a>
+<FONT color="green">986</FONT>                int what, int arg1, int arg2, Object obj) {<a name="line.986"></a>
+<FONT color="green">987</FONT>            //logd("Event posted from the native side: event="+ what + " args="+ arg1+" "+arg2);<a name="line.987"></a>
+<FONT color="green">988</FONT>            AudioTrack track = (AudioTrack)((WeakReference)audiotrack_ref).get();<a name="line.988"></a>
+<FONT color="green">989</FONT>            if (track == null) {<a name="line.989"></a>
+<FONT color="green">990</FONT>                return;<a name="line.990"></a>
+<FONT color="green">991</FONT>            }<a name="line.991"></a>
+<FONT color="green">992</FONT>    <a name="line.992"></a>
+<FONT color="green">993</FONT>            if (track.mEventHandlerDelegate != null) {<a name="line.993"></a>
+<FONT color="green">994</FONT>                Message m = <a name="line.994"></a>
+<FONT color="green">995</FONT>                    track.mEventHandlerDelegate.getHandler().obtainMessage(what, arg1, arg2, obj);<a name="line.995"></a>
+<FONT color="green">996</FONT>                track.mEventHandlerDelegate.getHandler().sendMessage(m);<a name="line.996"></a>
+<FONT color="green">997</FONT>            }<a name="line.997"></a>
+<FONT color="green">998</FONT>    <a name="line.998"></a>
+<FONT color="green">999</FONT>        }<a name="line.999"></a>
+<FONT color="green">1000</FONT>    <a name="line.1000"></a>
+<FONT color="green">1001</FONT>    <a name="line.1001"></a>
+<FONT color="green">1002</FONT>        //---------------------------------------------------------<a name="line.1002"></a>
+<FONT color="green">1003</FONT>        // Native methods called from the Java side<a name="line.1003"></a>
+<FONT color="green">1004</FONT>        //--------------------<a name="line.1004"></a>
+<FONT color="green">1005</FONT>    <a name="line.1005"></a>
+<FONT color="green">1006</FONT>        private native final int native_setup(Object audiotrack_this,<a name="line.1006"></a>
+<FONT color="green">1007</FONT>                int streamType, int sampleRate, int nbChannels, int audioFormat,<a name="line.1007"></a>
+<FONT color="green">1008</FONT>                int buffSizeInBytes, int mode);<a name="line.1008"></a>
+<FONT color="green">1009</FONT>    <a name="line.1009"></a>
+<FONT color="green">1010</FONT>        private native final void native_finalize();<a name="line.1010"></a>
+<FONT color="green">1011</FONT>    <a name="line.1011"></a>
+<FONT color="green">1012</FONT>        private native final void native_release();<a name="line.1012"></a>
+<FONT color="green">1013</FONT>    <a name="line.1013"></a>
+<FONT color="green">1014</FONT>        private native final void native_start();<a name="line.1014"></a>
+<FONT color="green">1015</FONT>    <a name="line.1015"></a>
+<FONT color="green">1016</FONT>        private native final void native_stop();<a name="line.1016"></a>
+<FONT color="green">1017</FONT>    <a name="line.1017"></a>
+<FONT color="green">1018</FONT>        private native final void native_pause();<a name="line.1018"></a>
+<FONT color="green">1019</FONT>    <a name="line.1019"></a>
+<FONT color="green">1020</FONT>        private native final void native_flush();<a name="line.1020"></a>
+<FONT color="green">1021</FONT>    <a name="line.1021"></a>
+<FONT color="green">1022</FONT>        private native final int native_write_byte(byte[] audioData,<a name="line.1022"></a>
+<FONT color="green">1023</FONT>                                                   int offsetInBytes, int sizeInBytes, int format);<a name="line.1023"></a>
+<FONT color="green">1024</FONT>    <a name="line.1024"></a>
+<FONT color="green">1025</FONT>        private native final int native_write_short(short[] audioData,<a name="line.1025"></a>
+<FONT color="green">1026</FONT>                                                    int offsetInShorts, int sizeInShorts, int format);<a name="line.1026"></a>
+<FONT color="green">1027</FONT>    <a name="line.1027"></a>
+<FONT color="green">1028</FONT>        private native final int native_reload_static();<a name="line.1028"></a>
+<FONT color="green">1029</FONT>    <a name="line.1029"></a>
+<FONT color="green">1030</FONT>        private native final int native_get_native_frame_count();<a name="line.1030"></a>
+<FONT color="green">1031</FONT>    <a name="line.1031"></a>
+<FONT color="green">1032</FONT>        private native final void native_setVolume(float leftVolume, float rightVolume);<a name="line.1032"></a>
+<FONT color="green">1033</FONT>    <a name="line.1033"></a>
+<FONT color="green">1034</FONT>        private native final void native_set_playback_rate(int sampleRateInHz);<a name="line.1034"></a>
+<FONT color="green">1035</FONT>        private native final int  native_get_playback_rate();<a name="line.1035"></a>
+<FONT color="green">1036</FONT>    <a name="line.1036"></a>
+<FONT color="green">1037</FONT>        private native final int native_set_marker_pos(int marker);<a name="line.1037"></a>
+<FONT color="green">1038</FONT>        private native final int native_get_marker_pos();<a name="line.1038"></a>
+<FONT color="green">1039</FONT>    <a name="line.1039"></a>
+<FONT color="green">1040</FONT>        private native final int native_set_pos_update_period(int updatePeriod);<a name="line.1040"></a>
+<FONT color="green">1041</FONT>        private native final int native_get_pos_update_period();<a name="line.1041"></a>
+<FONT color="green">1042</FONT>    <a name="line.1042"></a>
+<FONT color="green">1043</FONT>        private native final int native_set_position(int position);<a name="line.1043"></a>
+<FONT color="green">1044</FONT>        private native final int native_get_position();<a name="line.1044"></a>
+<FONT color="green">1045</FONT>    <a name="line.1045"></a>
+<FONT color="green">1046</FONT>        private native final int native_set_loop(int start, int end, int loopCount);<a name="line.1046"></a>
+<FONT color="green">1047</FONT>    <a name="line.1047"></a>
+<FONT color="green">1048</FONT>        static private native final int native_get_output_sample_rate(int streamType);<a name="line.1048"></a>
+<FONT color="green">1049</FONT>        static private native final int native_get_min_buff_size(<a name="line.1049"></a>
+<FONT color="green">1050</FONT>                int sampleRateInHz, int channelConfig, int audioFormat);<a name="line.1050"></a>
+<FONT color="green">1051</FONT>    <a name="line.1051"></a>
+<FONT color="green">1052</FONT>    <a name="line.1052"></a>
+<FONT color="green">1053</FONT>        //---------------------------------------------------------<a name="line.1053"></a>
+<FONT color="green">1054</FONT>        // Utility methods<a name="line.1054"></a>
+<FONT color="green">1055</FONT>        //------------------<a name="line.1055"></a>
+<FONT color="green">1056</FONT>    <a name="line.1056"></a>
+<FONT color="green">1057</FONT>        private static void logd(String msg) {<a name="line.1057"></a>
+<FONT color="green">1058</FONT>            Log.d(TAG, "[ android.media.AudioTrack ] " + msg);<a name="line.1058"></a>
+<FONT color="green">1059</FONT>        }<a name="line.1059"></a>
+<FONT color="green">1060</FONT>    <a name="line.1060"></a>
+<FONT color="green">1061</FONT>        private static void loge(String msg) {<a name="line.1061"></a>
+<FONT color="green">1062</FONT>            Log.e(TAG, "[ android.media.AudioTrack ] " + msg);<a name="line.1062"></a>
+<FONT color="green">1063</FONT>        }<a name="line.1063"></a>
+<FONT color="green">1064</FONT>    <a name="line.1064"></a>
+<FONT color="green">1065</FONT>    }<a name="line.1065"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

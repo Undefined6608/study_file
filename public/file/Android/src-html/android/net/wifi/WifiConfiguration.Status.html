@@ -1,0 +1,492 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.net.wifi;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.os.Parcelable;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.os.Parcel;<a name="line.20"></a>
+<FONT color="green">021</FONT>    <a name="line.21"></a>
+<FONT color="green">022</FONT>    import java.util.BitSet;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    /**<a name="line.24"></a>
+<FONT color="green">025</FONT>     * A class representing a configured Wi-Fi network, including the<a name="line.25"></a>
+<FONT color="green">026</FONT>     * security configuration. Android will not necessarily support<a name="line.26"></a>
+<FONT color="green">027</FONT>     * all of these security schemes initially.<a name="line.27"></a>
+<FONT color="green">028</FONT>     */<a name="line.28"></a>
+<FONT color="green">029</FONT>    public class WifiConfiguration implements Parcelable {<a name="line.29"></a>
+<FONT color="green">030</FONT>    <a name="line.30"></a>
+<FONT color="green">031</FONT>        /** {@hide} */<a name="line.31"></a>
+<FONT color="green">032</FONT>        public static final String ssidVarName = "ssid";<a name="line.32"></a>
+<FONT color="green">033</FONT>        /** {@hide} */<a name="line.33"></a>
+<FONT color="green">034</FONT>        public static final String bssidVarName = "bssid";<a name="line.34"></a>
+<FONT color="green">035</FONT>        /** {@hide} */<a name="line.35"></a>
+<FONT color="green">036</FONT>        public static final String pskVarName = "psk";<a name="line.36"></a>
+<FONT color="green">037</FONT>        /** {@hide} */<a name="line.37"></a>
+<FONT color="green">038</FONT>        public static final String[] wepKeyVarNames = { "wep_key0", "wep_key1", "wep_key2", "wep_key3" };<a name="line.38"></a>
+<FONT color="green">039</FONT>        /** {@hide} */<a name="line.39"></a>
+<FONT color="green">040</FONT>        public static final String wepTxKeyIdxVarName = "wep_tx_keyidx";<a name="line.40"></a>
+<FONT color="green">041</FONT>        /** {@hide} */<a name="line.41"></a>
+<FONT color="green">042</FONT>        public static final String priorityVarName = "priority";<a name="line.42"></a>
+<FONT color="green">043</FONT>        /** {@hide} */<a name="line.43"></a>
+<FONT color="green">044</FONT>        public static final String hiddenSSIDVarName = "scan_ssid";<a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>        /**<a name="line.46"></a>
+<FONT color="green">047</FONT>         * Recognized key management schemes.<a name="line.47"></a>
+<FONT color="green">048</FONT>         */<a name="line.48"></a>
+<FONT color="green">049</FONT>        public static class KeyMgmt {<a name="line.49"></a>
+<FONT color="green">050</FONT>            private KeyMgmt() { }<a name="line.50"></a>
+<FONT color="green">051</FONT>            <a name="line.51"></a>
+<FONT color="green">052</FONT>            /** WPA is not used; plaintext or static WEP could be used. */<a name="line.52"></a>
+<FONT color="green">053</FONT>            public static final int NONE = 0;<a name="line.53"></a>
+<FONT color="green">054</FONT>            /** WPA pre-shared key (requires {@code preSharedKey} to be specified). */<a name="line.54"></a>
+<FONT color="green">055</FONT>            public static final int WPA_PSK = 1;<a name="line.55"></a>
+<FONT color="green">056</FONT>            /** WPA using EAP authentication. Generally used with an external authentication server. */<a name="line.56"></a>
+<FONT color="green">057</FONT>            public static final int WPA_EAP = 2;<a name="line.57"></a>
+<FONT color="green">058</FONT>            /** IEEE 802.1X using EAP authentication and (optionally) dynamically<a name="line.58"></a>
+<FONT color="green">059</FONT>             * generated WEP keys. */<a name="line.59"></a>
+<FONT color="green">060</FONT>            public static final int IEEE8021X = 3;<a name="line.60"></a>
+<FONT color="green">061</FONT>    <a name="line.61"></a>
+<FONT color="green">062</FONT>            public static final String varName = "key_mgmt";<a name="line.62"></a>
+<FONT color="green">063</FONT>    <a name="line.63"></a>
+<FONT color="green">064</FONT>            public static final String[] strings = { "NONE", "WPA_PSK", "WPA_EAP", "IEEE8021X" };<a name="line.64"></a>
+<FONT color="green">065</FONT>        }<a name="line.65"></a>
+<FONT color="green">066</FONT>        <a name="line.66"></a>
+<FONT color="green">067</FONT>        /**<a name="line.67"></a>
+<FONT color="green">068</FONT>         * Recognized security protocols.<a name="line.68"></a>
+<FONT color="green">069</FONT>         */<a name="line.69"></a>
+<FONT color="green">070</FONT>        public static class Protocol {<a name="line.70"></a>
+<FONT color="green">071</FONT>            private Protocol() { }<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>            /** WPA/IEEE 802.11i/D3.0 */<a name="line.73"></a>
+<FONT color="green">074</FONT>            public static final int WPA = 0;<a name="line.74"></a>
+<FONT color="green">075</FONT>            /** WPA2/IEEE 802.11i */<a name="line.75"></a>
+<FONT color="green">076</FONT>            public static final int RSN = 1;<a name="line.76"></a>
+<FONT color="green">077</FONT>    <a name="line.77"></a>
+<FONT color="green">078</FONT>            public static final String varName = "proto";<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>            public static final String[] strings = { "WPA", "RSN" };<a name="line.80"></a>
+<FONT color="green">081</FONT>        }<a name="line.81"></a>
+<FONT color="green">082</FONT>    <a name="line.82"></a>
+<FONT color="green">083</FONT>        /**<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Recognized IEEE 802.11 authentication algorithms.<a name="line.84"></a>
+<FONT color="green">085</FONT>         */<a name="line.85"></a>
+<FONT color="green">086</FONT>        public static class AuthAlgorithm {<a name="line.86"></a>
+<FONT color="green">087</FONT>            private AuthAlgorithm() { }<a name="line.87"></a>
+<FONT color="green">088</FONT>    <a name="line.88"></a>
+<FONT color="green">089</FONT>            /** Open System authentication (required for WPA/WPA2) */<a name="line.89"></a>
+<FONT color="green">090</FONT>            public static final int OPEN = 0;<a name="line.90"></a>
+<FONT color="green">091</FONT>            /** Shared Key authentication (requires static WEP keys) */<a name="line.91"></a>
+<FONT color="green">092</FONT>            public static final int SHARED = 1;<a name="line.92"></a>
+<FONT color="green">093</FONT>            /** LEAP/Network EAP (only used with LEAP) */<a name="line.93"></a>
+<FONT color="green">094</FONT>            public static final int LEAP = 2;<a name="line.94"></a>
+<FONT color="green">095</FONT>    <a name="line.95"></a>
+<FONT color="green">096</FONT>            public static final String varName = "auth_alg";<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>            public static final String[] strings = { "OPEN", "SHARED", "LEAP" };<a name="line.98"></a>
+<FONT color="green">099</FONT>        }<a name="line.99"></a>
+<FONT color="green">100</FONT>    <a name="line.100"></a>
+<FONT color="green">101</FONT>        /**<a name="line.101"></a>
+<FONT color="green">102</FONT>         * Recognized pairwise ciphers for WPA.<a name="line.102"></a>
+<FONT color="green">103</FONT>         */<a name="line.103"></a>
+<FONT color="green">104</FONT>        public static class PairwiseCipher {<a name="line.104"></a>
+<FONT color="green">105</FONT>            private PairwiseCipher() { }<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>            /** Use only Group keys (deprecated) */<a name="line.107"></a>
+<FONT color="green">108</FONT>            public static final int NONE = 0;<a name="line.108"></a>
+<FONT color="green">109</FONT>            /** Temporal Key Integrity Protocol [IEEE 802.11i/D7.0] */<a name="line.109"></a>
+<FONT color="green">110</FONT>            public static final int TKIP = 1;<a name="line.110"></a>
+<FONT color="green">111</FONT>            /** AES in Counter mode with CBC-MAC [RFC 3610, IEEE 802.11i/D7.0] */<a name="line.111"></a>
+<FONT color="green">112</FONT>            public static final int CCMP = 2;<a name="line.112"></a>
+<FONT color="green">113</FONT>    <a name="line.113"></a>
+<FONT color="green">114</FONT>            public static final String varName = "pairwise";<a name="line.114"></a>
+<FONT color="green">115</FONT>            <a name="line.115"></a>
+<FONT color="green">116</FONT>            public static final String[] strings = { "NONE", "TKIP", "CCMP" };<a name="line.116"></a>
+<FONT color="green">117</FONT>        }<a name="line.117"></a>
+<FONT color="green">118</FONT>    <a name="line.118"></a>
+<FONT color="green">119</FONT>        /**<a name="line.119"></a>
+<FONT color="green">120</FONT>         * Recognized group ciphers.<a name="line.120"></a>
+<FONT color="green">121</FONT>         * &lt;pre&gt;<a name="line.121"></a>
+<FONT color="green">122</FONT>         * CCMP = AES in Counter mode with CBC-MAC [RFC 3610, IEEE 802.11i/D7.0]<a name="line.122"></a>
+<FONT color="green">123</FONT>         * TKIP = Temporal Key Integrity Protocol [IEEE 802.11i/D7.0]<a name="line.123"></a>
+<FONT color="green">124</FONT>         * WEP104 = WEP (Wired Equivalent Privacy) with 104-bit key<a name="line.124"></a>
+<FONT color="green">125</FONT>         * WEP40 = WEP (Wired Equivalent Privacy) with 40-bit key (original 802.11)<a name="line.125"></a>
+<FONT color="green">126</FONT>         * &lt;/pre&gt;<a name="line.126"></a>
+<FONT color="green">127</FONT>         */<a name="line.127"></a>
+<FONT color="green">128</FONT>        public static class GroupCipher {<a name="line.128"></a>
+<FONT color="green">129</FONT>            private GroupCipher() { }<a name="line.129"></a>
+<FONT color="green">130</FONT>    <a name="line.130"></a>
+<FONT color="green">131</FONT>            /** WEP40 = WEP (Wired Equivalent Privacy) with 40-bit key (original 802.11) */<a name="line.131"></a>
+<FONT color="green">132</FONT>            public static final int WEP40 = 0;<a name="line.132"></a>
+<FONT color="green">133</FONT>            /** WEP104 = WEP (Wired Equivalent Privacy) with 104-bit key */<a name="line.133"></a>
+<FONT color="green">134</FONT>            public static final int WEP104 = 1;<a name="line.134"></a>
+<FONT color="green">135</FONT>            /** Temporal Key Integrity Protocol [IEEE 802.11i/D7.0] */<a name="line.135"></a>
+<FONT color="green">136</FONT>            public static final int TKIP = 2;<a name="line.136"></a>
+<FONT color="green">137</FONT>            /** AES in Counter mode with CBC-MAC [RFC 3610, IEEE 802.11i/D7.0] */<a name="line.137"></a>
+<FONT color="green">138</FONT>            public static final int CCMP = 3;<a name="line.138"></a>
+<FONT color="green">139</FONT>    <a name="line.139"></a>
+<FONT color="green">140</FONT>            public static final String varName = "group";<a name="line.140"></a>
+<FONT color="green">141</FONT>    <a name="line.141"></a>
+<FONT color="green">142</FONT>            public static final String[] strings = { "WEP40", "WEP104", "TKIP", "CCMP" };<a name="line.142"></a>
+<FONT color="green">143</FONT>        }<a name="line.143"></a>
+<FONT color="green">144</FONT>    <a name="line.144"></a>
+<FONT color="green">145</FONT>        /** Possible status of a network configuration. */<a name="line.145"></a>
+<FONT color="green">146</FONT>        public static class Status {<a name="line.146"></a>
+<FONT color="green">147</FONT>            private Status() { }<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>            /** this is the network we are currently connected to */<a name="line.149"></a>
+<FONT color="green">150</FONT>            public static final int CURRENT = 0;<a name="line.150"></a>
+<FONT color="green">151</FONT>            /** supplicant will not attempt to use this network */<a name="line.151"></a>
+<FONT color="green">152</FONT>            public static final int DISABLED = 1;<a name="line.152"></a>
+<FONT color="green">153</FONT>            /** supplicant will consider this network available for association */<a name="line.153"></a>
+<FONT color="green">154</FONT>            public static final int ENABLED = 2;<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>            public static final String[] strings = { "current", "disabled", "enabled" };<a name="line.156"></a>
+<FONT color="green">157</FONT>        }<a name="line.157"></a>
+<FONT color="green">158</FONT>    <a name="line.158"></a>
+<FONT color="green">159</FONT>        /**<a name="line.159"></a>
+<FONT color="green">160</FONT>         * The ID number that the supplicant uses to identify this<a name="line.160"></a>
+<FONT color="green">161</FONT>         * network configuration entry. This must be passed as an argument<a name="line.161"></a>
+<FONT color="green">162</FONT>         * to most calls into the supplicant.<a name="line.162"></a>
+<FONT color="green">163</FONT>         */<a name="line.163"></a>
+<FONT color="green">164</FONT>        public int networkId;<a name="line.164"></a>
+<FONT color="green">165</FONT>    <a name="line.165"></a>
+<FONT color="green">166</FONT>        /**<a name="line.166"></a>
+<FONT color="green">167</FONT>         * The current status of this network configuration entry.<a name="line.167"></a>
+<FONT color="green">168</FONT>         * @see Status<a name="line.168"></a>
+<FONT color="green">169</FONT>         */<a name="line.169"></a>
+<FONT color="green">170</FONT>        public int status;<a name="line.170"></a>
+<FONT color="green">171</FONT>        /**<a name="line.171"></a>
+<FONT color="green">172</FONT>         * The network's SSID. Can either be an ASCII string,<a name="line.172"></a>
+<FONT color="green">173</FONT>         * which must be enclosed in double quotation marks<a name="line.173"></a>
+<FONT color="green">174</FONT>         * (e.g., {@code &amp;quot;MyNetwork&amp;quot;}, or a string of<a name="line.174"></a>
+<FONT color="green">175</FONT>         * hex digits,which are not enclosed in quotes<a name="line.175"></a>
+<FONT color="green">176</FONT>         * (e.g., {@code 01a243f405}).<a name="line.176"></a>
+<FONT color="green">177</FONT>         */<a name="line.177"></a>
+<FONT color="green">178</FONT>        public String SSID;<a name="line.178"></a>
+<FONT color="green">179</FONT>        /**<a name="line.179"></a>
+<FONT color="green">180</FONT>         * When set, this network configuration entry should only be used when<a name="line.180"></a>
+<FONT color="green">181</FONT>         * associating with the AP having the specified BSSID. The value is<a name="line.181"></a>
+<FONT color="green">182</FONT>         * a string in the format of an Ethernet MAC address, e.g.,<a name="line.182"></a>
+<FONT color="green">183</FONT>         * &lt;code&gt;XX:XX:XX:XX:XX:XX&lt;/code&gt; where each &lt;code&gt;X&lt;/code&gt; is a hex digit.<a name="line.183"></a>
+<FONT color="green">184</FONT>         */<a name="line.184"></a>
+<FONT color="green">185</FONT>        public String BSSID;<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        /**<a name="line.187"></a>
+<FONT color="green">188</FONT>         * Pre-shared key for use with WPA-PSK.<a name="line.188"></a>
+<FONT color="green">189</FONT>         * &lt;p/&gt;<a name="line.189"></a>
+<FONT color="green">190</FONT>         * When the value of this key is read, the actual key is<a name="line.190"></a>
+<FONT color="green">191</FONT>         * not returned, just a "*" if the key has a value, or the null<a name="line.191"></a>
+<FONT color="green">192</FONT>         * string otherwise.<a name="line.192"></a>
+<FONT color="green">193</FONT>         */<a name="line.193"></a>
+<FONT color="green">194</FONT>        public String preSharedKey;<a name="line.194"></a>
+<FONT color="green">195</FONT>        /**<a name="line.195"></a>
+<FONT color="green">196</FONT>         * Up to four WEP keys. Either an ASCII string enclosed in double<a name="line.196"></a>
+<FONT color="green">197</FONT>         * quotation marks (e.g., {@code &amp;quot;abcdef&amp;quot;} or a string<a name="line.197"></a>
+<FONT color="green">198</FONT>         * of hex digits (e.g., {@code 0102030405}).<a name="line.198"></a>
+<FONT color="green">199</FONT>         * &lt;p/&gt;<a name="line.199"></a>
+<FONT color="green">200</FONT>         * When the value of one of these keys is read, the actual key is<a name="line.200"></a>
+<FONT color="green">201</FONT>         * not returned, just a "*" if the key has a value, or the null<a name="line.201"></a>
+<FONT color="green">202</FONT>         * string otherwise.<a name="line.202"></a>
+<FONT color="green">203</FONT>         */<a name="line.203"></a>
+<FONT color="green">204</FONT>        public String[] wepKeys;<a name="line.204"></a>
+<FONT color="green">205</FONT>        <a name="line.205"></a>
+<FONT color="green">206</FONT>        /** Default WEP key index, ranging from 0 to 3. */<a name="line.206"></a>
+<FONT color="green">207</FONT>        public int wepTxKeyIndex;<a name="line.207"></a>
+<FONT color="green">208</FONT>    <a name="line.208"></a>
+<FONT color="green">209</FONT>        /**<a name="line.209"></a>
+<FONT color="green">210</FONT>         * Priority determines the preference given to a network by {@code wpa_supplicant}<a name="line.210"></a>
+<FONT color="green">211</FONT>         * when choosing an access point with which to associate.<a name="line.211"></a>
+<FONT color="green">212</FONT>         */<a name="line.212"></a>
+<FONT color="green">213</FONT>        public int priority;<a name="line.213"></a>
+<FONT color="green">214</FONT>    <a name="line.214"></a>
+<FONT color="green">215</FONT>        /**<a name="line.215"></a>
+<FONT color="green">216</FONT>         * This is a network that does not broadcast its SSID, so an<a name="line.216"></a>
+<FONT color="green">217</FONT>         * SSID-specific probe request must be used for scans.<a name="line.217"></a>
+<FONT color="green">218</FONT>         */<a name="line.218"></a>
+<FONT color="green">219</FONT>        public boolean hiddenSSID;<a name="line.219"></a>
+<FONT color="green">220</FONT>    <a name="line.220"></a>
+<FONT color="green">221</FONT>        /**<a name="line.221"></a>
+<FONT color="green">222</FONT>         * The set of key management protocols supported by this configuration.<a name="line.222"></a>
+<FONT color="green">223</FONT>         * See {@link KeyMgmt} for descriptions of the values.<a name="line.223"></a>
+<FONT color="green">224</FONT>         * Defaults to WPA-PSK WPA-EAP.<a name="line.224"></a>
+<FONT color="green">225</FONT>         */<a name="line.225"></a>
+<FONT color="green">226</FONT>        public BitSet allowedKeyManagement;<a name="line.226"></a>
+<FONT color="green">227</FONT>        /**<a name="line.227"></a>
+<FONT color="green">228</FONT>         * The set of security protocols supported by this configuration.<a name="line.228"></a>
+<FONT color="green">229</FONT>         * See {@link Protocol} for descriptions of the values.<a name="line.229"></a>
+<FONT color="green">230</FONT>         * Defaults to WPA RSN.<a name="line.230"></a>
+<FONT color="green">231</FONT>         */<a name="line.231"></a>
+<FONT color="green">232</FONT>        public BitSet allowedProtocols;<a name="line.232"></a>
+<FONT color="green">233</FONT>        /**<a name="line.233"></a>
+<FONT color="green">234</FONT>         * The set of authentication protocols supported by this configuration.<a name="line.234"></a>
+<FONT color="green">235</FONT>         * See {@link AuthAlgorithm} for descriptions of the values.<a name="line.235"></a>
+<FONT color="green">236</FONT>         * Defaults to automatic selection.<a name="line.236"></a>
+<FONT color="green">237</FONT>         */<a name="line.237"></a>
+<FONT color="green">238</FONT>        public BitSet allowedAuthAlgorithms;<a name="line.238"></a>
+<FONT color="green">239</FONT>        /**<a name="line.239"></a>
+<FONT color="green">240</FONT>         * The set of pairwise ciphers for WPA supported by this configuration.<a name="line.240"></a>
+<FONT color="green">241</FONT>         * See {@link PairwiseCipher} for descriptions of the values.<a name="line.241"></a>
+<FONT color="green">242</FONT>         * Defaults to CCMP TKIP.<a name="line.242"></a>
+<FONT color="green">243</FONT>         */<a name="line.243"></a>
+<FONT color="green">244</FONT>        public BitSet allowedPairwiseCiphers;<a name="line.244"></a>
+<FONT color="green">245</FONT>        /**<a name="line.245"></a>
+<FONT color="green">246</FONT>         * The set of group ciphers supported by this configuration.<a name="line.246"></a>
+<FONT color="green">247</FONT>         * See {@link GroupCipher} for descriptions of the values.<a name="line.247"></a>
+<FONT color="green">248</FONT>         * Defaults to CCMP TKIP WEP104 WEP40.<a name="line.248"></a>
+<FONT color="green">249</FONT>         */<a name="line.249"></a>
+<FONT color="green">250</FONT>        public BitSet allowedGroupCiphers;<a name="line.250"></a>
+<FONT color="green">251</FONT>    <a name="line.251"></a>
+<FONT color="green">252</FONT>        public WifiConfiguration() {<a name="line.252"></a>
+<FONT color="green">253</FONT>            networkId = -1;<a name="line.253"></a>
+<FONT color="green">254</FONT>            SSID = null;<a name="line.254"></a>
+<FONT color="green">255</FONT>            BSSID = null;<a name="line.255"></a>
+<FONT color="green">256</FONT>            priority = 0;<a name="line.256"></a>
+<FONT color="green">257</FONT>            hiddenSSID = false;<a name="line.257"></a>
+<FONT color="green">258</FONT>            allowedKeyManagement = new BitSet();<a name="line.258"></a>
+<FONT color="green">259</FONT>            allowedProtocols = new BitSet();<a name="line.259"></a>
+<FONT color="green">260</FONT>            allowedAuthAlgorithms = new BitSet();<a name="line.260"></a>
+<FONT color="green">261</FONT>            allowedPairwiseCiphers = new BitSet();<a name="line.261"></a>
+<FONT color="green">262</FONT>            allowedGroupCiphers = new BitSet();<a name="line.262"></a>
+<FONT color="green">263</FONT>            wepKeys = new String[4];<a name="line.263"></a>
+<FONT color="green">264</FONT>            for (int i = 0; i &lt; wepKeys.length; i++)<a name="line.264"></a>
+<FONT color="green">265</FONT>                wepKeys[i] = null;<a name="line.265"></a>
+<FONT color="green">266</FONT>        }<a name="line.266"></a>
+<FONT color="green">267</FONT>    <a name="line.267"></a>
+<FONT color="green">268</FONT>        public String toString() {<a name="line.268"></a>
+<FONT color="green">269</FONT>            StringBuffer sbuf = new StringBuffer();<a name="line.269"></a>
+<FONT color="green">270</FONT>            if (this.status == WifiConfiguration.Status.CURRENT) {<a name="line.270"></a>
+<FONT color="green">271</FONT>                sbuf.append("* ");<a name="line.271"></a>
+<FONT color="green">272</FONT>            } else if (this.status == WifiConfiguration.Status.DISABLED) {<a name="line.272"></a>
+<FONT color="green">273</FONT>                sbuf.append("- ");<a name="line.273"></a>
+<FONT color="green">274</FONT>            }<a name="line.274"></a>
+<FONT color="green">275</FONT>            sbuf.append("ID: ").append(this.networkId).append(" SSID: ").append(this.SSID).<a name="line.275"></a>
+<FONT color="green">276</FONT>                    append(" BSSID: ").append(this.BSSID).append(" PRIO: ").append(this.priority).<a name="line.276"></a>
+<FONT color="green">277</FONT>                    append('\n');<a name="line.277"></a>
+<FONT color="green">278</FONT>            sbuf.append(" KeyMgmt:");<a name="line.278"></a>
+<FONT color="green">279</FONT>            for (int k = 0; k &lt; this.allowedKeyManagement.size(); k++) {<a name="line.279"></a>
+<FONT color="green">280</FONT>                if (this.allowedKeyManagement.get(k)) {<a name="line.280"></a>
+<FONT color="green">281</FONT>                    sbuf.append(" ");<a name="line.281"></a>
+<FONT color="green">282</FONT>                    if (k &lt; KeyMgmt.strings.length) {<a name="line.282"></a>
+<FONT color="green">283</FONT>                        sbuf.append(KeyMgmt.strings[k]);<a name="line.283"></a>
+<FONT color="green">284</FONT>                    } else {<a name="line.284"></a>
+<FONT color="green">285</FONT>                        sbuf.append("??");<a name="line.285"></a>
+<FONT color="green">286</FONT>                    }<a name="line.286"></a>
+<FONT color="green">287</FONT>                }<a name="line.287"></a>
+<FONT color="green">288</FONT>            }<a name="line.288"></a>
+<FONT color="green">289</FONT>            sbuf.append(" Protocols:");<a name="line.289"></a>
+<FONT color="green">290</FONT>            for (int p = 0; p &lt; this.allowedProtocols.size(); p++) {<a name="line.290"></a>
+<FONT color="green">291</FONT>                if (this.allowedProtocols.get(p)) {<a name="line.291"></a>
+<FONT color="green">292</FONT>                    sbuf.append(" ");<a name="line.292"></a>
+<FONT color="green">293</FONT>                    if (p &lt; Protocol.strings.length) {<a name="line.293"></a>
+<FONT color="green">294</FONT>                        sbuf.append(Protocol.strings[p]);<a name="line.294"></a>
+<FONT color="green">295</FONT>                    } else {<a name="line.295"></a>
+<FONT color="green">296</FONT>                        sbuf.append("??");<a name="line.296"></a>
+<FONT color="green">297</FONT>                    }<a name="line.297"></a>
+<FONT color="green">298</FONT>                }<a name="line.298"></a>
+<FONT color="green">299</FONT>            }<a name="line.299"></a>
+<FONT color="green">300</FONT>            sbuf.append('\n');<a name="line.300"></a>
+<FONT color="green">301</FONT>            sbuf.append(" AuthAlgorithms:");<a name="line.301"></a>
+<FONT color="green">302</FONT>            for (int a = 0; a &lt; this.allowedAuthAlgorithms.size(); a++) {<a name="line.302"></a>
+<FONT color="green">303</FONT>                if (this.allowedAuthAlgorithms.get(a)) {<a name="line.303"></a>
+<FONT color="green">304</FONT>                    sbuf.append(" ");<a name="line.304"></a>
+<FONT color="green">305</FONT>                    if (a &lt; AuthAlgorithm.strings.length) {<a name="line.305"></a>
+<FONT color="green">306</FONT>                        sbuf.append(AuthAlgorithm.strings[a]);<a name="line.306"></a>
+<FONT color="green">307</FONT>                    } else {<a name="line.307"></a>
+<FONT color="green">308</FONT>                        sbuf.append("??");<a name="line.308"></a>
+<FONT color="green">309</FONT>                    }<a name="line.309"></a>
+<FONT color="green">310</FONT>                }<a name="line.310"></a>
+<FONT color="green">311</FONT>            }<a name="line.311"></a>
+<FONT color="green">312</FONT>            sbuf.append('\n');<a name="line.312"></a>
+<FONT color="green">313</FONT>            sbuf.append(" PairwiseCiphers:");<a name="line.313"></a>
+<FONT color="green">314</FONT>            for (int pc = 0; pc &lt; this.allowedPairwiseCiphers.size(); pc++) {<a name="line.314"></a>
+<FONT color="green">315</FONT>                if (this.allowedPairwiseCiphers.get(pc)) {<a name="line.315"></a>
+<FONT color="green">316</FONT>                    sbuf.append(" ");<a name="line.316"></a>
+<FONT color="green">317</FONT>                    if (pc &lt; PairwiseCipher.strings.length) {<a name="line.317"></a>
+<FONT color="green">318</FONT>                        sbuf.append(PairwiseCipher.strings[pc]);<a name="line.318"></a>
+<FONT color="green">319</FONT>                    } else {<a name="line.319"></a>
+<FONT color="green">320</FONT>                        sbuf.append("??");<a name="line.320"></a>
+<FONT color="green">321</FONT>                    }<a name="line.321"></a>
+<FONT color="green">322</FONT>                }<a name="line.322"></a>
+<FONT color="green">323</FONT>            }<a name="line.323"></a>
+<FONT color="green">324</FONT>            sbuf.append('\n');<a name="line.324"></a>
+<FONT color="green">325</FONT>            sbuf.append(" GroupCiphers:");<a name="line.325"></a>
+<FONT color="green">326</FONT>            for (int gc = 0; gc &lt; this.allowedGroupCiphers.size(); gc++) {<a name="line.326"></a>
+<FONT color="green">327</FONT>                if (this.allowedGroupCiphers.get(gc)) {<a name="line.327"></a>
+<FONT color="green">328</FONT>                    sbuf.append(" ");<a name="line.328"></a>
+<FONT color="green">329</FONT>                    if (gc &lt; GroupCipher.strings.length) {<a name="line.329"></a>
+<FONT color="green">330</FONT>                        sbuf.append(GroupCipher.strings[gc]);<a name="line.330"></a>
+<FONT color="green">331</FONT>                    } else {<a name="line.331"></a>
+<FONT color="green">332</FONT>                        sbuf.append("??");<a name="line.332"></a>
+<FONT color="green">333</FONT>                    }<a name="line.333"></a>
+<FONT color="green">334</FONT>                }<a name="line.334"></a>
+<FONT color="green">335</FONT>            }<a name="line.335"></a>
+<FONT color="green">336</FONT>            sbuf.append('\n');<a name="line.336"></a>
+<FONT color="green">337</FONT>            if (this.preSharedKey != null) {<a name="line.337"></a>
+<FONT color="green">338</FONT>                sbuf.append(" PSK: ").append('*');<a name="line.338"></a>
+<FONT color="green">339</FONT>            }<a name="line.339"></a>
+<FONT color="green">340</FONT>            return sbuf.toString();<a name="line.340"></a>
+<FONT color="green">341</FONT>        }<a name="line.341"></a>
+<FONT color="green">342</FONT>    <a name="line.342"></a>
+<FONT color="green">343</FONT>        /**<a name="line.343"></a>
+<FONT color="green">344</FONT>         * Construct a WifiConfiguration from a scanned network<a name="line.344"></a>
+<FONT color="green">345</FONT>         * @param scannedAP the scan result used to construct the config entry<a name="line.345"></a>
+<FONT color="green">346</FONT>         * TODO: figure out whether this is a useful way to construct a new entry.<a name="line.346"></a>
+<FONT color="green">347</FONT>         *<a name="line.347"></a>
+<FONT color="green">348</FONT>        public WifiConfiguration(ScanResult scannedAP) {<a name="line.348"></a>
+<FONT color="green">349</FONT>            networkId = -1;<a name="line.349"></a>
+<FONT color="green">350</FONT>            SSID = scannedAP.SSID;<a name="line.350"></a>
+<FONT color="green">351</FONT>            BSSID = scannedAP.BSSID;<a name="line.351"></a>
+<FONT color="green">352</FONT>        }<a name="line.352"></a>
+<FONT color="green">353</FONT>        */<a name="line.353"></a>
+<FONT color="green">354</FONT>    <a name="line.354"></a>
+<FONT color="green">355</FONT>        private static BitSet readBitSet(Parcel src) {<a name="line.355"></a>
+<FONT color="green">356</FONT>            int cardinality = src.readInt();<a name="line.356"></a>
+<FONT color="green">357</FONT>    <a name="line.357"></a>
+<FONT color="green">358</FONT>            BitSet set = new BitSet();<a name="line.358"></a>
+<FONT color="green">359</FONT>            for (int i = 0; i &lt; cardinality; i++)<a name="line.359"></a>
+<FONT color="green">360</FONT>                set.set(src.readInt());<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>            return set;<a name="line.362"></a>
+<FONT color="green">363</FONT>        }<a name="line.363"></a>
+<FONT color="green">364</FONT>    <a name="line.364"></a>
+<FONT color="green">365</FONT>        private static void writeBitSet(Parcel dest, BitSet set) {<a name="line.365"></a>
+<FONT color="green">366</FONT>            int nextSetBit = -1;<a name="line.366"></a>
+<FONT color="green">367</FONT>    <a name="line.367"></a>
+<FONT color="green">368</FONT>            dest.writeInt(set.cardinality());<a name="line.368"></a>
+<FONT color="green">369</FONT>    <a name="line.369"></a>
+<FONT color="green">370</FONT>            while ((nextSetBit = set.nextSetBit(nextSetBit + 1)) != -1)<a name="line.370"></a>
+<FONT color="green">371</FONT>                dest.writeInt(nextSetBit);<a name="line.371"></a>
+<FONT color="green">372</FONT>        }<a name="line.372"></a>
+<FONT color="green">373</FONT>    <a name="line.373"></a>
+<FONT color="green">374</FONT>        /** Implement the Parcelable interface {@hide} */<a name="line.374"></a>
+<FONT color="green">375</FONT>        public int describeContents() {<a name="line.375"></a>
+<FONT color="green">376</FONT>            return 0;<a name="line.376"></a>
+<FONT color="green">377</FONT>        }<a name="line.377"></a>
+<FONT color="green">378</FONT>    <a name="line.378"></a>
+<FONT color="green">379</FONT>        /** Implement the Parcelable interface {@hide} */<a name="line.379"></a>
+<FONT color="green">380</FONT>        public void writeToParcel(Parcel dest, int flags) {<a name="line.380"></a>
+<FONT color="green">381</FONT>            dest.writeInt(networkId);<a name="line.381"></a>
+<FONT color="green">382</FONT>            dest.writeInt(status);<a name="line.382"></a>
+<FONT color="green">383</FONT>            dest.writeString(SSID);<a name="line.383"></a>
+<FONT color="green">384</FONT>            dest.writeString(BSSID);<a name="line.384"></a>
+<FONT color="green">385</FONT>            dest.writeString(preSharedKey);<a name="line.385"></a>
+<FONT color="green">386</FONT>            for (String wepKey : wepKeys)<a name="line.386"></a>
+<FONT color="green">387</FONT>                dest.writeString(wepKey);<a name="line.387"></a>
+<FONT color="green">388</FONT>            dest.writeInt(wepTxKeyIndex);<a name="line.388"></a>
+<FONT color="green">389</FONT>            dest.writeInt(priority);<a name="line.389"></a>
+<FONT color="green">390</FONT>            dest.writeInt(hiddenSSID ? 1 : 0);<a name="line.390"></a>
+<FONT color="green">391</FONT>    <a name="line.391"></a>
+<FONT color="green">392</FONT>            writeBitSet(dest, allowedKeyManagement);<a name="line.392"></a>
+<FONT color="green">393</FONT>            writeBitSet(dest, allowedProtocols);<a name="line.393"></a>
+<FONT color="green">394</FONT>            writeBitSet(dest, allowedAuthAlgorithms);<a name="line.394"></a>
+<FONT color="green">395</FONT>            writeBitSet(dest, allowedPairwiseCiphers);<a name="line.395"></a>
+<FONT color="green">396</FONT>            writeBitSet(dest, allowedGroupCiphers);<a name="line.396"></a>
+<FONT color="green">397</FONT>        }<a name="line.397"></a>
+<FONT color="green">398</FONT>    <a name="line.398"></a>
+<FONT color="green">399</FONT>        /** Implement the Parcelable interface {@hide} */<a name="line.399"></a>
+<FONT color="green">400</FONT>        public static final Creator&lt;WifiConfiguration&gt; CREATOR =<a name="line.400"></a>
+<FONT color="green">401</FONT>            new Creator&lt;WifiConfiguration&gt;() {<a name="line.401"></a>
+<FONT color="green">402</FONT>                public WifiConfiguration createFromParcel(Parcel in) {<a name="line.402"></a>
+<FONT color="green">403</FONT>                    WifiConfiguration config = new WifiConfiguration();<a name="line.403"></a>
+<FONT color="green">404</FONT>                    config.networkId = in.readInt();<a name="line.404"></a>
+<FONT color="green">405</FONT>                    config.status = in.readInt();<a name="line.405"></a>
+<FONT color="green">406</FONT>                    config.SSID = in.readString();<a name="line.406"></a>
+<FONT color="green">407</FONT>                    config.BSSID = in.readString();<a name="line.407"></a>
+<FONT color="green">408</FONT>                    config.preSharedKey = in.readString();<a name="line.408"></a>
+<FONT color="green">409</FONT>                    for (int i = 0; i &lt; config.wepKeys.length; i++)<a name="line.409"></a>
+<FONT color="green">410</FONT>                        config.wepKeys[i] = in.readString();<a name="line.410"></a>
+<FONT color="green">411</FONT>                    config.wepTxKeyIndex = in.readInt();<a name="line.411"></a>
+<FONT color="green">412</FONT>                    config.priority = in.readInt();<a name="line.412"></a>
+<FONT color="green">413</FONT>                    config.hiddenSSID = in.readInt() != 0;<a name="line.413"></a>
+<FONT color="green">414</FONT>                    config.allowedKeyManagement   = readBitSet(in);<a name="line.414"></a>
+<FONT color="green">415</FONT>                    config.allowedProtocols       = readBitSet(in);<a name="line.415"></a>
+<FONT color="green">416</FONT>                    config.allowedAuthAlgorithms  = readBitSet(in);<a name="line.416"></a>
+<FONT color="green">417</FONT>                    config.allowedPairwiseCiphers = readBitSet(in);<a name="line.417"></a>
+<FONT color="green">418</FONT>                    config.allowedGroupCiphers    = readBitSet(in);<a name="line.418"></a>
+<FONT color="green">419</FONT>                    return config;<a name="line.419"></a>
+<FONT color="green">420</FONT>                }<a name="line.420"></a>
+<FONT color="green">421</FONT>    <a name="line.421"></a>
+<FONT color="green">422</FONT>                public WifiConfiguration[] newArray(int size) {<a name="line.422"></a>
+<FONT color="green">423</FONT>                    return new WifiConfiguration[size];<a name="line.423"></a>
+<FONT color="green">424</FONT>                }<a name="line.424"></a>
+<FONT color="green">425</FONT>            };<a name="line.425"></a>
+<FONT color="green">426</FONT>    }<a name="line.426"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

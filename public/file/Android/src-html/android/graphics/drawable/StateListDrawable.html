@@ -1,0 +1,351 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.graphics.drawable;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import org.xmlpull.v1.XmlPullParser;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import org.xmlpull.v1.XmlPullParserException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    <a name="line.21"></a>
+<FONT color="green">022</FONT>    import java.io.IOException;<a name="line.22"></a>
+<FONT color="green">023</FONT>    <a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.content.res.Resources;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.content.res.TypedArray;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import android.util.AttributeSet;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import android.util.StateSet;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    /**<a name="line.29"></a>
+<FONT color="green">030</FONT>     * Lets you assign a number of graphic images to a single Drawable and swap out the visible item by a string<a name="line.30"></a>
+<FONT color="green">031</FONT>     * ID value.<a name="line.31"></a>
+<FONT color="green">032</FONT>     * &lt;p/&gt;<a name="line.32"></a>
+<FONT color="green">033</FONT>     * &lt;p&gt;It can be defined in an XML file with the &lt;code&gt;&amp;lt;selector&gt;&lt;/code&gt; element.<a name="line.33"></a>
+<FONT color="green">034</FONT>     * Each state Drawable is defined in a nested &lt;code&gt;&amp;lt;item&gt;&lt;/code&gt; element.&lt;/p&gt;<a name="line.34"></a>
+<FONT color="green">035</FONT>     *<a name="line.35"></a>
+<FONT color="green">036</FONT>     * @attr ref android.R.styleable#StateListDrawable_visible<a name="line.36"></a>
+<FONT color="green">037</FONT>     * @attr ref android.R.styleable#StateListDrawable_variablePadding<a name="line.37"></a>
+<FONT color="green">038</FONT>     * @attr ref android.R.styleable#StateListDrawable_constantSize<a name="line.38"></a>
+<FONT color="green">039</FONT>     * @attr ref android.R.styleable#DrawableStates_state_focused<a name="line.39"></a>
+<FONT color="green">040</FONT>     * @attr ref android.R.styleable#DrawableStates_state_window_focused<a name="line.40"></a>
+<FONT color="green">041</FONT>     * @attr ref android.R.styleable#DrawableStates_state_enabled<a name="line.41"></a>
+<FONT color="green">042</FONT>     * @attr ref android.R.styleable#DrawableStates_state_checkable<a name="line.42"></a>
+<FONT color="green">043</FONT>     * @attr ref android.R.styleable#DrawableStates_state_checked<a name="line.43"></a>
+<FONT color="green">044</FONT>     * @attr ref android.R.styleable#DrawableStates_state_selected<a name="line.44"></a>
+<FONT color="green">045</FONT>     * @attr ref android.R.styleable#DrawableStates_state_active<a name="line.45"></a>
+<FONT color="green">046</FONT>     * @attr ref android.R.styleable#DrawableStates_state_single<a name="line.46"></a>
+<FONT color="green">047</FONT>     * @attr ref android.R.styleable#DrawableStates_state_first<a name="line.47"></a>
+<FONT color="green">048</FONT>     * @attr ref android.R.styleable#DrawableStates_state_middle<a name="line.48"></a>
+<FONT color="green">049</FONT>     * @attr ref android.R.styleable#DrawableStates_state_last<a name="line.49"></a>
+<FONT color="green">050</FONT>     * @attr ref android.R.styleable#DrawableStates_state_pressed<a name="line.50"></a>
+<FONT color="green">051</FONT>     */<a name="line.51"></a>
+<FONT color="green">052</FONT>    public class StateListDrawable extends DrawableContainer {<a name="line.52"></a>
+<FONT color="green">053</FONT>        private final StateListState mStateListState;<a name="line.53"></a>
+<FONT color="green">054</FONT>        private boolean mMutated;<a name="line.54"></a>
+<FONT color="green">055</FONT>    <a name="line.55"></a>
+<FONT color="green">056</FONT>        public StateListDrawable() {<a name="line.56"></a>
+<FONT color="green">057</FONT>            this(null);<a name="line.57"></a>
+<FONT color="green">058</FONT>        }<a name="line.58"></a>
+<FONT color="green">059</FONT>    <a name="line.59"></a>
+<FONT color="green">060</FONT>        /**<a name="line.60"></a>
+<FONT color="green">061</FONT>         * Add a new image/string ID to the set of images.<a name="line.61"></a>
+<FONT color="green">062</FONT>         *<a name="line.62"></a>
+<FONT color="green">063</FONT>         * @param stateSet - An array of resource Ids to associate with the image.<a name="line.63"></a>
+<FONT color="green">064</FONT>         *                 Switch to this image by calling setState().<a name="line.64"></a>
+<FONT color="green">065</FONT>         * @param drawable -The image to show.<a name="line.65"></a>
+<FONT color="green">066</FONT>         */<a name="line.66"></a>
+<FONT color="green">067</FONT>        public void addState(int[] stateSet, Drawable drawable) {<a name="line.67"></a>
+<FONT color="green">068</FONT>            if (drawable != null) {<a name="line.68"></a>
+<FONT color="green">069</FONT>                mStateListState.addStateSet(stateSet, drawable);<a name="line.69"></a>
+<FONT color="green">070</FONT>                // in case the new state matches our current state...<a name="line.70"></a>
+<FONT color="green">071</FONT>                onStateChange(getState());<a name="line.71"></a>
+<FONT color="green">072</FONT>            }<a name="line.72"></a>
+<FONT color="green">073</FONT>        }<a name="line.73"></a>
+<FONT color="green">074</FONT>    <a name="line.74"></a>
+<FONT color="green">075</FONT>        @Override<a name="line.75"></a>
+<FONT color="green">076</FONT>        public boolean isStateful() {<a name="line.76"></a>
+<FONT color="green">077</FONT>            return true;<a name="line.77"></a>
+<FONT color="green">078</FONT>        }<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>        @Override<a name="line.80"></a>
+<FONT color="green">081</FONT>        protected boolean onStateChange(int[] stateSet) {<a name="line.81"></a>
+<FONT color="green">082</FONT>            int idx = mStateListState.indexOfStateSet(stateSet);<a name="line.82"></a>
+<FONT color="green">083</FONT>            if (idx &lt; 0) {<a name="line.83"></a>
+<FONT color="green">084</FONT>                idx = mStateListState.indexOfStateSet(StateSet.WILD_CARD);<a name="line.84"></a>
+<FONT color="green">085</FONT>            }<a name="line.85"></a>
+<FONT color="green">086</FONT>            if (selectDrawable(idx)) {<a name="line.86"></a>
+<FONT color="green">087</FONT>                return true;<a name="line.87"></a>
+<FONT color="green">088</FONT>            }<a name="line.88"></a>
+<FONT color="green">089</FONT>            return super.onStateChange(stateSet);<a name="line.89"></a>
+<FONT color="green">090</FONT>        }<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        @Override<a name="line.92"></a>
+<FONT color="green">093</FONT>        public void inflate(Resources r, XmlPullParser parser,<a name="line.93"></a>
+<FONT color="green">094</FONT>                AttributeSet attrs)<a name="line.94"></a>
+<FONT color="green">095</FONT>                throws XmlPullParserException, IOException {<a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>            TypedArray a = r.obtainAttributes(attrs,<a name="line.97"></a>
+<FONT color="green">098</FONT>                    com.android.internal.R.styleable.StateListDrawable);<a name="line.98"></a>
+<FONT color="green">099</FONT>    <a name="line.99"></a>
+<FONT color="green">100</FONT>            super.inflateWithAttributes(r, parser, a,<a name="line.100"></a>
+<FONT color="green">101</FONT>                    com.android.internal.R.styleable.StateListDrawable_visible);<a name="line.101"></a>
+<FONT color="green">102</FONT>    <a name="line.102"></a>
+<FONT color="green">103</FONT>            mStateListState.setVariablePadding(a.getBoolean(<a name="line.103"></a>
+<FONT color="green">104</FONT>                    com.android.internal.R.styleable.StateListDrawable_variablePadding, false));<a name="line.104"></a>
+<FONT color="green">105</FONT>            mStateListState.setConstantSize(a.getBoolean(<a name="line.105"></a>
+<FONT color="green">106</FONT>                    com.android.internal.R.styleable.StateListDrawable_constantSize, false));<a name="line.106"></a>
+<FONT color="green">107</FONT>    <a name="line.107"></a>
+<FONT color="green">108</FONT>            a.recycle();<a name="line.108"></a>
+<FONT color="green">109</FONT>    <a name="line.109"></a>
+<FONT color="green">110</FONT>            int type;<a name="line.110"></a>
+<FONT color="green">111</FONT>    <a name="line.111"></a>
+<FONT color="green">112</FONT>            final int innerDepth = parser.getDepth() + 1;<a name="line.112"></a>
+<FONT color="green">113</FONT>            int depth;<a name="line.113"></a>
+<FONT color="green">114</FONT>            while ((type = parser.next()) != XmlPullParser.END_DOCUMENT<a name="line.114"></a>
+<FONT color="green">115</FONT>                    &amp;&amp; ((depth = parser.getDepth()) &gt;= innerDepth<a name="line.115"></a>
+<FONT color="green">116</FONT>                    || type != XmlPullParser.END_TAG)) {<a name="line.116"></a>
+<FONT color="green">117</FONT>                if (type != XmlPullParser.START_TAG) {<a name="line.117"></a>
+<FONT color="green">118</FONT>                    continue;<a name="line.118"></a>
+<FONT color="green">119</FONT>                }<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>                if (depth &gt; innerDepth || !parser.getName().equals("item")) {<a name="line.121"></a>
+<FONT color="green">122</FONT>                    continue;<a name="line.122"></a>
+<FONT color="green">123</FONT>                }<a name="line.123"></a>
+<FONT color="green">124</FONT>    <a name="line.124"></a>
+<FONT color="green">125</FONT>                int drawableRes = 0;<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>                int i;<a name="line.127"></a>
+<FONT color="green">128</FONT>                int j = 0;<a name="line.128"></a>
+<FONT color="green">129</FONT>                final int numAttrs = attrs.getAttributeCount();<a name="line.129"></a>
+<FONT color="green">130</FONT>                int[] states = new int[numAttrs];<a name="line.130"></a>
+<FONT color="green">131</FONT>                for (i = 0; i &lt; numAttrs; i++) {<a name="line.131"></a>
+<FONT color="green">132</FONT>                    final int stateResId = attrs.getAttributeNameResource(i);<a name="line.132"></a>
+<FONT color="green">133</FONT>                    if (stateResId == 0) break;<a name="line.133"></a>
+<FONT color="green">134</FONT>                    if (stateResId == com.android.internal.R.attr.drawable) {<a name="line.134"></a>
+<FONT color="green">135</FONT>                        drawableRes = attrs.getAttributeResourceValue(i, 0);<a name="line.135"></a>
+<FONT color="green">136</FONT>                    } else {<a name="line.136"></a>
+<FONT color="green">137</FONT>                        states[j++] = attrs.getAttributeBooleanValue(i, false)<a name="line.137"></a>
+<FONT color="green">138</FONT>                                ? stateResId<a name="line.138"></a>
+<FONT color="green">139</FONT>                                : -stateResId;<a name="line.139"></a>
+<FONT color="green">140</FONT>                    }<a name="line.140"></a>
+<FONT color="green">141</FONT>                }<a name="line.141"></a>
+<FONT color="green">142</FONT>                states = StateSet.trimStateSet(states, j);<a name="line.142"></a>
+<FONT color="green">143</FONT>    <a name="line.143"></a>
+<FONT color="green">144</FONT>                Drawable dr;<a name="line.144"></a>
+<FONT color="green">145</FONT>                if (drawableRes != 0) {<a name="line.145"></a>
+<FONT color="green">146</FONT>                    dr = r.getDrawable(drawableRes);<a name="line.146"></a>
+<FONT color="green">147</FONT>                } else {<a name="line.147"></a>
+<FONT color="green">148</FONT>                    while ((type = parser.next()) == XmlPullParser.TEXT) {<a name="line.148"></a>
+<FONT color="green">149</FONT>                    }<a name="line.149"></a>
+<FONT color="green">150</FONT>                    if (type != XmlPullParser.START_TAG) {<a name="line.150"></a>
+<FONT color="green">151</FONT>                        throw new XmlPullParserException(<a name="line.151"></a>
+<FONT color="green">152</FONT>                                parser.getPositionDescription()<a name="line.152"></a>
+<FONT color="green">153</FONT>                                        + ": &lt;item&gt; tag requires a 'drawable' attribute or "<a name="line.153"></a>
+<FONT color="green">154</FONT>                                        + "child tag defining a drawable");<a name="line.154"></a>
+<FONT color="green">155</FONT>                    }<a name="line.155"></a>
+<FONT color="green">156</FONT>                    dr = Drawable.createFromXmlInner(r, parser, attrs);<a name="line.156"></a>
+<FONT color="green">157</FONT>                }<a name="line.157"></a>
+<FONT color="green">158</FONT>    <a name="line.158"></a>
+<FONT color="green">159</FONT>                mStateListState.addStateSet(states, dr);<a name="line.159"></a>
+<FONT color="green">160</FONT>            }<a name="line.160"></a>
+<FONT color="green">161</FONT>    <a name="line.161"></a>
+<FONT color="green">162</FONT>            onStateChange(getState());<a name="line.162"></a>
+<FONT color="green">163</FONT>        }<a name="line.163"></a>
+<FONT color="green">164</FONT>    <a name="line.164"></a>
+<FONT color="green">165</FONT>        StateListState getStateListState() {<a name="line.165"></a>
+<FONT color="green">166</FONT>            return mStateListState;<a name="line.166"></a>
+<FONT color="green">167</FONT>        }<a name="line.167"></a>
+<FONT color="green">168</FONT>    <a name="line.168"></a>
+<FONT color="green">169</FONT>        /**<a name="line.169"></a>
+<FONT color="green">170</FONT>         * Gets the number of states contained in this drawable.<a name="line.170"></a>
+<FONT color="green">171</FONT>         *<a name="line.171"></a>
+<FONT color="green">172</FONT>         * @return The number of states contained in this drawable.<a name="line.172"></a>
+<FONT color="green">173</FONT>         * @hide pending API council<a name="line.173"></a>
+<FONT color="green">174</FONT>         * @see #getStateSet(int)<a name="line.174"></a>
+<FONT color="green">175</FONT>         * @see #getStateDrawable(int)<a name="line.175"></a>
+<FONT color="green">176</FONT>         */<a name="line.176"></a>
+<FONT color="green">177</FONT>        public int getStateCount() {<a name="line.177"></a>
+<FONT color="green">178</FONT>            return mStateListState.getChildCount();<a name="line.178"></a>
+<FONT color="green">179</FONT>        }<a name="line.179"></a>
+<FONT color="green">180</FONT>    <a name="line.180"></a>
+<FONT color="green">181</FONT>        /**<a name="line.181"></a>
+<FONT color="green">182</FONT>         * Gets the state set at an index.<a name="line.182"></a>
+<FONT color="green">183</FONT>         *<a name="line.183"></a>
+<FONT color="green">184</FONT>         * @param index The index of the state set.<a name="line.184"></a>
+<FONT color="green">185</FONT>         * @return The state set at the index.<a name="line.185"></a>
+<FONT color="green">186</FONT>         * @hide pending API council<a name="line.186"></a>
+<FONT color="green">187</FONT>         * @see #getStateCount()<a name="line.187"></a>
+<FONT color="green">188</FONT>         * @see #getStateDrawable(int)<a name="line.188"></a>
+<FONT color="green">189</FONT>         */<a name="line.189"></a>
+<FONT color="green">190</FONT>        public int[] getStateSet(int index) {<a name="line.190"></a>
+<FONT color="green">191</FONT>            return mStateListState.mStateSets[index];<a name="line.191"></a>
+<FONT color="green">192</FONT>        }<a name="line.192"></a>
+<FONT color="green">193</FONT>    <a name="line.193"></a>
+<FONT color="green">194</FONT>        /**<a name="line.194"></a>
+<FONT color="green">195</FONT>         * Gets the drawable at an index.<a name="line.195"></a>
+<FONT color="green">196</FONT>         *<a name="line.196"></a>
+<FONT color="green">197</FONT>         * @param index The index of the drawable.<a name="line.197"></a>
+<FONT color="green">198</FONT>         * @return The drawable at the index.<a name="line.198"></a>
+<FONT color="green">199</FONT>         * @hide pending API council<a name="line.199"></a>
+<FONT color="green">200</FONT>         * @see #getStateCount()<a name="line.200"></a>
+<FONT color="green">201</FONT>         * @see #getStateSet(int)<a name="line.201"></a>
+<FONT color="green">202</FONT>         */<a name="line.202"></a>
+<FONT color="green">203</FONT>        public Drawable getStateDrawable(int index) {<a name="line.203"></a>
+<FONT color="green">204</FONT>            return mStateListState.getChildren()[index];<a name="line.204"></a>
+<FONT color="green">205</FONT>        }<a name="line.205"></a>
+<FONT color="green">206</FONT>        <a name="line.206"></a>
+<FONT color="green">207</FONT>        /**<a name="line.207"></a>
+<FONT color="green">208</FONT>         * Gets the index of the drawable with the provided state set.<a name="line.208"></a>
+<FONT color="green">209</FONT>         * <a name="line.209"></a>
+<FONT color="green">210</FONT>         * @param stateSet the state set to look up<a name="line.210"></a>
+<FONT color="green">211</FONT>         * @return the index of the provided state set, or -1 if not found<a name="line.211"></a>
+<FONT color="green">212</FONT>         * @hide pending API council<a name="line.212"></a>
+<FONT color="green">213</FONT>         * @see #getStateDrawable(int)<a name="line.213"></a>
+<FONT color="green">214</FONT>         * @see #getStateSet(int)<a name="line.214"></a>
+<FONT color="green">215</FONT>         */<a name="line.215"></a>
+<FONT color="green">216</FONT>        public int getStateDrawableIndex(int[] stateSet) {<a name="line.216"></a>
+<FONT color="green">217</FONT>            return mStateListState.indexOfStateSet(stateSet);<a name="line.217"></a>
+<FONT color="green">218</FONT>        }<a name="line.218"></a>
+<FONT color="green">219</FONT>        <a name="line.219"></a>
+<FONT color="green">220</FONT>        @Override<a name="line.220"></a>
+<FONT color="green">221</FONT>        public Drawable mutate() {<a name="line.221"></a>
+<FONT color="green">222</FONT>            if (!mMutated &amp;&amp; super.mutate() == this) {<a name="line.222"></a>
+<FONT color="green">223</FONT>                final int[][] sets = mStateListState.mStateSets;<a name="line.223"></a>
+<FONT color="green">224</FONT>                final int count = sets.length;<a name="line.224"></a>
+<FONT color="green">225</FONT>                mStateListState.mStateSets = new int[count][];<a name="line.225"></a>
+<FONT color="green">226</FONT>                for (int i = 0; i &lt; count; i++) {<a name="line.226"></a>
+<FONT color="green">227</FONT>                    mStateListState.mStateSets[i] = sets[i].clone();<a name="line.227"></a>
+<FONT color="green">228</FONT>                }<a name="line.228"></a>
+<FONT color="green">229</FONT>                mMutated = true;<a name="line.229"></a>
+<FONT color="green">230</FONT>            }<a name="line.230"></a>
+<FONT color="green">231</FONT>            return this;<a name="line.231"></a>
+<FONT color="green">232</FONT>        }<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>        static final class StateListState extends DrawableContainerState {<a name="line.234"></a>
+<FONT color="green">235</FONT>            private int[][] mStateSets;<a name="line.235"></a>
+<FONT color="green">236</FONT>    <a name="line.236"></a>
+<FONT color="green">237</FONT>            StateListState(StateListState orig, StateListDrawable owner) {<a name="line.237"></a>
+<FONT color="green">238</FONT>                super(orig, owner);<a name="line.238"></a>
+<FONT color="green">239</FONT>    <a name="line.239"></a>
+<FONT color="green">240</FONT>                if (orig != null) {<a name="line.240"></a>
+<FONT color="green">241</FONT>                    mStateSets = orig.mStateSets;<a name="line.241"></a>
+<FONT color="green">242</FONT>                } else {<a name="line.242"></a>
+<FONT color="green">243</FONT>                    mStateSets = new int[getChildren().length][];<a name="line.243"></a>
+<FONT color="green">244</FONT>                }<a name="line.244"></a>
+<FONT color="green">245</FONT>            }<a name="line.245"></a>
+<FONT color="green">246</FONT>    <a name="line.246"></a>
+<FONT color="green">247</FONT>            int addStateSet(int[] stateSet, Drawable drawable) {<a name="line.247"></a>
+<FONT color="green">248</FONT>                final int pos = addChild(drawable);<a name="line.248"></a>
+<FONT color="green">249</FONT>                mStateSets[pos] = stateSet;<a name="line.249"></a>
+<FONT color="green">250</FONT>                return pos;<a name="line.250"></a>
+<FONT color="green">251</FONT>            }<a name="line.251"></a>
+<FONT color="green">252</FONT>    <a name="line.252"></a>
+<FONT color="green">253</FONT>            private int indexOfStateSet(int[] stateSet) {<a name="line.253"></a>
+<FONT color="green">254</FONT>                final int[][] stateSets = mStateSets;<a name="line.254"></a>
+<FONT color="green">255</FONT>                final int N = getChildCount();<a name="line.255"></a>
+<FONT color="green">256</FONT>                for (int i = 0; i &lt; N; i++) {<a name="line.256"></a>
+<FONT color="green">257</FONT>                    if (StateSet.stateSetMatches(stateSets[i], stateSet)) {<a name="line.257"></a>
+<FONT color="green">258</FONT>                        return i;<a name="line.258"></a>
+<FONT color="green">259</FONT>                    }<a name="line.259"></a>
+<FONT color="green">260</FONT>                }<a name="line.260"></a>
+<FONT color="green">261</FONT>                return -1;<a name="line.261"></a>
+<FONT color="green">262</FONT>            }<a name="line.262"></a>
+<FONT color="green">263</FONT>    <a name="line.263"></a>
+<FONT color="green">264</FONT>            @Override<a name="line.264"></a>
+<FONT color="green">265</FONT>            public Drawable newDrawable() {<a name="line.265"></a>
+<FONT color="green">266</FONT>                return new StateListDrawable(this);<a name="line.266"></a>
+<FONT color="green">267</FONT>            }<a name="line.267"></a>
+<FONT color="green">268</FONT>    <a name="line.268"></a>
+<FONT color="green">269</FONT>            @Override<a name="line.269"></a>
+<FONT color="green">270</FONT>            public void growArray(int oldSize, int newSize) {<a name="line.270"></a>
+<FONT color="green">271</FONT>                super.growArray(oldSize, newSize);<a name="line.271"></a>
+<FONT color="green">272</FONT>                final int[][] newStateSets = new int[newSize][];<a name="line.272"></a>
+<FONT color="green">273</FONT>                System.arraycopy(mStateSets, 0, newStateSets, 0, oldSize);<a name="line.273"></a>
+<FONT color="green">274</FONT>                mStateSets = newStateSets;<a name="line.274"></a>
+<FONT color="green">275</FONT>            }<a name="line.275"></a>
+<FONT color="green">276</FONT>        }<a name="line.276"></a>
+<FONT color="green">277</FONT>    <a name="line.277"></a>
+<FONT color="green">278</FONT>        private StateListDrawable(StateListState state) {<a name="line.278"></a>
+<FONT color="green">279</FONT>            StateListState as = new StateListState(state, this);<a name="line.279"></a>
+<FONT color="green">280</FONT>            mStateListState = as;<a name="line.280"></a>
+<FONT color="green">281</FONT>            setConstantState(as);<a name="line.281"></a>
+<FONT color="green">282</FONT>            onStateChange(getState());<a name="line.282"></a>
+<FONT color="green">283</FONT>        }<a name="line.283"></a>
+<FONT color="green">284</FONT>    }<a name="line.284"></a>
+<FONT color="green">285</FONT>    <a name="line.285"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

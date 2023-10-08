@@ -1,0 +1,498 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.telephony.gsm;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.app.PendingIntent;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.os.RemoteException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.IServiceManager;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.os.ServiceManager;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.os.ServiceManagerNative;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.text.TextUtils;<a name="line.24"></a>
+<FONT color="green">025</FONT>    <a name="line.25"></a>
+<FONT color="green">026</FONT>    import com.android.internal.telephony.gsm.EncodeException;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import com.android.internal.telephony.gsm.GsmAlphabet;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import com.android.internal.telephony.gsm.ISms;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import com.android.internal.telephony.gsm.SimConstants;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import com.android.internal.telephony.gsm.SmsRawData;<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.ArrayList;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.Arrays;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.util.List;<a name="line.34"></a>
+<FONT color="green">035</FONT>    <a name="line.35"></a>
+<FONT color="green">036</FONT>    /**<a name="line.36"></a>
+<FONT color="green">037</FONT>     * Manages SMS operations such as sending data, text, and pdu SMS messages.<a name="line.37"></a>
+<FONT color="green">038</FONT>     * Get this object by calling the static method SmsManager.getDefault().<a name="line.38"></a>
+<FONT color="green">039</FONT>     */<a name="line.39"></a>
+<FONT color="green">040</FONT>    public final class SmsManager {<a name="line.40"></a>
+<FONT color="green">041</FONT>        private static SmsManager sInstance;<a name="line.41"></a>
+<FONT color="green">042</FONT>    <a name="line.42"></a>
+<FONT color="green">043</FONT>        /**<a name="line.43"></a>
+<FONT color="green">044</FONT>         * Send a text based SMS.<a name="line.44"></a>
+<FONT color="green">045</FONT>         *<a name="line.45"></a>
+<FONT color="green">046</FONT>         * @param destinationAddress the address to send the message to<a name="line.46"></a>
+<FONT color="green">047</FONT>         * @param scAddress is the service center address or null to use<a name="line.47"></a>
+<FONT color="green">048</FONT>         *  the current default SMSC<a name="line.48"></a>
+<FONT color="green">049</FONT>         * @param text the body of the message to send<a name="line.49"></a>
+<FONT color="green">050</FONT>         * @param sentIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.50"></a>
+<FONT color="green">051</FONT>         *  broadcast when the message is sucessfully sent, or failed.<a name="line.51"></a>
+<FONT color="green">052</FONT>         *  The result code will be &lt;code&gt;Activity.RESULT_OK&lt;code&gt; for success,<a name="line.52"></a>
+<FONT color="green">053</FONT>         *  or one of these errors:<a name="line.53"></a>
+<FONT color="green">054</FONT>         *  &lt;code&gt;RESULT_ERROR_GENERIC_FAILURE&lt;/code&gt;<a name="line.54"></a>
+<FONT color="green">055</FONT>         *  &lt;code&gt;RESULT_ERROR_RADIO_OFF&lt;/code&gt;<a name="line.55"></a>
+<FONT color="green">056</FONT>         *  &lt;code&gt;RESULT_ERROR_NULL_PDU&lt;/code&gt;.<a name="line.56"></a>
+<FONT color="green">057</FONT>         *  The per-application based SMS control checks sentIntent. If sentIntent<a name="line.57"></a>
+<FONT color="green">058</FONT>         *  is NULL the caller will be checked against all unknown applicaitons,<a name="line.58"></a>
+<FONT color="green">059</FONT>         *  which cause smaller number of SMS to be sent in checking period.<a name="line.59"></a>
+<FONT color="green">060</FONT>         * @param deliveryIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.60"></a>
+<FONT color="green">061</FONT>         *  broadcast when the message is delivered to the recipient.  The<a name="line.61"></a>
+<FONT color="green">062</FONT>         *  raw pdu of the status report is in the extended data ("pdu").<a name="line.62"></a>
+<FONT color="green">063</FONT>         *<a name="line.63"></a>
+<FONT color="green">064</FONT>         * @throws IllegalArgumentException if destinationAddress or text are empty<a name="line.64"></a>
+<FONT color="green">065</FONT>         */<a name="line.65"></a>
+<FONT color="green">066</FONT>        public void sendTextMessage(<a name="line.66"></a>
+<FONT color="green">067</FONT>                String destinationAddress, String scAddress, String text,<a name="line.67"></a>
+<FONT color="green">068</FONT>                PendingIntent sentIntent, PendingIntent deliveryIntent) {<a name="line.68"></a>
+<FONT color="green">069</FONT>            if (TextUtils.isEmpty(destinationAddress)) {<a name="line.69"></a>
+<FONT color="green">070</FONT>                throw new IllegalArgumentException("Invalid destinationAddress");<a name="line.70"></a>
+<FONT color="green">071</FONT>            }<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>            if (TextUtils.isEmpty(text)) {<a name="line.73"></a>
+<FONT color="green">074</FONT>                throw new IllegalArgumentException("Invalid message body");<a name="line.74"></a>
+<FONT color="green">075</FONT>            }<a name="line.75"></a>
+<FONT color="green">076</FONT>    <a name="line.76"></a>
+<FONT color="green">077</FONT>            SmsMessage.SubmitPdu pdus = SmsMessage.getSubmitPdu(<a name="line.77"></a>
+<FONT color="green">078</FONT>                    scAddress, destinationAddress, text, (deliveryIntent != null));<a name="line.78"></a>
+<FONT color="green">079</FONT>            sendRawPdu(pdus.encodedScAddress, pdus.encodedMessage, sentIntent, deliveryIntent);<a name="line.79"></a>
+<FONT color="green">080</FONT>        }<a name="line.80"></a>
+<FONT color="green">081</FONT>    <a name="line.81"></a>
+<FONT color="green">082</FONT>        /**<a name="line.82"></a>
+<FONT color="green">083</FONT>         * Divide a text message into several messages, none bigger than<a name="line.83"></a>
+<FONT color="green">084</FONT>         * the maximum SMS message size.<a name="line.84"></a>
+<FONT color="green">085</FONT>         *<a name="line.85"></a>
+<FONT color="green">086</FONT>         * @param text the original message.  Must not be null.<a name="line.86"></a>
+<FONT color="green">087</FONT>         * @return an &lt;code&gt;ArrayList&lt;/code&gt; of strings that, in order,<a name="line.87"></a>
+<FONT color="green">088</FONT>         *   comprise the original message<a name="line.88"></a>
+<FONT color="green">089</FONT>         */<a name="line.89"></a>
+<FONT color="green">090</FONT>        public ArrayList&lt;String&gt; divideMessage(String text) {<a name="line.90"></a>
+<FONT color="green">091</FONT>            int size = text.length();<a name="line.91"></a>
+<FONT color="green">092</FONT>            int[] params = SmsMessage.calculateLength(text, false);<a name="line.92"></a>
+<FONT color="green">093</FONT>                /* SmsMessage.calculateLength returns an int[4] with:<a name="line.93"></a>
+<FONT color="green">094</FONT>                 *   int[0] being the number of SMS's required,<a name="line.94"></a>
+<FONT color="green">095</FONT>                 *   int[1] the number of code units used,<a name="line.95"></a>
+<FONT color="green">096</FONT>                 *   int[2] is the number of code units remaining until the next message.<a name="line.96"></a>
+<FONT color="green">097</FONT>                 *   int[3] is the encoding type that should be used for the message.<a name="line.97"></a>
+<FONT color="green">098</FONT>                 */<a name="line.98"></a>
+<FONT color="green">099</FONT>            int messageCount = params[0];<a name="line.99"></a>
+<FONT color="green">100</FONT>            int encodingType = params[3];<a name="line.100"></a>
+<FONT color="green">101</FONT>            ArrayList&lt;String&gt; result = new ArrayList&lt;String&gt;(messageCount);<a name="line.101"></a>
+<FONT color="green">102</FONT>    <a name="line.102"></a>
+<FONT color="green">103</FONT>            int start = 0;<a name="line.103"></a>
+<FONT color="green">104</FONT>            int limit;<a name="line.104"></a>
+<FONT color="green">105</FONT>            <a name="line.105"></a>
+<FONT color="green">106</FONT>            if (messageCount &gt; 1) {<a name="line.106"></a>
+<FONT color="green">107</FONT>                limit = (encodingType == SmsMessage.ENCODING_7BIT) ?<a name="line.107"></a>
+<FONT color="green">108</FONT>                        SmsMessage.MAX_USER_DATA_SEPTETS_WITH_HEADER :<a name="line.108"></a>
+<FONT color="green">109</FONT>                            SmsMessage.MAX_USER_DATA_BYTES_WITH_HEADER;            <a name="line.109"></a>
+<FONT color="green">110</FONT>            } else {<a name="line.110"></a>
+<FONT color="green">111</FONT>                limit = (encodingType == SmsMessage.ENCODING_7BIT) ?<a name="line.111"></a>
+<FONT color="green">112</FONT>                    SmsMessage.MAX_USER_DATA_SEPTETS : SmsMessage.MAX_USER_DATA_BYTES;            <a name="line.112"></a>
+<FONT color="green">113</FONT>            }<a name="line.113"></a>
+<FONT color="green">114</FONT>    <a name="line.114"></a>
+<FONT color="green">115</FONT>            try {<a name="line.115"></a>
+<FONT color="green">116</FONT>                while (start &lt; size) {<a name="line.116"></a>
+<FONT color="green">117</FONT>                    int end = GsmAlphabet.findLimitIndex(text, start, limit, encodingType);<a name="line.117"></a>
+<FONT color="green">118</FONT>                    result.add(text.substring(start, end));<a name="line.118"></a>
+<FONT color="green">119</FONT>                    start = end;<a name="line.119"></a>
+<FONT color="green">120</FONT>                }<a name="line.120"></a>
+<FONT color="green">121</FONT>            } catch (EncodeException e) {<a name="line.121"></a>
+<FONT color="green">122</FONT>                // ignore it.<a name="line.122"></a>
+<FONT color="green">123</FONT>            }<a name="line.123"></a>
+<FONT color="green">124</FONT>            return result;<a name="line.124"></a>
+<FONT color="green">125</FONT>        }<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>        /**<a name="line.127"></a>
+<FONT color="green">128</FONT>         * Send a multi-part text based SMS.  The callee should have already<a name="line.128"></a>
+<FONT color="green">129</FONT>         * divided the message into correctly sized parts by calling<a name="line.129"></a>
+<FONT color="green">130</FONT>         * &lt;code&gt;divideMessage&lt;/code&gt;.<a name="line.130"></a>
+<FONT color="green">131</FONT>         * <a name="line.131"></a>
+<FONT color="green">132</FONT>         * @param destinationAddress the address to send the message to<a name="line.132"></a>
+<FONT color="green">133</FONT>         * @param scAddress is the service center address or null to use<a name="line.133"></a>
+<FONT color="green">134</FONT>         *   the current default SMSC<a name="line.134"></a>
+<FONT color="green">135</FONT>         * @param parts an &lt;code&gt;ArrayList&lt;/code&gt; of strings that, in order,<a name="line.135"></a>
+<FONT color="green">136</FONT>         *   comprise the original message<a name="line.136"></a>
+<FONT color="green">137</FONT>         * @param sentIntents if not null, an &lt;code&gt;ArrayList&lt;/code&gt; of <a name="line.137"></a>
+<FONT color="green">138</FONT>         *   &lt;code&gt;PendingIntent&lt;/code&gt;s (one for each message part) that is<a name="line.138"></a>
+<FONT color="green">139</FONT>         *   broadcast when the corresponding message part has been sent.<a name="line.139"></a>
+<FONT color="green">140</FONT>         *   The result code will be &lt;code&gt;Activity.RESULT_OK&lt;code&gt; for success,<a name="line.140"></a>
+<FONT color="green">141</FONT>         *   or one of these errors:<a name="line.141"></a>
+<FONT color="green">142</FONT>         *   &lt;code&gt;RESULT_ERROR_GENERIC_FAILURE&lt;/code&gt;<a name="line.142"></a>
+<FONT color="green">143</FONT>         *   &lt;code&gt;RESULT_ERROR_RADIO_OFF&lt;/code&gt;<a name="line.143"></a>
+<FONT color="green">144</FONT>         *   &lt;code&gt;RESULT_ERROR_NULL_PDU&lt;/code&gt;.<a name="line.144"></a>
+<FONT color="green">145</FONT>         *   The per-application based SMS control checks sentIntent. If sentIntent<a name="line.145"></a>
+<FONT color="green">146</FONT>         *   is NULL the caller will be checked against all unknown applicaitons,<a name="line.146"></a>
+<FONT color="green">147</FONT>         *   which cause smaller number of SMS to be sent in checking period.<a name="line.147"></a>
+<FONT color="green">148</FONT>         * @param deliveryIntents if not null, an &lt;code&gt;ArrayList&lt;/code&gt; of <a name="line.148"></a>
+<FONT color="green">149</FONT>         *   &lt;code&gt;PendingIntent&lt;/code&gt;s (one for each message part) that is<a name="line.149"></a>
+<FONT color="green">150</FONT>         *   broadcast when the corresponding message part has been delivered<a name="line.150"></a>
+<FONT color="green">151</FONT>         *   to the recipient.  The raw pdu of the status report is in the<a name="line.151"></a>
+<FONT color="green">152</FONT>         *   extended data ("pdu").<a name="line.152"></a>
+<FONT color="green">153</FONT>         */<a name="line.153"></a>
+<FONT color="green">154</FONT>        public void sendMultipartTextMessage(<a name="line.154"></a>
+<FONT color="green">155</FONT>                String destinationAddress, String scAddress, ArrayList&lt;String&gt; parts,<a name="line.155"></a>
+<FONT color="green">156</FONT>                ArrayList&lt;PendingIntent&gt; sentIntents, ArrayList&lt;PendingIntent&gt; deliveryIntents) {<a name="line.156"></a>
+<FONT color="green">157</FONT>            if (TextUtils.isEmpty(destinationAddress)) {<a name="line.157"></a>
+<FONT color="green">158</FONT>                throw new IllegalArgumentException("Invalid destinationAddress");<a name="line.158"></a>
+<FONT color="green">159</FONT>            }<a name="line.159"></a>
+<FONT color="green">160</FONT>            if (parts == null || parts.size() &lt; 1) {<a name="line.160"></a>
+<FONT color="green">161</FONT>                throw new IllegalArgumentException("Invalid message body");<a name="line.161"></a>
+<FONT color="green">162</FONT>            }<a name="line.162"></a>
+<FONT color="green">163</FONT>            <a name="line.163"></a>
+<FONT color="green">164</FONT>            if (parts.size() &gt; 1) {<a name="line.164"></a>
+<FONT color="green">165</FONT>                try {<a name="line.165"></a>
+<FONT color="green">166</FONT>                    ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.166"></a>
+<FONT color="green">167</FONT>                    if (simISms != null) {<a name="line.167"></a>
+<FONT color="green">168</FONT>                        simISms.sendMultipartText(destinationAddress, scAddress, parts,<a name="line.168"></a>
+<FONT color="green">169</FONT>                                sentIntents, deliveryIntents);<a name="line.169"></a>
+<FONT color="green">170</FONT>                    }<a name="line.170"></a>
+<FONT color="green">171</FONT>                } catch (RemoteException ex) {<a name="line.171"></a>
+<FONT color="green">172</FONT>                    // ignore it<a name="line.172"></a>
+<FONT color="green">173</FONT>                }<a name="line.173"></a>
+<FONT color="green">174</FONT>            } else {<a name="line.174"></a>
+<FONT color="green">175</FONT>                PendingIntent sentIntent = null;<a name="line.175"></a>
+<FONT color="green">176</FONT>                PendingIntent deliveryIntent = null;<a name="line.176"></a>
+<FONT color="green">177</FONT>                if (sentIntents != null &amp;&amp; sentIntents.size() &gt; 0) {<a name="line.177"></a>
+<FONT color="green">178</FONT>                    sentIntent = sentIntents.get(0);<a name="line.178"></a>
+<FONT color="green">179</FONT>                }<a name="line.179"></a>
+<FONT color="green">180</FONT>                if (deliveryIntents != null &amp;&amp; deliveryIntents.size() &gt; 0) {<a name="line.180"></a>
+<FONT color="green">181</FONT>                    deliveryIntent = deliveryIntents.get(0);<a name="line.181"></a>
+<FONT color="green">182</FONT>                }<a name="line.182"></a>
+<FONT color="green">183</FONT>                sendTextMessage(destinationAddress, scAddress, parts.get(0),<a name="line.183"></a>
+<FONT color="green">184</FONT>                        sentIntent, deliveryIntent);<a name="line.184"></a>
+<FONT color="green">185</FONT>            }<a name="line.185"></a>
+<FONT color="green">186</FONT>        }<a name="line.186"></a>
+<FONT color="green">187</FONT>    <a name="line.187"></a>
+<FONT color="green">188</FONT>        /**<a name="line.188"></a>
+<FONT color="green">189</FONT>         * Send a data based SMS to a specific application port.<a name="line.189"></a>
+<FONT color="green">190</FONT>         *<a name="line.190"></a>
+<FONT color="green">191</FONT>         * @param destinationAddress the address to send the message to<a name="line.191"></a>
+<FONT color="green">192</FONT>         * @param scAddress is the service center address or null to use<a name="line.192"></a>
+<FONT color="green">193</FONT>         *  the current default SMSC<a name="line.193"></a>
+<FONT color="green">194</FONT>         * @param destinationPort the port to deliver the message to<a name="line.194"></a>
+<FONT color="green">195</FONT>         * @param data the body of the message to send<a name="line.195"></a>
+<FONT color="green">196</FONT>         * @param sentIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.196"></a>
+<FONT color="green">197</FONT>         *  broadcast when the message is sucessfully sent, or failed.<a name="line.197"></a>
+<FONT color="green">198</FONT>         *  The result code will be &lt;code&gt;Activity.RESULT_OK&lt;code&gt; for success,<a name="line.198"></a>
+<FONT color="green">199</FONT>         *  or one of these errors:<a name="line.199"></a>
+<FONT color="green">200</FONT>         *  &lt;code&gt;RESULT_ERROR_GENERIC_FAILURE&lt;/code&gt;<a name="line.200"></a>
+<FONT color="green">201</FONT>         *  &lt;code&gt;RESULT_ERROR_RADIO_OFF&lt;/code&gt;<a name="line.201"></a>
+<FONT color="green">202</FONT>         *  &lt;code&gt;RESULT_ERROR_NULL_PDU&lt;/code&gt;.<a name="line.202"></a>
+<FONT color="green">203</FONT>         *  The per-application based SMS control checks sentIntent. If sentIntent<a name="line.203"></a>
+<FONT color="green">204</FONT>         *  is NULL the caller will be checked against all unknown applicaitons,<a name="line.204"></a>
+<FONT color="green">205</FONT>         *  which cause smaller number of SMS to be sent in checking period.<a name="line.205"></a>
+<FONT color="green">206</FONT>         * @param deliveryIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.206"></a>
+<FONT color="green">207</FONT>         *  broadcast when the message is delivered to the recipient.  The<a name="line.207"></a>
+<FONT color="green">208</FONT>         *  raw pdu of the status report is in the extended data ("pdu").<a name="line.208"></a>
+<FONT color="green">209</FONT>         *<a name="line.209"></a>
+<FONT color="green">210</FONT>         * @throws IllegalArgumentException if destinationAddress or data are empty<a name="line.210"></a>
+<FONT color="green">211</FONT>         */<a name="line.211"></a>
+<FONT color="green">212</FONT>        public void sendDataMessage(<a name="line.212"></a>
+<FONT color="green">213</FONT>                String destinationAddress, String scAddress, short destinationPort,<a name="line.213"></a>
+<FONT color="green">214</FONT>                byte[] data, PendingIntent sentIntent, PendingIntent deliveryIntent) {<a name="line.214"></a>
+<FONT color="green">215</FONT>            if (TextUtils.isEmpty(destinationAddress)) {<a name="line.215"></a>
+<FONT color="green">216</FONT>                throw new IllegalArgumentException("Invalid destinationAddress");<a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>    <a name="line.218"></a>
+<FONT color="green">219</FONT>            if (data == null || data.length == 0) {<a name="line.219"></a>
+<FONT color="green">220</FONT>                throw new IllegalArgumentException("Invalid message data");<a name="line.220"></a>
+<FONT color="green">221</FONT>            }<a name="line.221"></a>
+<FONT color="green">222</FONT>    <a name="line.222"></a>
+<FONT color="green">223</FONT>            SmsMessage.SubmitPdu pdus = SmsMessage.getSubmitPdu(scAddress, destinationAddress,<a name="line.223"></a>
+<FONT color="green">224</FONT>                    destinationPort, data, (deliveryIntent != null));<a name="line.224"></a>
+<FONT color="green">225</FONT>            sendRawPdu(pdus.encodedScAddress, pdus.encodedMessage, sentIntent, deliveryIntent);<a name="line.225"></a>
+<FONT color="green">226</FONT>        }<a name="line.226"></a>
+<FONT color="green">227</FONT>    <a name="line.227"></a>
+<FONT color="green">228</FONT>        /**<a name="line.228"></a>
+<FONT color="green">229</FONT>         * Send a raw SMS PDU.<a name="line.229"></a>
+<FONT color="green">230</FONT>         *<a name="line.230"></a>
+<FONT color="green">231</FONT>         * @param smsc the SMSC to send the message through, or NULL for the<a name="line.231"></a>
+<FONT color="green">232</FONT>         *  default SMSC<a name="line.232"></a>
+<FONT color="green">233</FONT>         * @param pdu the raw PDU to send<a name="line.233"></a>
+<FONT color="green">234</FONT>         * @param sentIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.234"></a>
+<FONT color="green">235</FONT>         *  broadcast when the message is sucessfully sent, or failed.<a name="line.235"></a>
+<FONT color="green">236</FONT>         *  The result code will be &lt;code&gt;Activity.RESULT_OK&lt;code&gt; for success,<a name="line.236"></a>
+<FONT color="green">237</FONT>         *  or one of these errors:<a name="line.237"></a>
+<FONT color="green">238</FONT>         *  &lt;code&gt;RESULT_ERROR_GENERIC_FAILURE&lt;/code&gt;<a name="line.238"></a>
+<FONT color="green">239</FONT>         *  &lt;code&gt;RESULT_ERROR_RADIO_OFF&lt;/code&gt;<a name="line.239"></a>
+<FONT color="green">240</FONT>         *  &lt;code&gt;RESULT_ERROR_NULL_PDU&lt;/code&gt;.<a name="line.240"></a>
+<FONT color="green">241</FONT>         *  The per-application based SMS control checks sentIntent. If sentIntent<a name="line.241"></a>
+<FONT color="green">242</FONT>         *  is NULL the caller will be checked against all unknown applicaitons,<a name="line.242"></a>
+<FONT color="green">243</FONT>         *  which cause smaller number of SMS to be sent in checking period. <a name="line.243"></a>
+<FONT color="green">244</FONT>         * @param deliveryIntent if not NULL this &lt;code&gt;PendingIntent&lt;/code&gt; is<a name="line.244"></a>
+<FONT color="green">245</FONT>         *  broadcast when the message is delivered to the recipient.  The<a name="line.245"></a>
+<FONT color="green">246</FONT>         *  raw pdu of the status report is in the extended data ("pdu").<a name="line.246"></a>
+<FONT color="green">247</FONT>         *<a name="line.247"></a>
+<FONT color="green">248</FONT>         */<a name="line.248"></a>
+<FONT color="green">249</FONT>        private void sendRawPdu(byte[] smsc, byte[] pdu, PendingIntent sentIntent,<a name="line.249"></a>
+<FONT color="green">250</FONT>                PendingIntent deliveryIntent) {<a name="line.250"></a>
+<FONT color="green">251</FONT>            try {<a name="line.251"></a>
+<FONT color="green">252</FONT>                ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.252"></a>
+<FONT color="green">253</FONT>                if (simISms != null) {<a name="line.253"></a>
+<FONT color="green">254</FONT>                    simISms.sendRawPdu(smsc, pdu, sentIntent, deliveryIntent);<a name="line.254"></a>
+<FONT color="green">255</FONT>                }<a name="line.255"></a>
+<FONT color="green">256</FONT>            } catch (RemoteException ex) {<a name="line.256"></a>
+<FONT color="green">257</FONT>                // ignore it<a name="line.257"></a>
+<FONT color="green">258</FONT>            }<a name="line.258"></a>
+<FONT color="green">259</FONT>        }<a name="line.259"></a>
+<FONT color="green">260</FONT>    <a name="line.260"></a>
+<FONT color="green">261</FONT>        /**<a name="line.261"></a>
+<FONT color="green">262</FONT>         * Get the default instance of the SmsManager<a name="line.262"></a>
+<FONT color="green">263</FONT>         *<a name="line.263"></a>
+<FONT color="green">264</FONT>         * @return the default instance of the SmsManager<a name="line.264"></a>
+<FONT color="green">265</FONT>         */<a name="line.265"></a>
+<FONT color="green">266</FONT>        public static SmsManager getDefault() {<a name="line.266"></a>
+<FONT color="green">267</FONT>            if (sInstance == null) {<a name="line.267"></a>
+<FONT color="green">268</FONT>                sInstance = new SmsManager();<a name="line.268"></a>
+<FONT color="green">269</FONT>            }<a name="line.269"></a>
+<FONT color="green">270</FONT>            return sInstance;<a name="line.270"></a>
+<FONT color="green">271</FONT>        }<a name="line.271"></a>
+<FONT color="green">272</FONT>    <a name="line.272"></a>
+<FONT color="green">273</FONT>        private SmsManager() {<a name="line.273"></a>
+<FONT color="green">274</FONT>            // nothing to see here<a name="line.274"></a>
+<FONT color="green">275</FONT>        }<a name="line.275"></a>
+<FONT color="green">276</FONT>    <a name="line.276"></a>
+<FONT color="green">277</FONT>        /**<a name="line.277"></a>
+<FONT color="green">278</FONT>         * Copy a raw SMS PDU to the SIM.<a name="line.278"></a>
+<FONT color="green">279</FONT>         *<a name="line.279"></a>
+<FONT color="green">280</FONT>         * @param smsc the SMSC for this message, or NULL for the default SMSC<a name="line.280"></a>
+<FONT color="green">281</FONT>         * @param pdu the raw PDU to store<a name="line.281"></a>
+<FONT color="green">282</FONT>         * @param status message status (STATUS_ON_SIM_READ, STATUS_ON_SIM_UNREAD,<a name="line.282"></a>
+<FONT color="green">283</FONT>         *               STATUS_ON_SIM_SENT, STATUS_ON_SIM_UNSENT)<a name="line.283"></a>
+<FONT color="green">284</FONT>         * @return true for success<a name="line.284"></a>
+<FONT color="green">285</FONT>         *<a name="line.285"></a>
+<FONT color="green">286</FONT>         * {@hide}<a name="line.286"></a>
+<FONT color="green">287</FONT>         */<a name="line.287"></a>
+<FONT color="green">288</FONT>        public boolean copyMessageToSim(byte[] smsc, byte[] pdu, int status) {<a name="line.288"></a>
+<FONT color="green">289</FONT>            boolean success = false;<a name="line.289"></a>
+<FONT color="green">290</FONT>    <a name="line.290"></a>
+<FONT color="green">291</FONT>            try {<a name="line.291"></a>
+<FONT color="green">292</FONT>                ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.292"></a>
+<FONT color="green">293</FONT>                if (simISms != null) {<a name="line.293"></a>
+<FONT color="green">294</FONT>                    success = simISms.copyMessageToSimEf(status, pdu, smsc);<a name="line.294"></a>
+<FONT color="green">295</FONT>                }<a name="line.295"></a>
+<FONT color="green">296</FONT>            } catch (RemoteException ex) {<a name="line.296"></a>
+<FONT color="green">297</FONT>                // ignore it<a name="line.297"></a>
+<FONT color="green">298</FONT>            }<a name="line.298"></a>
+<FONT color="green">299</FONT>    <a name="line.299"></a>
+<FONT color="green">300</FONT>            return success;<a name="line.300"></a>
+<FONT color="green">301</FONT>        }<a name="line.301"></a>
+<FONT color="green">302</FONT>    <a name="line.302"></a>
+<FONT color="green">303</FONT>        /**<a name="line.303"></a>
+<FONT color="green">304</FONT>         * Delete the specified message from the SIM.<a name="line.304"></a>
+<FONT color="green">305</FONT>         *<a name="line.305"></a>
+<FONT color="green">306</FONT>         * @param messageIndex is the record index of the message on SIM<a name="line.306"></a>
+<FONT color="green">307</FONT>         * @return true for success<a name="line.307"></a>
+<FONT color="green">308</FONT>         *<a name="line.308"></a>
+<FONT color="green">309</FONT>         * {@hide}<a name="line.309"></a>
+<FONT color="green">310</FONT>         */<a name="line.310"></a>
+<FONT color="green">311</FONT>        public boolean<a name="line.311"></a>
+<FONT color="green">312</FONT>        deleteMessageFromSim(int messageIndex) {<a name="line.312"></a>
+<FONT color="green">313</FONT>            boolean success = false;<a name="line.313"></a>
+<FONT color="green">314</FONT>            byte[] pdu = new byte[SimConstants.SMS_RECORD_LENGTH-1];<a name="line.314"></a>
+<FONT color="green">315</FONT>            Arrays.fill(pdu, (byte)0xff);<a name="line.315"></a>
+<FONT color="green">316</FONT>    <a name="line.316"></a>
+<FONT color="green">317</FONT>            try {<a name="line.317"></a>
+<FONT color="green">318</FONT>                ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.318"></a>
+<FONT color="green">319</FONT>                if (simISms != null) {<a name="line.319"></a>
+<FONT color="green">320</FONT>                    success = simISms.updateMessageOnSimEf(messageIndex,<a name="line.320"></a>
+<FONT color="green">321</FONT>                            STATUS_ON_SIM_FREE, pdu);<a name="line.321"></a>
+<FONT color="green">322</FONT>                }<a name="line.322"></a>
+<FONT color="green">323</FONT>            } catch (RemoteException ex) {<a name="line.323"></a>
+<FONT color="green">324</FONT>                // ignore it<a name="line.324"></a>
+<FONT color="green">325</FONT>            }<a name="line.325"></a>
+<FONT color="green">326</FONT>    <a name="line.326"></a>
+<FONT color="green">327</FONT>            return success;<a name="line.327"></a>
+<FONT color="green">328</FONT>        }<a name="line.328"></a>
+<FONT color="green">329</FONT>    <a name="line.329"></a>
+<FONT color="green">330</FONT>        /**<a name="line.330"></a>
+<FONT color="green">331</FONT>         * Update the specified message on the SIM.<a name="line.331"></a>
+<FONT color="green">332</FONT>         *<a name="line.332"></a>
+<FONT color="green">333</FONT>         * @param messageIndex record index of message to update<a name="line.333"></a>
+<FONT color="green">334</FONT>         * @param newStatus new message status (STATUS_ON_SIM_READ,<a name="line.334"></a>
+<FONT color="green">335</FONT>         *                  STATUS_ON_SIM_UNREAD, STATUS_ON_SIM_SENT,<a name="line.335"></a>
+<FONT color="green">336</FONT>         *                  STATUS_ON_SIM_UNSENT, STATUS_ON_SIM_FREE)<a name="line.336"></a>
+<FONT color="green">337</FONT>         * @param pdu the raw PDU to store<a name="line.337"></a>
+<FONT color="green">338</FONT>         * @return true for success<a name="line.338"></a>
+<FONT color="green">339</FONT>         *<a name="line.339"></a>
+<FONT color="green">340</FONT>         * {@hide}<a name="line.340"></a>
+<FONT color="green">341</FONT>         */<a name="line.341"></a>
+<FONT color="green">342</FONT>        public boolean updateMessageOnSim(int messageIndex, int newStatus,<a name="line.342"></a>
+<FONT color="green">343</FONT>                byte[] pdu) {<a name="line.343"></a>
+<FONT color="green">344</FONT>            boolean success = false;<a name="line.344"></a>
+<FONT color="green">345</FONT>    <a name="line.345"></a>
+<FONT color="green">346</FONT>            try {<a name="line.346"></a>
+<FONT color="green">347</FONT>                ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.347"></a>
+<FONT color="green">348</FONT>                if (simISms != null) {<a name="line.348"></a>
+<FONT color="green">349</FONT>                    success = simISms.updateMessageOnSimEf(messageIndex, newStatus, pdu);<a name="line.349"></a>
+<FONT color="green">350</FONT>                }<a name="line.350"></a>
+<FONT color="green">351</FONT>            } catch (RemoteException ex) {<a name="line.351"></a>
+<FONT color="green">352</FONT>                // ignore it<a name="line.352"></a>
+<FONT color="green">353</FONT>            }<a name="line.353"></a>
+<FONT color="green">354</FONT>    <a name="line.354"></a>
+<FONT color="green">355</FONT>            return success;<a name="line.355"></a>
+<FONT color="green">356</FONT>        }<a name="line.356"></a>
+<FONT color="green">357</FONT>    <a name="line.357"></a>
+<FONT color="green">358</FONT>    <a name="line.358"></a>
+<FONT color="green">359</FONT>        /**<a name="line.359"></a>
+<FONT color="green">360</FONT>         * Retrieves all messages currently stored on SIM.<a name="line.360"></a>
+<FONT color="green">361</FONT>         *<a name="line.361"></a>
+<FONT color="green">362</FONT>         * @return &lt;code&gt;ArrayList&lt;/code&gt; of &lt;code&gt;SmsMessage&lt;/code&gt; objects<a name="line.362"></a>
+<FONT color="green">363</FONT>         *<a name="line.363"></a>
+<FONT color="green">364</FONT>         * {@hide}<a name="line.364"></a>
+<FONT color="green">365</FONT>         */<a name="line.365"></a>
+<FONT color="green">366</FONT>        public ArrayList&lt;SmsMessage&gt; getAllMessagesFromSim() {<a name="line.366"></a>
+<FONT color="green">367</FONT>            List&lt;SmsRawData&gt; records = null;<a name="line.367"></a>
+<FONT color="green">368</FONT>    <a name="line.368"></a>
+<FONT color="green">369</FONT>            try {<a name="line.369"></a>
+<FONT color="green">370</FONT>                ISms simISms = ISms.Stub.asInterface(ServiceManager.getService("isms"));<a name="line.370"></a>
+<FONT color="green">371</FONT>                if (simISms != null) {<a name="line.371"></a>
+<FONT color="green">372</FONT>                    records = simISms.getAllMessagesFromSimEf();<a name="line.372"></a>
+<FONT color="green">373</FONT>                }<a name="line.373"></a>
+<FONT color="green">374</FONT>            } catch (RemoteException ex) {<a name="line.374"></a>
+<FONT color="green">375</FONT>                // ignore it<a name="line.375"></a>
+<FONT color="green">376</FONT>            }<a name="line.376"></a>
+<FONT color="green">377</FONT>            <a name="line.377"></a>
+<FONT color="green">378</FONT>            return createMessageListFromRawRecords(records); <a name="line.378"></a>
+<FONT color="green">379</FONT>       }<a name="line.379"></a>
+<FONT color="green">380</FONT>    <a name="line.380"></a>
+<FONT color="green">381</FONT>        /**<a name="line.381"></a>
+<FONT color="green">382</FONT>         * Create a list of &lt;code&gt;SmsMessage&lt;/code&gt;s from a list of RawSmsData<a name="line.382"></a>
+<FONT color="green">383</FONT>         * records returned by &lt;code&gt;getAllMessagesFromSim()&lt;/code&gt;<a name="line.383"></a>
+<FONT color="green">384</FONT>         *<a name="line.384"></a>
+<FONT color="green">385</FONT>         * @param records SMS EF records, returned by<a name="line.385"></a>
+<FONT color="green">386</FONT>         *   &lt;code&gt;getAllMessagesFromSim&lt;/code&gt;<a name="line.386"></a>
+<FONT color="green">387</FONT>         * @return &lt;code&gt;ArrayList&lt;/code&gt; of &lt;code&gt;SmsMessage&lt;/code&gt; objects.<a name="line.387"></a>
+<FONT color="green">388</FONT>         */<a name="line.388"></a>
+<FONT color="green">389</FONT>        private ArrayList&lt;SmsMessage&gt; createMessageListFromRawRecords(List records) {<a name="line.389"></a>
+<FONT color="green">390</FONT>            ArrayList&lt;SmsMessage&gt; messages = new ArrayList&lt;SmsMessage&gt;();<a name="line.390"></a>
+<FONT color="green">391</FONT>            if (records != null) {<a name="line.391"></a>
+<FONT color="green">392</FONT>                int count = records.size();<a name="line.392"></a>
+<FONT color="green">393</FONT>                for (int i = 0; i &lt; count; i++) {<a name="line.393"></a>
+<FONT color="green">394</FONT>                    SmsRawData data = (SmsRawData)records.get(i);<a name="line.394"></a>
+<FONT color="green">395</FONT>                    // List contains all records, including "free" records (null)<a name="line.395"></a>
+<FONT color="green">396</FONT>                    if (data != null) {<a name="line.396"></a>
+<FONT color="green">397</FONT>                        SmsMessage sms =<a name="line.397"></a>
+<FONT color="green">398</FONT>                                SmsMessage.createFromEfRecord(i+1, data.getBytes());<a name="line.398"></a>
+<FONT color="green">399</FONT>                        messages.add(sms);<a name="line.399"></a>
+<FONT color="green">400</FONT>                    }<a name="line.400"></a>
+<FONT color="green">401</FONT>                }<a name="line.401"></a>
+<FONT color="green">402</FONT>            }<a name="line.402"></a>
+<FONT color="green">403</FONT>            return messages;<a name="line.403"></a>
+<FONT color="green">404</FONT>        }<a name="line.404"></a>
+<FONT color="green">405</FONT>    <a name="line.405"></a>
+<FONT color="green">406</FONT>        /** Free space (TS 51.011 10.5.3). */<a name="line.406"></a>
+<FONT color="green">407</FONT>        static public final int STATUS_ON_SIM_FREE      = 0;<a name="line.407"></a>
+<FONT color="green">408</FONT>    <a name="line.408"></a>
+<FONT color="green">409</FONT>        /** Received and read (TS 51.011 10.5.3). */<a name="line.409"></a>
+<FONT color="green">410</FONT>        static public final int STATUS_ON_SIM_READ      = 1;<a name="line.410"></a>
+<FONT color="green">411</FONT>    <a name="line.411"></a>
+<FONT color="green">412</FONT>        /** Received and unread (TS 51.011 10.5.3). */<a name="line.412"></a>
+<FONT color="green">413</FONT>        static public final int STATUS_ON_SIM_UNREAD    = 3;<a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>        /** Stored and sent (TS 51.011 10.5.3). */<a name="line.415"></a>
+<FONT color="green">416</FONT>        static public final int STATUS_ON_SIM_SENT      = 5;<a name="line.416"></a>
+<FONT color="green">417</FONT>    <a name="line.417"></a>
+<FONT color="green">418</FONT>        /** Stored and unsent (TS 51.011 10.5.3). */<a name="line.418"></a>
+<FONT color="green">419</FONT>        static public final int STATUS_ON_SIM_UNSENT    = 7;<a name="line.419"></a>
+<FONT color="green">420</FONT>    <a name="line.420"></a>
+<FONT color="green">421</FONT>    <a name="line.421"></a>
+<FONT color="green">422</FONT>        // SMS send failure result codes<a name="line.422"></a>
+<FONT color="green">423</FONT>    <a name="line.423"></a>
+<FONT color="green">424</FONT>        /** Generic failure cause */<a name="line.424"></a>
+<FONT color="green">425</FONT>        static public final int RESULT_ERROR_GENERIC_FAILURE    = 1;<a name="line.425"></a>
+<FONT color="green">426</FONT>        /** Failed because radio was explicitly turned off */<a name="line.426"></a>
+<FONT color="green">427</FONT>        static public final int RESULT_ERROR_RADIO_OFF          = 2;<a name="line.427"></a>
+<FONT color="green">428</FONT>        /** Failed because no pdu provided */<a name="line.428"></a>
+<FONT color="green">429</FONT>        static public final int RESULT_ERROR_NULL_PDU           = 3;<a name="line.429"></a>
+<FONT color="green">430</FONT>        /** Failed because service is currently unavailable */<a name="line.430"></a>
+<FONT color="green">431</FONT>        static public final int RESULT_ERROR_NO_SERVICE         = 4;<a name="line.431"></a>
+<FONT color="green">432</FONT>    }<a name="line.432"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

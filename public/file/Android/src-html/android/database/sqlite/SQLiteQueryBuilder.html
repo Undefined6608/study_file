@@ -1,0 +1,586 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.database.sqlite;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.database.Cursor;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.database.DatabaseUtils;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.database.sqlite.SQLiteDatabase;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.provider.BaseColumns;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.text.TextUtils;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.util.Config;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.util.Log;<a name="line.25"></a>
+<FONT color="green">026</FONT>    <a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.Iterator;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.Map;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.Set;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Map.Entry;<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    /**<a name="line.32"></a>
+<FONT color="green">033</FONT>     * This is a convience class that helps build SQL queries to be sent to<a name="line.33"></a>
+<FONT color="green">034</FONT>     * {@link SQLiteDatabase} objects.<a name="line.34"></a>
+<FONT color="green">035</FONT>     */<a name="line.35"></a>
+<FONT color="green">036</FONT>    public class SQLiteQueryBuilder<a name="line.36"></a>
+<FONT color="green">037</FONT>    {<a name="line.37"></a>
+<FONT color="green">038</FONT>        private static final String TAG = "SQLiteQueryBuilder";<a name="line.38"></a>
+<FONT color="green">039</FONT>    <a name="line.39"></a>
+<FONT color="green">040</FONT>        private Map&lt;String, String&gt; mProjectionMap = null;<a name="line.40"></a>
+<FONT color="green">041</FONT>        private String mTables = "";<a name="line.41"></a>
+<FONT color="green">042</FONT>        private StringBuilder mWhereClause = new StringBuilder(64);<a name="line.42"></a>
+<FONT color="green">043</FONT>        private boolean mDistinct;<a name="line.43"></a>
+<FONT color="green">044</FONT>        private SQLiteDatabase.CursorFactory mFactory;<a name="line.44"></a>
+<FONT color="green">045</FONT>    <a name="line.45"></a>
+<FONT color="green">046</FONT>        public SQLiteQueryBuilder() {<a name="line.46"></a>
+<FONT color="green">047</FONT>            mDistinct = false;<a name="line.47"></a>
+<FONT color="green">048</FONT>            mFactory = null;<a name="line.48"></a>
+<FONT color="green">049</FONT>        }<a name="line.49"></a>
+<FONT color="green">050</FONT>    <a name="line.50"></a>
+<FONT color="green">051</FONT>        /**<a name="line.51"></a>
+<FONT color="green">052</FONT>         * Mark the query as DISTINCT.<a name="line.52"></a>
+<FONT color="green">053</FONT>         *<a name="line.53"></a>
+<FONT color="green">054</FONT>         * @param distinct if true the query is DISTINCT, otherwise it isn't<a name="line.54"></a>
+<FONT color="green">055</FONT>         */<a name="line.55"></a>
+<FONT color="green">056</FONT>        public void setDistinct(boolean distinct) {<a name="line.56"></a>
+<FONT color="green">057</FONT>            mDistinct = distinct;<a name="line.57"></a>
+<FONT color="green">058</FONT>        }<a name="line.58"></a>
+<FONT color="green">059</FONT>    <a name="line.59"></a>
+<FONT color="green">060</FONT>        /**<a name="line.60"></a>
+<FONT color="green">061</FONT>         * Returns the list of tables being queried<a name="line.61"></a>
+<FONT color="green">062</FONT>         *<a name="line.62"></a>
+<FONT color="green">063</FONT>         * @return the list of tables being queried<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        public String getTables() {<a name="line.65"></a>
+<FONT color="green">066</FONT>            return mTables;<a name="line.66"></a>
+<FONT color="green">067</FONT>        }<a name="line.67"></a>
+<FONT color="green">068</FONT>    <a name="line.68"></a>
+<FONT color="green">069</FONT>        /**<a name="line.69"></a>
+<FONT color="green">070</FONT>         * Sets the list of tables to query. Multiple tables can be specified to perform a join.<a name="line.70"></a>
+<FONT color="green">071</FONT>         * For example:<a name="line.71"></a>
+<FONT color="green">072</FONT>         *   setTables("foo, bar")<a name="line.72"></a>
+<FONT color="green">073</FONT>         *   setTables("foo LEFT OUTER JOIN bar ON (foo.id = bar.foo_id)")<a name="line.73"></a>
+<FONT color="green">074</FONT>         *<a name="line.74"></a>
+<FONT color="green">075</FONT>         * @param inTables the list of tables to query on<a name="line.75"></a>
+<FONT color="green">076</FONT>         */<a name="line.76"></a>
+<FONT color="green">077</FONT>        public void setTables(String inTables) {<a name="line.77"></a>
+<FONT color="green">078</FONT>            mTables = inTables;<a name="line.78"></a>
+<FONT color="green">079</FONT>        }<a name="line.79"></a>
+<FONT color="green">080</FONT>    <a name="line.80"></a>
+<FONT color="green">081</FONT>        /**<a name="line.81"></a>
+<FONT color="green">082</FONT>         * Append a chunk to the WHERE clause of the query. All chunks appended are surrounded<a name="line.82"></a>
+<FONT color="green">083</FONT>         * by parenthesis and ANDed with the selection passed to {@link #query}. The final<a name="line.83"></a>
+<FONT color="green">084</FONT>         * WHERE clause looks like:<a name="line.84"></a>
+<FONT color="green">085</FONT>         *<a name="line.85"></a>
+<FONT color="green">086</FONT>         * WHERE (&amp;lt;append chunk 1&gt;&amp;lt;append chunk2&gt;) AND (&amp;lt;query() selection parameter&gt;)<a name="line.86"></a>
+<FONT color="green">087</FONT>         *<a name="line.87"></a>
+<FONT color="green">088</FONT>         * @param inWhere the chunk of text to append to the WHERE clause.<a name="line.88"></a>
+<FONT color="green">089</FONT>         */<a name="line.89"></a>
+<FONT color="green">090</FONT>        public void appendWhere(CharSequence inWhere) {<a name="line.90"></a>
+<FONT color="green">091</FONT>            if (mWhereClause.length() == 0) {<a name="line.91"></a>
+<FONT color="green">092</FONT>                mWhereClause.append('(');<a name="line.92"></a>
+<FONT color="green">093</FONT>            }<a name="line.93"></a>
+<FONT color="green">094</FONT>            mWhereClause.append(inWhere);<a name="line.94"></a>
+<FONT color="green">095</FONT>        }<a name="line.95"></a>
+<FONT color="green">096</FONT>    <a name="line.96"></a>
+<FONT color="green">097</FONT>        /**<a name="line.97"></a>
+<FONT color="green">098</FONT>         * Append a chunk to the WHERE clause of the query. All chunks appended are surrounded<a name="line.98"></a>
+<FONT color="green">099</FONT>         * by parenthesis and ANDed with the selection passed to {@link #query}. The final<a name="line.99"></a>
+<FONT color="green">100</FONT>         * WHERE clause looks like:<a name="line.100"></a>
+<FONT color="green">101</FONT>         *<a name="line.101"></a>
+<FONT color="green">102</FONT>         * WHERE (&amp;lt;append chunk 1&gt;&amp;lt;append chunk2&gt;) AND (&amp;lt;query() selection parameter&gt;)<a name="line.102"></a>
+<FONT color="green">103</FONT>         *<a name="line.103"></a>
+<FONT color="green">104</FONT>         * @param inWhere the chunk of text to append to the WHERE clause. it will be escaped<a name="line.104"></a>
+<FONT color="green">105</FONT>         * to avoid SQL injection attacks<a name="line.105"></a>
+<FONT color="green">106</FONT>         */<a name="line.106"></a>
+<FONT color="green">107</FONT>        public void appendWhereEscapeString(String inWhere) {<a name="line.107"></a>
+<FONT color="green">108</FONT>            if (mWhereClause.length() == 0) {<a name="line.108"></a>
+<FONT color="green">109</FONT>                mWhereClause.append('(');<a name="line.109"></a>
+<FONT color="green">110</FONT>            }<a name="line.110"></a>
+<FONT color="green">111</FONT>            DatabaseUtils.appendEscapedSQLString(mWhereClause, inWhere);<a name="line.111"></a>
+<FONT color="green">112</FONT>        }<a name="line.112"></a>
+<FONT color="green">113</FONT>    <a name="line.113"></a>
+<FONT color="green">114</FONT>        /**<a name="line.114"></a>
+<FONT color="green">115</FONT>         * Sets the projection map for the query.  The projection map maps<a name="line.115"></a>
+<FONT color="green">116</FONT>         * from column names that the caller passes into query to database<a name="line.116"></a>
+<FONT color="green">117</FONT>         * column names. This is useful for renaming columns as well as<a name="line.117"></a>
+<FONT color="green">118</FONT>         * disambiguating column names when doing joins. For example you<a name="line.118"></a>
+<FONT color="green">119</FONT>         * could map "name" to "people.name".  If a projection map is set<a name="line.119"></a>
+<FONT color="green">120</FONT>         * it must contain all column names the user may request, even if<a name="line.120"></a>
+<FONT color="green">121</FONT>         * the key and value are the same.<a name="line.121"></a>
+<FONT color="green">122</FONT>         *<a name="line.122"></a>
+<FONT color="green">123</FONT>         * @param columnMap maps from the user column names to the database column names<a name="line.123"></a>
+<FONT color="green">124</FONT>         */<a name="line.124"></a>
+<FONT color="green">125</FONT>        public void setProjectionMap(Map&lt;String, String&gt; columnMap) {<a name="line.125"></a>
+<FONT color="green">126</FONT>            mProjectionMap = columnMap;<a name="line.126"></a>
+<FONT color="green">127</FONT>        }<a name="line.127"></a>
+<FONT color="green">128</FONT>    <a name="line.128"></a>
+<FONT color="green">129</FONT>        /**<a name="line.129"></a>
+<FONT color="green">130</FONT>         * Sets the cursor factory to be used for the query.  You can use<a name="line.130"></a>
+<FONT color="green">131</FONT>         * one factory for all queries on a database but it is normally<a name="line.131"></a>
+<FONT color="green">132</FONT>         * easier to specify the factory when doing this query.  @param<a name="line.132"></a>
+<FONT color="green">133</FONT>         * factory the factor to use<a name="line.133"></a>
+<FONT color="green">134</FONT>         */<a name="line.134"></a>
+<FONT color="green">135</FONT>        public void setCursorFactory(SQLiteDatabase.CursorFactory factory) {<a name="line.135"></a>
+<FONT color="green">136</FONT>            mFactory = factory;<a name="line.136"></a>
+<FONT color="green">137</FONT>        }<a name="line.137"></a>
+<FONT color="green">138</FONT>    <a name="line.138"></a>
+<FONT color="green">139</FONT>        /**<a name="line.139"></a>
+<FONT color="green">140</FONT>         * Build an SQL query string from the given clauses.<a name="line.140"></a>
+<FONT color="green">141</FONT>         *<a name="line.141"></a>
+<FONT color="green">142</FONT>         * @param distinct true if you want each row to be unique, false otherwise.<a name="line.142"></a>
+<FONT color="green">143</FONT>         * @param tables The table names to compile the query against.<a name="line.143"></a>
+<FONT color="green">144</FONT>         * @param columns A list of which columns to return. Passing null will<a name="line.144"></a>
+<FONT color="green">145</FONT>         *            return all columns, which is discouraged to prevent reading<a name="line.145"></a>
+<FONT color="green">146</FONT>         *            data from storage that isn't going to be used.<a name="line.146"></a>
+<FONT color="green">147</FONT>         * @param where A filter declaring which rows to return, formatted as an SQL<a name="line.147"></a>
+<FONT color="green">148</FONT>         *            WHERE clause (excluding the WHERE itself). Passing null will<a name="line.148"></a>
+<FONT color="green">149</FONT>         *            return all rows for the given URL.<a name="line.149"></a>
+<FONT color="green">150</FONT>         * @param groupBy A filter declaring how to group rows, formatted as an SQL<a name="line.150"></a>
+<FONT color="green">151</FONT>         *            GROUP BY clause (excluding the GROUP BY itself). Passing null<a name="line.151"></a>
+<FONT color="green">152</FONT>         *            will cause the rows to not be grouped.<a name="line.152"></a>
+<FONT color="green">153</FONT>         * @param having A filter declare which row groups to include in the cursor,<a name="line.153"></a>
+<FONT color="green">154</FONT>         *            if row grouping is being used, formatted as an SQL HAVING<a name="line.154"></a>
+<FONT color="green">155</FONT>         *            clause (excluding the HAVING itself). Passing null will cause<a name="line.155"></a>
+<FONT color="green">156</FONT>         *            all row groups to be included, and is required when row<a name="line.156"></a>
+<FONT color="green">157</FONT>         *            grouping is not being used.<a name="line.157"></a>
+<FONT color="green">158</FONT>         * @param orderBy How to order the rows, formatted as an SQL ORDER BY clause<a name="line.158"></a>
+<FONT color="green">159</FONT>         *            (excluding the ORDER BY itself). Passing null will use the<a name="line.159"></a>
+<FONT color="green">160</FONT>         *            default sort order, which may be unordered.<a name="line.160"></a>
+<FONT color="green">161</FONT>         * @param limit Limits the number of rows returned by the query,<a name="line.161"></a>
+<FONT color="green">162</FONT>         *            formatted as LIMIT clause. Passing null denotes no LIMIT clause.<a name="line.162"></a>
+<FONT color="green">163</FONT>         * @return the SQL query string<a name="line.163"></a>
+<FONT color="green">164</FONT>         */<a name="line.164"></a>
+<FONT color="green">165</FONT>        public static String buildQueryString(<a name="line.165"></a>
+<FONT color="green">166</FONT>                boolean distinct, String tables, String[] columns, String where,<a name="line.166"></a>
+<FONT color="green">167</FONT>                String groupBy, String having, String orderBy, String limit) {<a name="line.167"></a>
+<FONT color="green">168</FONT>            if (TextUtils.isEmpty(groupBy) &amp;&amp; !TextUtils.isEmpty(having)) {<a name="line.168"></a>
+<FONT color="green">169</FONT>                throw new IllegalArgumentException(<a name="line.169"></a>
+<FONT color="green">170</FONT>                        "HAVING clauses are only permitted when using a groupBy clause");<a name="line.170"></a>
+<FONT color="green">171</FONT>            }<a name="line.171"></a>
+<FONT color="green">172</FONT>    <a name="line.172"></a>
+<FONT color="green">173</FONT>            StringBuilder query = new StringBuilder(120);<a name="line.173"></a>
+<FONT color="green">174</FONT>    <a name="line.174"></a>
+<FONT color="green">175</FONT>            query.append("SELECT ");<a name="line.175"></a>
+<FONT color="green">176</FONT>            if (distinct) {<a name="line.176"></a>
+<FONT color="green">177</FONT>                query.append("DISTINCT ");<a name="line.177"></a>
+<FONT color="green">178</FONT>            }<a name="line.178"></a>
+<FONT color="green">179</FONT>            if (columns != null &amp;&amp; columns.length != 0) {<a name="line.179"></a>
+<FONT color="green">180</FONT>                appendColumns(query, columns);<a name="line.180"></a>
+<FONT color="green">181</FONT>            } else {<a name="line.181"></a>
+<FONT color="green">182</FONT>                query.append("* ");<a name="line.182"></a>
+<FONT color="green">183</FONT>            }<a name="line.183"></a>
+<FONT color="green">184</FONT>            query.append("FROM ");<a name="line.184"></a>
+<FONT color="green">185</FONT>            query.append(tables);<a name="line.185"></a>
+<FONT color="green">186</FONT>            appendClause(query, " WHERE ", where);<a name="line.186"></a>
+<FONT color="green">187</FONT>            appendClause(query, " GROUP BY ", groupBy);<a name="line.187"></a>
+<FONT color="green">188</FONT>            appendClause(query, " HAVING ", having);<a name="line.188"></a>
+<FONT color="green">189</FONT>            appendClause(query, " ORDER BY ", orderBy);<a name="line.189"></a>
+<FONT color="green">190</FONT>            appendClauseEscapeClause(query, " LIMIT ", limit);<a name="line.190"></a>
+<FONT color="green">191</FONT>    <a name="line.191"></a>
+<FONT color="green">192</FONT>            return query.toString();<a name="line.192"></a>
+<FONT color="green">193</FONT>        }<a name="line.193"></a>
+<FONT color="green">194</FONT>    <a name="line.194"></a>
+<FONT color="green">195</FONT>        private static void appendClause(StringBuilder s, String name, String clause) {<a name="line.195"></a>
+<FONT color="green">196</FONT>            if (!TextUtils.isEmpty(clause)) {<a name="line.196"></a>
+<FONT color="green">197</FONT>                s.append(name);<a name="line.197"></a>
+<FONT color="green">198</FONT>                s.append(clause);<a name="line.198"></a>
+<FONT color="green">199</FONT>            }<a name="line.199"></a>
+<FONT color="green">200</FONT>        }<a name="line.200"></a>
+<FONT color="green">201</FONT>    <a name="line.201"></a>
+<FONT color="green">202</FONT>        private static void appendClauseEscapeClause(StringBuilder s, String name, String clause) {<a name="line.202"></a>
+<FONT color="green">203</FONT>            if (!TextUtils.isEmpty(clause)) {<a name="line.203"></a>
+<FONT color="green">204</FONT>                s.append(name);<a name="line.204"></a>
+<FONT color="green">205</FONT>                DatabaseUtils.appendEscapedSQLString(s, clause);<a name="line.205"></a>
+<FONT color="green">206</FONT>            }<a name="line.206"></a>
+<FONT color="green">207</FONT>        }<a name="line.207"></a>
+<FONT color="green">208</FONT>    <a name="line.208"></a>
+<FONT color="green">209</FONT>        /**<a name="line.209"></a>
+<FONT color="green">210</FONT>         * Add the names that are non-null in columns to s, separating<a name="line.210"></a>
+<FONT color="green">211</FONT>         * them with commas.<a name="line.211"></a>
+<FONT color="green">212</FONT>         */<a name="line.212"></a>
+<FONT color="green">213</FONT>        public static void appendColumns(StringBuilder s, String[] columns) {<a name="line.213"></a>
+<FONT color="green">214</FONT>            int n = columns.length;<a name="line.214"></a>
+<FONT color="green">215</FONT>    <a name="line.215"></a>
+<FONT color="green">216</FONT>            for (int i = 0; i &lt; n; i++) {<a name="line.216"></a>
+<FONT color="green">217</FONT>                String column = columns[i];<a name="line.217"></a>
+<FONT color="green">218</FONT>    <a name="line.218"></a>
+<FONT color="green">219</FONT>                if (column != null) {<a name="line.219"></a>
+<FONT color="green">220</FONT>                    if (i &gt; 0) {<a name="line.220"></a>
+<FONT color="green">221</FONT>                        s.append(", ");<a name="line.221"></a>
+<FONT color="green">222</FONT>                    }<a name="line.222"></a>
+<FONT color="green">223</FONT>                    s.append(column);<a name="line.223"></a>
+<FONT color="green">224</FONT>                }<a name="line.224"></a>
+<FONT color="green">225</FONT>            }<a name="line.225"></a>
+<FONT color="green">226</FONT>            s.append(' ');<a name="line.226"></a>
+<FONT color="green">227</FONT>        }<a name="line.227"></a>
+<FONT color="green">228</FONT>    <a name="line.228"></a>
+<FONT color="green">229</FONT>        /**<a name="line.229"></a>
+<FONT color="green">230</FONT>         * Perform a query by combining all current settings and the<a name="line.230"></a>
+<FONT color="green">231</FONT>         * information passed into this method.<a name="line.231"></a>
+<FONT color="green">232</FONT>         *<a name="line.232"></a>
+<FONT color="green">233</FONT>         * @param db the database to query on<a name="line.233"></a>
+<FONT color="green">234</FONT>         * @param projectionIn A list of which columns to return. Passing<a name="line.234"></a>
+<FONT color="green">235</FONT>         *   null will return all columns, which is discouraged to prevent<a name="line.235"></a>
+<FONT color="green">236</FONT>         *   reading data from storage that isn't going to be used.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * @param selection A filter declaring which rows to return,<a name="line.237"></a>
+<FONT color="green">238</FONT>         *   formatted as an SQL WHERE clause (excluding the WHERE<a name="line.238"></a>
+<FONT color="green">239</FONT>         *   itself). Passing null will return all rows for the given URL.<a name="line.239"></a>
+<FONT color="green">240</FONT>         * @param selectionArgs You may include ?s in selection, which<a name="line.240"></a>
+<FONT color="green">241</FONT>         *   will be replaced by the values from selectionArgs, in order<a name="line.241"></a>
+<FONT color="green">242</FONT>         *   that they appear in the selection. The values will be bound<a name="line.242"></a>
+<FONT color="green">243</FONT>         *   as Strings.<a name="line.243"></a>
+<FONT color="green">244</FONT>         * @param groupBy A filter declaring how to group rows, formatted<a name="line.244"></a>
+<FONT color="green">245</FONT>         *   as an SQL GROUP BY clause (excluding the GROUP BY<a name="line.245"></a>
+<FONT color="green">246</FONT>         *   itself). Passing null will cause the rows to not be grouped.<a name="line.246"></a>
+<FONT color="green">247</FONT>         * @param having A filter declare which row groups to include in<a name="line.247"></a>
+<FONT color="green">248</FONT>         *   the cursor, if row grouping is being used, formatted as an<a name="line.248"></a>
+<FONT color="green">249</FONT>         *   SQL HAVING clause (excluding the HAVING itself).  Passing<a name="line.249"></a>
+<FONT color="green">250</FONT>         *   null will cause all row groups to be included, and is<a name="line.250"></a>
+<FONT color="green">251</FONT>         *   required when row grouping is not being used.<a name="line.251"></a>
+<FONT color="green">252</FONT>         * @param sortOrder How to order the rows, formatted as an SQL<a name="line.252"></a>
+<FONT color="green">253</FONT>         *   ORDER BY clause (excluding the ORDER BY itself). Passing null<a name="line.253"></a>
+<FONT color="green">254</FONT>         *   will use the default sort order, which may be unordered.<a name="line.254"></a>
+<FONT color="green">255</FONT>         * @return a cursor over the result set<a name="line.255"></a>
+<FONT color="green">256</FONT>         * @see android.content.ContentResolver#query(android.net.Uri, String[],<a name="line.256"></a>
+<FONT color="green">257</FONT>         *      String, String[], String)<a name="line.257"></a>
+<FONT color="green">258</FONT>         */<a name="line.258"></a>
+<FONT color="green">259</FONT>        public Cursor query(SQLiteDatabase db, String[] projectionIn,<a name="line.259"></a>
+<FONT color="green">260</FONT>                String selection, String[] selectionArgs, String groupBy,<a name="line.260"></a>
+<FONT color="green">261</FONT>                String having, String sortOrder) {<a name="line.261"></a>
+<FONT color="green">262</FONT>            return query(db, projectionIn, selection, selectionArgs, groupBy, having, sortOrder,<a name="line.262"></a>
+<FONT color="green">263</FONT>                    null /* limit */);<a name="line.263"></a>
+<FONT color="green">264</FONT>        }<a name="line.264"></a>
+<FONT color="green">265</FONT>    <a name="line.265"></a>
+<FONT color="green">266</FONT>        /**<a name="line.266"></a>
+<FONT color="green">267</FONT>         * Perform a query by combining all current settings and the<a name="line.267"></a>
+<FONT color="green">268</FONT>         * information passed into this method.<a name="line.268"></a>
+<FONT color="green">269</FONT>         *<a name="line.269"></a>
+<FONT color="green">270</FONT>         * @param db the database to query on<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @param projectionIn A list of which columns to return. Passing<a name="line.271"></a>
+<FONT color="green">272</FONT>         *   null will return all columns, which is discouraged to prevent<a name="line.272"></a>
+<FONT color="green">273</FONT>         *   reading data from storage that isn't going to be used.<a name="line.273"></a>
+<FONT color="green">274</FONT>         * @param selection A filter declaring which rows to return,<a name="line.274"></a>
+<FONT color="green">275</FONT>         *   formatted as an SQL WHERE clause (excluding the WHERE<a name="line.275"></a>
+<FONT color="green">276</FONT>         *   itself). Passing null will return all rows for the given URL.<a name="line.276"></a>
+<FONT color="green">277</FONT>         * @param selectionArgs You may include ?s in selection, which<a name="line.277"></a>
+<FONT color="green">278</FONT>         *   will be replaced by the values from selectionArgs, in order<a name="line.278"></a>
+<FONT color="green">279</FONT>         *   that they appear in the selection. The values will be bound<a name="line.279"></a>
+<FONT color="green">280</FONT>         *   as Strings.<a name="line.280"></a>
+<FONT color="green">281</FONT>         * @param groupBy A filter declaring how to group rows, formatted<a name="line.281"></a>
+<FONT color="green">282</FONT>         *   as an SQL GROUP BY clause (excluding the GROUP BY<a name="line.282"></a>
+<FONT color="green">283</FONT>         *   itself). Passing null will cause the rows to not be grouped.<a name="line.283"></a>
+<FONT color="green">284</FONT>         * @param having A filter declare which row groups to include in<a name="line.284"></a>
+<FONT color="green">285</FONT>         *   the cursor, if row grouping is being used, formatted as an<a name="line.285"></a>
+<FONT color="green">286</FONT>         *   SQL HAVING clause (excluding the HAVING itself).  Passing<a name="line.286"></a>
+<FONT color="green">287</FONT>         *   null will cause all row groups to be included, and is<a name="line.287"></a>
+<FONT color="green">288</FONT>         *   required when row grouping is not being used.<a name="line.288"></a>
+<FONT color="green">289</FONT>         * @param sortOrder How to order the rows, formatted as an SQL<a name="line.289"></a>
+<FONT color="green">290</FONT>         *   ORDER BY clause (excluding the ORDER BY itself). Passing null<a name="line.290"></a>
+<FONT color="green">291</FONT>         *   will use the default sort order, which may be unordered.<a name="line.291"></a>
+<FONT color="green">292</FONT>         * @param limit Limits the number of rows returned by the query,<a name="line.292"></a>
+<FONT color="green">293</FONT>         *   formatted as LIMIT clause. Passing null denotes no LIMIT clause.<a name="line.293"></a>
+<FONT color="green">294</FONT>         * @return a cursor over the result set<a name="line.294"></a>
+<FONT color="green">295</FONT>         * @see android.content.ContentResolver#query(android.net.Uri, String[],<a name="line.295"></a>
+<FONT color="green">296</FONT>         *      String, String[], String)<a name="line.296"></a>
+<FONT color="green">297</FONT>         */<a name="line.297"></a>
+<FONT color="green">298</FONT>        public Cursor query(SQLiteDatabase db, String[] projectionIn,<a name="line.298"></a>
+<FONT color="green">299</FONT>                String selection, String[] selectionArgs, String groupBy,<a name="line.299"></a>
+<FONT color="green">300</FONT>                String having, String sortOrder, String limit) {<a name="line.300"></a>
+<FONT color="green">301</FONT>            if (mTables == null) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                return null;<a name="line.302"></a>
+<FONT color="green">303</FONT>            }<a name="line.303"></a>
+<FONT color="green">304</FONT>    <a name="line.304"></a>
+<FONT color="green">305</FONT>            String sql = buildQuery(<a name="line.305"></a>
+<FONT color="green">306</FONT>                    projectionIn, selection, selectionArgs, groupBy, having,<a name="line.306"></a>
+<FONT color="green">307</FONT>                    sortOrder, limit);<a name="line.307"></a>
+<FONT color="green">308</FONT>    <a name="line.308"></a>
+<FONT color="green">309</FONT>            if (Log.isLoggable(TAG, Log.DEBUG)) {<a name="line.309"></a>
+<FONT color="green">310</FONT>                Log.d(TAG, "Performing query: " + sql);<a name="line.310"></a>
+<FONT color="green">311</FONT>            }<a name="line.311"></a>
+<FONT color="green">312</FONT>            return db.rawQueryWithFactory(<a name="line.312"></a>
+<FONT color="green">313</FONT>                    mFactory, sql, selectionArgs,<a name="line.313"></a>
+<FONT color="green">314</FONT>                    SQLiteDatabase.findEditTable(mTables));<a name="line.314"></a>
+<FONT color="green">315</FONT>        }<a name="line.315"></a>
+<FONT color="green">316</FONT>    <a name="line.316"></a>
+<FONT color="green">317</FONT>        /**<a name="line.317"></a>
+<FONT color="green">318</FONT>         * Construct a SELECT statement suitable for use in a group of<a name="line.318"></a>
+<FONT color="green">319</FONT>         * SELECT statements that will be joined through UNION operators<a name="line.319"></a>
+<FONT color="green">320</FONT>         * in buildUnionQuery.<a name="line.320"></a>
+<FONT color="green">321</FONT>         *<a name="line.321"></a>
+<FONT color="green">322</FONT>         * @param projectionIn A list of which columns to return. Passing<a name="line.322"></a>
+<FONT color="green">323</FONT>         *    null will return all columns, which is discouraged to<a name="line.323"></a>
+<FONT color="green">324</FONT>         *    prevent reading data from storage that isn't going to be<a name="line.324"></a>
+<FONT color="green">325</FONT>         *    used.<a name="line.325"></a>
+<FONT color="green">326</FONT>         * @param selection A filter declaring which rows to return,<a name="line.326"></a>
+<FONT color="green">327</FONT>         *   formatted as an SQL WHERE clause (excluding the WHERE<a name="line.327"></a>
+<FONT color="green">328</FONT>         *   itself).  Passing null will return all rows for the given<a name="line.328"></a>
+<FONT color="green">329</FONT>         *   URL.<a name="line.329"></a>
+<FONT color="green">330</FONT>         * @param selectionArgs You may include ?s in selection, which<a name="line.330"></a>
+<FONT color="green">331</FONT>         *   will be replaced by the values from selectionArgs, in order<a name="line.331"></a>
+<FONT color="green">332</FONT>         *   that they appear in the selection.  The values will be bound<a name="line.332"></a>
+<FONT color="green">333</FONT>         *   as Strings.<a name="line.333"></a>
+<FONT color="green">334</FONT>         * @param groupBy A filter declaring how to group rows, formatted<a name="line.334"></a>
+<FONT color="green">335</FONT>         *   as an SQL GROUP BY clause (excluding the GROUP BY itself).<a name="line.335"></a>
+<FONT color="green">336</FONT>         *   Passing null will cause the rows to not be grouped.<a name="line.336"></a>
+<FONT color="green">337</FONT>         * @param having A filter declare which row groups to include in<a name="line.337"></a>
+<FONT color="green">338</FONT>         *   the cursor, if row grouping is being used, formatted as an<a name="line.338"></a>
+<FONT color="green">339</FONT>         *   SQL HAVING clause (excluding the HAVING itself).  Passing<a name="line.339"></a>
+<FONT color="green">340</FONT>         *   null will cause all row groups to be included, and is<a name="line.340"></a>
+<FONT color="green">341</FONT>         *   required when row grouping is not being used.<a name="line.341"></a>
+<FONT color="green">342</FONT>         * @param sortOrder How to order the rows, formatted as an SQL<a name="line.342"></a>
+<FONT color="green">343</FONT>         *   ORDER BY clause (excluding the ORDER BY itself). Passing null<a name="line.343"></a>
+<FONT color="green">344</FONT>         *   will use the default sort order, which may be unordered.<a name="line.344"></a>
+<FONT color="green">345</FONT>         * @param limit Limits the number of rows returned by the query,<a name="line.345"></a>
+<FONT color="green">346</FONT>         *   formatted as LIMIT clause. Passing null denotes no LIMIT clause.<a name="line.346"></a>
+<FONT color="green">347</FONT>         * @return the resulting SQL SELECT statement<a name="line.347"></a>
+<FONT color="green">348</FONT>         */<a name="line.348"></a>
+<FONT color="green">349</FONT>        public String buildQuery(<a name="line.349"></a>
+<FONT color="green">350</FONT>                String[] projectionIn, String selection, String[] selectionArgs,<a name="line.350"></a>
+<FONT color="green">351</FONT>                String groupBy, String having, String sortOrder, String limit) {<a name="line.351"></a>
+<FONT color="green">352</FONT>            String[] projection = computeProjection(projectionIn);<a name="line.352"></a>
+<FONT color="green">353</FONT>    <a name="line.353"></a>
+<FONT color="green">354</FONT>            if (mWhereClause.length() &gt; 0) {<a name="line.354"></a>
+<FONT color="green">355</FONT>                mWhereClause.append(')');<a name="line.355"></a>
+<FONT color="green">356</FONT>            }<a name="line.356"></a>
+<FONT color="green">357</FONT>    <a name="line.357"></a>
+<FONT color="green">358</FONT>            // Tack on the user's selection, if present.<a name="line.358"></a>
+<FONT color="green">359</FONT>            if (selection != null &amp;&amp; selection.length() &gt; 0) {<a name="line.359"></a>
+<FONT color="green">360</FONT>                if (mWhereClause.length() &gt; 0) {<a name="line.360"></a>
+<FONT color="green">361</FONT>                    mWhereClause.append(" AND ");<a name="line.361"></a>
+<FONT color="green">362</FONT>                }<a name="line.362"></a>
+<FONT color="green">363</FONT>    <a name="line.363"></a>
+<FONT color="green">364</FONT>                mWhereClause.append('(');<a name="line.364"></a>
+<FONT color="green">365</FONT>                mWhereClause.append(selection);<a name="line.365"></a>
+<FONT color="green">366</FONT>                mWhereClause.append(')');<a name="line.366"></a>
+<FONT color="green">367</FONT>            }<a name="line.367"></a>
+<FONT color="green">368</FONT>    <a name="line.368"></a>
+<FONT color="green">369</FONT>            return buildQueryString(<a name="line.369"></a>
+<FONT color="green">370</FONT>                    mDistinct, mTables, projection, mWhereClause.toString(),<a name="line.370"></a>
+<FONT color="green">371</FONT>                    groupBy, having, sortOrder, limit);<a name="line.371"></a>
+<FONT color="green">372</FONT>        }<a name="line.372"></a>
+<FONT color="green">373</FONT>    <a name="line.373"></a>
+<FONT color="green">374</FONT>        /**<a name="line.374"></a>
+<FONT color="green">375</FONT>         * Construct a SELECT statement suitable for use in a group of<a name="line.375"></a>
+<FONT color="green">376</FONT>         * SELECT statements that will be joined through UNION operators<a name="line.376"></a>
+<FONT color="green">377</FONT>         * in buildUnionQuery.<a name="line.377"></a>
+<FONT color="green">378</FONT>         *<a name="line.378"></a>
+<FONT color="green">379</FONT>         * @param typeDiscriminatorColumn the name of the result column<a name="line.379"></a>
+<FONT color="green">380</FONT>         *   whose cells will contain the name of the table from which<a name="line.380"></a>
+<FONT color="green">381</FONT>         *   each row was drawn.<a name="line.381"></a>
+<FONT color="green">382</FONT>         * @param unionColumns the names of the columns to appear in the<a name="line.382"></a>
+<FONT color="green">383</FONT>         *   result.  This may include columns that do not appear in the<a name="line.383"></a>
+<FONT color="green">384</FONT>         *   table this SELECT is querying (i.e. mTables), but that do<a name="line.384"></a>
+<FONT color="green">385</FONT>         *   appear in one of the other tables in the UNION query that we<a name="line.385"></a>
+<FONT color="green">386</FONT>         *   are constructing.<a name="line.386"></a>
+<FONT color="green">387</FONT>         * @param columnsPresentInTable a Set of the names of the columns<a name="line.387"></a>
+<FONT color="green">388</FONT>         *   that appear in this table (i.e. in the table whose name is<a name="line.388"></a>
+<FONT color="green">389</FONT>         *   mTables).  Since columns in unionColumns include columns that<a name="line.389"></a>
+<FONT color="green">390</FONT>         *   appear only in other tables, we use this array to distinguish<a name="line.390"></a>
+<FONT color="green">391</FONT>         *   which ones actually are present.  Other columns will have<a name="line.391"></a>
+<FONT color="green">392</FONT>         *   NULL values for results from this subquery.<a name="line.392"></a>
+<FONT color="green">393</FONT>         * @param computedColumnsOffset all columns in unionColumns before<a name="line.393"></a>
+<FONT color="green">394</FONT>         *   this index are included under the assumption that they're<a name="line.394"></a>
+<FONT color="green">395</FONT>         *   computed and therefore won't appear in columnsPresentInTable,<a name="line.395"></a>
+<FONT color="green">396</FONT>         *   e.g. "date * 1000 as normalized_date"<a name="line.396"></a>
+<FONT color="green">397</FONT>         * @param typeDiscriminatorValue the value used for the<a name="line.397"></a>
+<FONT color="green">398</FONT>         *   type-discriminator column in this subquery<a name="line.398"></a>
+<FONT color="green">399</FONT>         * @param selection A filter declaring which rows to return,<a name="line.399"></a>
+<FONT color="green">400</FONT>         *   formatted as an SQL WHERE clause (excluding the WHERE<a name="line.400"></a>
+<FONT color="green">401</FONT>         *   itself).  Passing null will return all rows for the given<a name="line.401"></a>
+<FONT color="green">402</FONT>         *   URL.<a name="line.402"></a>
+<FONT color="green">403</FONT>         * @param selectionArgs You may include ?s in selection, which<a name="line.403"></a>
+<FONT color="green">404</FONT>         *   will be replaced by the values from selectionArgs, in order<a name="line.404"></a>
+<FONT color="green">405</FONT>         *   that they appear in the selection.  The values will be bound<a name="line.405"></a>
+<FONT color="green">406</FONT>         *   as Strings.<a name="line.406"></a>
+<FONT color="green">407</FONT>         * @param groupBy A filter declaring how to group rows, formatted<a name="line.407"></a>
+<FONT color="green">408</FONT>         *   as an SQL GROUP BY clause (excluding the GROUP BY itself).<a name="line.408"></a>
+<FONT color="green">409</FONT>         *   Passing null will cause the rows to not be grouped.<a name="line.409"></a>
+<FONT color="green">410</FONT>         * @param having A filter declare which row groups to include in<a name="line.410"></a>
+<FONT color="green">411</FONT>         *   the cursor, if row grouping is being used, formatted as an<a name="line.411"></a>
+<FONT color="green">412</FONT>         *   SQL HAVING clause (excluding the HAVING itself).  Passing<a name="line.412"></a>
+<FONT color="green">413</FONT>         *   null will cause all row groups to be included, and is<a name="line.413"></a>
+<FONT color="green">414</FONT>         *   required when row grouping is not being used.<a name="line.414"></a>
+<FONT color="green">415</FONT>         * @return the resulting SQL SELECT statement<a name="line.415"></a>
+<FONT color="green">416</FONT>         */<a name="line.416"></a>
+<FONT color="green">417</FONT>        public String buildUnionSubQuery(<a name="line.417"></a>
+<FONT color="green">418</FONT>                String typeDiscriminatorColumn,<a name="line.418"></a>
+<FONT color="green">419</FONT>                String[] unionColumns,<a name="line.419"></a>
+<FONT color="green">420</FONT>                Set&lt;String&gt; columnsPresentInTable,<a name="line.420"></a>
+<FONT color="green">421</FONT>                int computedColumnsOffset,<a name="line.421"></a>
+<FONT color="green">422</FONT>                String typeDiscriminatorValue,<a name="line.422"></a>
+<FONT color="green">423</FONT>                String selection,<a name="line.423"></a>
+<FONT color="green">424</FONT>                String[] selectionArgs,<a name="line.424"></a>
+<FONT color="green">425</FONT>                String groupBy,<a name="line.425"></a>
+<FONT color="green">426</FONT>                String having) {<a name="line.426"></a>
+<FONT color="green">427</FONT>            int unionColumnsCount = unionColumns.length;<a name="line.427"></a>
+<FONT color="green">428</FONT>            String[] projectionIn = new String[unionColumnsCount];<a name="line.428"></a>
+<FONT color="green">429</FONT>    <a name="line.429"></a>
+<FONT color="green">430</FONT>            for (int i = 0; i &lt; unionColumnsCount; i++) {<a name="line.430"></a>
+<FONT color="green">431</FONT>                String unionColumn = unionColumns[i];<a name="line.431"></a>
+<FONT color="green">432</FONT>    <a name="line.432"></a>
+<FONT color="green">433</FONT>                if (unionColumn.equals(typeDiscriminatorColumn)) {<a name="line.433"></a>
+<FONT color="green">434</FONT>                    projectionIn[i] = "'" + typeDiscriminatorValue + "' AS "<a name="line.434"></a>
+<FONT color="green">435</FONT>                            + typeDiscriminatorColumn;<a name="line.435"></a>
+<FONT color="green">436</FONT>                } else if (i &lt;= computedColumnsOffset<a name="line.436"></a>
+<FONT color="green">437</FONT>                           || columnsPresentInTable.contains(unionColumn)) {<a name="line.437"></a>
+<FONT color="green">438</FONT>                    projectionIn[i] = unionColumn;<a name="line.438"></a>
+<FONT color="green">439</FONT>                } else {<a name="line.439"></a>
+<FONT color="green">440</FONT>                    projectionIn[i] = "NULL AS " + unionColumn;<a name="line.440"></a>
+<FONT color="green">441</FONT>                }<a name="line.441"></a>
+<FONT color="green">442</FONT>            }<a name="line.442"></a>
+<FONT color="green">443</FONT>            return buildQuery(<a name="line.443"></a>
+<FONT color="green">444</FONT>                    projectionIn, selection, selectionArgs, groupBy, having,<a name="line.444"></a>
+<FONT color="green">445</FONT>                    null /* sortOrder */,<a name="line.445"></a>
+<FONT color="green">446</FONT>                    null /* limit */);<a name="line.446"></a>
+<FONT color="green">447</FONT>        }<a name="line.447"></a>
+<FONT color="green">448</FONT>    <a name="line.448"></a>
+<FONT color="green">449</FONT>        /**<a name="line.449"></a>
+<FONT color="green">450</FONT>         * Given a set of subqueries, all of which are SELECT statements,<a name="line.450"></a>
+<FONT color="green">451</FONT>         * construct a query that returns the union of what those<a name="line.451"></a>
+<FONT color="green">452</FONT>         * subqueries return.<a name="line.452"></a>
+<FONT color="green">453</FONT>         * @param subQueries an array of SQL SELECT statements, all of<a name="line.453"></a>
+<FONT color="green">454</FONT>         *   which must have the same columns as the same positions in<a name="line.454"></a>
+<FONT color="green">455</FONT>         *   their results<a name="line.455"></a>
+<FONT color="green">456</FONT>         * @param sortOrder How to order the rows, formatted as an SQL<a name="line.456"></a>
+<FONT color="green">457</FONT>         *   ORDER BY clause (excluding the ORDER BY itself).  Passing<a name="line.457"></a>
+<FONT color="green">458</FONT>         *   null will use the default sort order, which may be unordered.<a name="line.458"></a>
+<FONT color="green">459</FONT>         * @param limit The limit clause, which applies to the entire union result set<a name="line.459"></a>
+<FONT color="green">460</FONT>         *<a name="line.460"></a>
+<FONT color="green">461</FONT>         * @return the resulting SQL SELECT statement<a name="line.461"></a>
+<FONT color="green">462</FONT>         */<a name="line.462"></a>
+<FONT color="green">463</FONT>        public String buildUnionQuery(String[] subQueries, String sortOrder, String limit) {<a name="line.463"></a>
+<FONT color="green">464</FONT>            StringBuilder query = new StringBuilder(128);<a name="line.464"></a>
+<FONT color="green">465</FONT>            int subQueryCount = subQueries.length;<a name="line.465"></a>
+<FONT color="green">466</FONT>            String unionOperator = mDistinct ? " UNION " : " UNION ALL ";<a name="line.466"></a>
+<FONT color="green">467</FONT>    <a name="line.467"></a>
+<FONT color="green">468</FONT>            for (int i = 0; i &lt; subQueryCount; i++) {<a name="line.468"></a>
+<FONT color="green">469</FONT>                if (i &gt; 0) {<a name="line.469"></a>
+<FONT color="green">470</FONT>                    query.append(unionOperator);<a name="line.470"></a>
+<FONT color="green">471</FONT>                }<a name="line.471"></a>
+<FONT color="green">472</FONT>                query.append(subQueries[i]);<a name="line.472"></a>
+<FONT color="green">473</FONT>            }<a name="line.473"></a>
+<FONT color="green">474</FONT>            appendClause(query, " ORDER BY ", sortOrder);<a name="line.474"></a>
+<FONT color="green">475</FONT>            appendClause(query, " LIMIT ", limit);<a name="line.475"></a>
+<FONT color="green">476</FONT>            return query.toString();<a name="line.476"></a>
+<FONT color="green">477</FONT>        }<a name="line.477"></a>
+<FONT color="green">478</FONT>    <a name="line.478"></a>
+<FONT color="green">479</FONT>        private String[] computeProjection(String[] projectionIn) {<a name="line.479"></a>
+<FONT color="green">480</FONT>            if (projectionIn != null &amp;&amp; projectionIn.length &gt; 0) {<a name="line.480"></a>
+<FONT color="green">481</FONT>                if (mProjectionMap != null) {<a name="line.481"></a>
+<FONT color="green">482</FONT>                    String[] projection = new String[projectionIn.length];<a name="line.482"></a>
+<FONT color="green">483</FONT>                    int length = projectionIn.length;<a name="line.483"></a>
+<FONT color="green">484</FONT>    <a name="line.484"></a>
+<FONT color="green">485</FONT>                    for (int i = 0; i &lt; length; i++) {<a name="line.485"></a>
+<FONT color="green">486</FONT>                        String userColumn = projectionIn[i];<a name="line.486"></a>
+<FONT color="green">487</FONT>                        String column = mProjectionMap.get(userColumn);<a name="line.487"></a>
+<FONT color="green">488</FONT>    <a name="line.488"></a>
+<FONT color="green">489</FONT>                        if (column == null) {<a name="line.489"></a>
+<FONT color="green">490</FONT>                            throw new IllegalArgumentException(<a name="line.490"></a>
+<FONT color="green">491</FONT>                                        "Invalid column " + projectionIn[i]);<a name="line.491"></a>
+<FONT color="green">492</FONT>                        } else {<a name="line.492"></a>
+<FONT color="green">493</FONT>                            projection[i] = column;<a name="line.493"></a>
+<FONT color="green">494</FONT>                        }<a name="line.494"></a>
+<FONT color="green">495</FONT>                    }<a name="line.495"></a>
+<FONT color="green">496</FONT>                    return projection;<a name="line.496"></a>
+<FONT color="green">497</FONT>                } else {<a name="line.497"></a>
+<FONT color="green">498</FONT>                    return projectionIn;<a name="line.498"></a>
+<FONT color="green">499</FONT>                }<a name="line.499"></a>
+<FONT color="green">500</FONT>            } else if (mProjectionMap != null) {<a name="line.500"></a>
+<FONT color="green">501</FONT>                // Return all columns in projection map.<a name="line.501"></a>
+<FONT color="green">502</FONT>                Set&lt;Entry&lt;String, String&gt;&gt; entrySet = mProjectionMap.entrySet();<a name="line.502"></a>
+<FONT color="green">503</FONT>                String[] projection = new String[entrySet.size()];<a name="line.503"></a>
+<FONT color="green">504</FONT>                Iterator&lt;Entry&lt;String, String&gt;&gt; entryIter = entrySet.iterator();<a name="line.504"></a>
+<FONT color="green">505</FONT>                int i = 0;<a name="line.505"></a>
+<FONT color="green">506</FONT>    <a name="line.506"></a>
+<FONT color="green">507</FONT>                while (entryIter.hasNext()) {<a name="line.507"></a>
+<FONT color="green">508</FONT>                    Entry&lt;String, String&gt; entry = entryIter.next();<a name="line.508"></a>
+<FONT color="green">509</FONT>    <a name="line.509"></a>
+<FONT color="green">510</FONT>                    // Don't include the _count column when people ask for no projection.<a name="line.510"></a>
+<FONT color="green">511</FONT>                    if (entry.getKey().equals(BaseColumns._COUNT)) {<a name="line.511"></a>
+<FONT color="green">512</FONT>                        continue;<a name="line.512"></a>
+<FONT color="green">513</FONT>                    }<a name="line.513"></a>
+<FONT color="green">514</FONT>                    projection[i++] = entry.getValue();<a name="line.514"></a>
+<FONT color="green">515</FONT>                }<a name="line.515"></a>
+<FONT color="green">516</FONT>                return projection;<a name="line.516"></a>
+<FONT color="green">517</FONT>            }<a name="line.517"></a>
+<FONT color="green">518</FONT>            return null;<a name="line.518"></a>
+<FONT color="green">519</FONT>        }<a name="line.519"></a>
+<FONT color="green">520</FONT>    }<a name="line.520"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

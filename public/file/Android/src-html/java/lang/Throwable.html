@@ -1,0 +1,476 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /* <a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    package java.lang;<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    import java.io.IOException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import java.io.ObjectOutputStream;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import java.io.PrintStream;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import java.io.PrintWriter;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    /**<a name="line.25"></a>
+<FONT color="green">026</FONT>     * The superclass of all classes which can be thrown by the virtual machine. The<a name="line.26"></a>
+<FONT color="green">027</FONT>     * two direct subclasses are recoverable exceptions ({@code Exception}) and<a name="line.27"></a>
+<FONT color="green">028</FONT>     * unrecoverable errors ({@code Error}). This class provides common methods for<a name="line.28"></a>
+<FONT color="green">029</FONT>     * accessing a string message which provides extra information about the<a name="line.29"></a>
+<FONT color="green">030</FONT>     * circumstances in which the {@code Throwable} was created (basically an error<a name="line.30"></a>
+<FONT color="green">031</FONT>     * message in most cases), and for saving a stack trace (that is, a record of<a name="line.31"></a>
+<FONT color="green">032</FONT>     * the call stack at a particular point in time) which can be printed later.<a name="line.32"></a>
+<FONT color="green">033</FONT>     * &lt;p&gt;<a name="line.33"></a>
+<FONT color="green">034</FONT>     * A {@code Throwable} can also include a cause, which is a nested {@code<a name="line.34"></a>
+<FONT color="green">035</FONT>     * Throwable} that represents the original problem that led to this {@code<a name="line.35"></a>
+<FONT color="green">036</FONT>     * Throwable}. It is often used for wrapping various types of errors into a<a name="line.36"></a>
+<FONT color="green">037</FONT>     * common {@code Throwable} without losing the detailed original error<a name="line.37"></a>
+<FONT color="green">038</FONT>     * information. When printing the stack trace, the trace of the cause is<a name="line.38"></a>
+<FONT color="green">039</FONT>     * included.<a name="line.39"></a>
+<FONT color="green">040</FONT>     * <a name="line.40"></a>
+<FONT color="green">041</FONT>     * @see Error<a name="line.41"></a>
+<FONT color="green">042</FONT>     * @see Exception<a name="line.42"></a>
+<FONT color="green">043</FONT>     * @see RuntimeException<a name="line.43"></a>
+<FONT color="green">044</FONT>     * <a name="line.44"></a>
+<FONT color="green">045</FONT>     * @since Android 1.0<a name="line.45"></a>
+<FONT color="green">046</FONT>     */<a name="line.46"></a>
+<FONT color="green">047</FONT>    public class Throwable implements java.io.Serializable {<a name="line.47"></a>
+<FONT color="green">048</FONT>        private static final long serialVersionUID = -3042686055658047285L;<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>        /**<a name="line.50"></a>
+<FONT color="green">051</FONT>         * The message provided when the exception was created.<a name="line.51"></a>
+<FONT color="green">052</FONT>         */<a name="line.52"></a>
+<FONT color="green">053</FONT>        private String detailMessage;<a name="line.53"></a>
+<FONT color="green">054</FONT>    <a name="line.54"></a>
+<FONT color="green">055</FONT>        /**<a name="line.55"></a>
+<FONT color="green">056</FONT>         * The cause of this Throwable. Null when there is no cause.<a name="line.56"></a>
+<FONT color="green">057</FONT>         */<a name="line.57"></a>
+<FONT color="green">058</FONT>        private Throwable cause = this;<a name="line.58"></a>
+<FONT color="green">059</FONT>    <a name="line.59"></a>
+<FONT color="green">060</FONT>        // BEGIN android-added<a name="line.60"></a>
+<FONT color="green">061</FONT>        /**<a name="line.61"></a>
+<FONT color="green">062</FONT>         * An intermediate representation of the stack trace.  This field may<a name="line.62"></a>
+<FONT color="green">063</FONT>         * be accessed by the VM; do not rename.<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        private volatile Object stackState;<a name="line.65"></a>
+<FONT color="green">066</FONT>        // END android-added<a name="line.66"></a>
+<FONT color="green">067</FONT>    <a name="line.67"></a>
+<FONT color="green">068</FONT>        /**<a name="line.68"></a>
+<FONT color="green">069</FONT>         * A fully-expanded representation of the stack trace.<a name="line.69"></a>
+<FONT color="green">070</FONT>         */<a name="line.70"></a>
+<FONT color="green">071</FONT>        private StackTraceElement[] stackTrace;<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        /**<a name="line.73"></a>
+<FONT color="green">074</FONT>         * Constructs a new {@code Throwable} that includes the current stack trace.<a name="line.74"></a>
+<FONT color="green">075</FONT>         * <a name="line.75"></a>
+<FONT color="green">076</FONT>         * @since Android 1.0<a name="line.76"></a>
+<FONT color="green">077</FONT>         */<a name="line.77"></a>
+<FONT color="green">078</FONT>        public Throwable() {<a name="line.78"></a>
+<FONT color="green">079</FONT>            super();<a name="line.79"></a>
+<FONT color="green">080</FONT>            fillInStackTrace();<a name="line.80"></a>
+<FONT color="green">081</FONT>        }<a name="line.81"></a>
+<FONT color="green">082</FONT>    <a name="line.82"></a>
+<FONT color="green">083</FONT>        /**<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Constructs a new {@code Throwable} with the current stack trace and the<a name="line.84"></a>
+<FONT color="green">085</FONT>         * specified detail message.<a name="line.85"></a>
+<FONT color="green">086</FONT>         * <a name="line.86"></a>
+<FONT color="green">087</FONT>         * @param detailMessage<a name="line.87"></a>
+<FONT color="green">088</FONT>         *            the detail message for this {@code Throwable}.<a name="line.88"></a>
+<FONT color="green">089</FONT>         * @since Android 1.0<a name="line.89"></a>
+<FONT color="green">090</FONT>         */<a name="line.90"></a>
+<FONT color="green">091</FONT>        public Throwable(String detailMessage) {<a name="line.91"></a>
+<FONT color="green">092</FONT>            this();<a name="line.92"></a>
+<FONT color="green">093</FONT>            this.detailMessage = detailMessage;<a name="line.93"></a>
+<FONT color="green">094</FONT>        }<a name="line.94"></a>
+<FONT color="green">095</FONT>    <a name="line.95"></a>
+<FONT color="green">096</FONT>        /**<a name="line.96"></a>
+<FONT color="green">097</FONT>         * Constructs a new {@code Throwable} with the current stack trace, the<a name="line.97"></a>
+<FONT color="green">098</FONT>         * specified detail message and the specified cause.<a name="line.98"></a>
+<FONT color="green">099</FONT>         * <a name="line.99"></a>
+<FONT color="green">100</FONT>         * @param detailMessage<a name="line.100"></a>
+<FONT color="green">101</FONT>         *            the detail message for this {@code Throwable}.<a name="line.101"></a>
+<FONT color="green">102</FONT>         * @param throwable<a name="line.102"></a>
+<FONT color="green">103</FONT>         *            the cause of this {@code Throwable}.<a name="line.103"></a>
+<FONT color="green">104</FONT>         * @since Android 1.0<a name="line.104"></a>
+<FONT color="green">105</FONT>         */<a name="line.105"></a>
+<FONT color="green">106</FONT>        public Throwable(String detailMessage, Throwable throwable) {<a name="line.106"></a>
+<FONT color="green">107</FONT>            this();<a name="line.107"></a>
+<FONT color="green">108</FONT>            this.detailMessage = detailMessage;<a name="line.108"></a>
+<FONT color="green">109</FONT>            cause = throwable;<a name="line.109"></a>
+<FONT color="green">110</FONT>        }<a name="line.110"></a>
+<FONT color="green">111</FONT>    <a name="line.111"></a>
+<FONT color="green">112</FONT>        /**<a name="line.112"></a>
+<FONT color="green">113</FONT>         * Constructs a new {@code Throwable} with the current stack trace and the<a name="line.113"></a>
+<FONT color="green">114</FONT>         * specified cause.<a name="line.114"></a>
+<FONT color="green">115</FONT>         * <a name="line.115"></a>
+<FONT color="green">116</FONT>         * @param throwable<a name="line.116"></a>
+<FONT color="green">117</FONT>         *            the cause of this {@code Throwable}.<a name="line.117"></a>
+<FONT color="green">118</FONT>         * @since Android 1.0<a name="line.118"></a>
+<FONT color="green">119</FONT>         */<a name="line.119"></a>
+<FONT color="green">120</FONT>        public Throwable(Throwable throwable) {<a name="line.120"></a>
+<FONT color="green">121</FONT>            this();<a name="line.121"></a>
+<FONT color="green">122</FONT>            this.detailMessage = throwable == null ? null : throwable.toString();<a name="line.122"></a>
+<FONT color="green">123</FONT>            cause = throwable;<a name="line.123"></a>
+<FONT color="green">124</FONT>        }<a name="line.124"></a>
+<FONT color="green">125</FONT>    <a name="line.125"></a>
+<FONT color="green">126</FONT>        // BEGIN android-changed<a name="line.126"></a>
+<FONT color="green">127</FONT>        /**<a name="line.127"></a>
+<FONT color="green">128</FONT>         * Records the stack trace from the point where this method has been called<a name="line.128"></a>
+<FONT color="green">129</FONT>         * to this {@code Throwable}. The method is public so that code which<a name="line.129"></a>
+<FONT color="green">130</FONT>         * catches a {@code Throwable} and then re-throws it can adjust the stack<a name="line.130"></a>
+<FONT color="green">131</FONT>         * trace to represent the location where the exception was re-thrown.<a name="line.131"></a>
+<FONT color="green">132</FONT>         * <a name="line.132"></a>
+<FONT color="green">133</FONT>         * @return this {@code Throwable} instance.<a name="line.133"></a>
+<FONT color="green">134</FONT>         * @since Android 1.0<a name="line.134"></a>
+<FONT color="green">135</FONT>         */<a name="line.135"></a>
+<FONT color="green">136</FONT>        public Throwable fillInStackTrace() {<a name="line.136"></a>
+<FONT color="green">137</FONT>            // Fill in the intermediate representation<a name="line.137"></a>
+<FONT color="green">138</FONT>            stackState = nativeFillInStackTrace();<a name="line.138"></a>
+<FONT color="green">139</FONT>            // Mark the full representation as empty<a name="line.139"></a>
+<FONT color="green">140</FONT>            stackTrace = null;<a name="line.140"></a>
+<FONT color="green">141</FONT>            return this;<a name="line.141"></a>
+<FONT color="green">142</FONT>        }<a name="line.142"></a>
+<FONT color="green">143</FONT>        // END android-changed<a name="line.143"></a>
+<FONT color="green">144</FONT>    <a name="line.144"></a>
+<FONT color="green">145</FONT>        /**<a name="line.145"></a>
+<FONT color="green">146</FONT>         * Returns the extra information message which was provided when this<a name="line.146"></a>
+<FONT color="green">147</FONT>         * {@code Throwable} was created. Returns {@code null} if no message was<a name="line.147"></a>
+<FONT color="green">148</FONT>         * provided at creation time.<a name="line.148"></a>
+<FONT color="green">149</FONT>         * <a name="line.149"></a>
+<FONT color="green">150</FONT>         * @return this {@code Throwable}'s detail message.<a name="line.150"></a>
+<FONT color="green">151</FONT>         * @since Android 1.0<a name="line.151"></a>
+<FONT color="green">152</FONT>         */<a name="line.152"></a>
+<FONT color="green">153</FONT>        public String getMessage() {<a name="line.153"></a>
+<FONT color="green">154</FONT>            return detailMessage;<a name="line.154"></a>
+<FONT color="green">155</FONT>        }<a name="line.155"></a>
+<FONT color="green">156</FONT>    <a name="line.156"></a>
+<FONT color="green">157</FONT>        /**<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Returns the extra information message which was provided when this<a name="line.158"></a>
+<FONT color="green">159</FONT>         * {@code Throwable} was created. Returns {@code null} if no message was<a name="line.159"></a>
+<FONT color="green">160</FONT>         * provided at creation time. Subclasses may override this method to return<a name="line.160"></a>
+<FONT color="green">161</FONT>         * localized text for the message. The Android reference implementation<a name="line.161"></a>
+<FONT color="green">162</FONT>         * returns the unlocalized detail message.<a name="line.162"></a>
+<FONT color="green">163</FONT>         * <a name="line.163"></a>
+<FONT color="green">164</FONT>         * @return this {@code Throwable}'s localized detail message.<a name="line.164"></a>
+<FONT color="green">165</FONT>         * @since Android 1.0<a name="line.165"></a>
+<FONT color="green">166</FONT>         */<a name="line.166"></a>
+<FONT color="green">167</FONT>        public String getLocalizedMessage() {<a name="line.167"></a>
+<FONT color="green">168</FONT>            return getMessage();<a name="line.168"></a>
+<FONT color="green">169</FONT>        }<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>        /**<a name="line.171"></a>
+<FONT color="green">172</FONT>         * Returns the array of stack trace elements of this {@code Throwable}. Each<a name="line.172"></a>
+<FONT color="green">173</FONT>         * {@code StackTraceElement} represents an entry in the call stack. The<a name="line.173"></a>
+<FONT color="green">174</FONT>         * element at position 0 is the top of the stack, that is, the stack frame<a name="line.174"></a>
+<FONT color="green">175</FONT>         * where this {@code Throwable} is thrown.<a name="line.175"></a>
+<FONT color="green">176</FONT>         * <a name="line.176"></a>
+<FONT color="green">177</FONT>         * @return a copy of the array of {@code StackTraceElement}s representing<a name="line.177"></a>
+<FONT color="green">178</FONT>         *         the call stack. Changes in the array obtained from this call will<a name="line.178"></a>
+<FONT color="green">179</FONT>         *         not change the call stack stored in this {@code Throwable}.<a name="line.179"></a>
+<FONT color="green">180</FONT>         * @see #printStackTrace()<a name="line.180"></a>
+<FONT color="green">181</FONT>         * @since Android 1.0<a name="line.181"></a>
+<FONT color="green">182</FONT>         */<a name="line.182"></a>
+<FONT color="green">183</FONT>        public StackTraceElement[] getStackTrace() {<a name="line.183"></a>
+<FONT color="green">184</FONT>            return getInternalStackTrace().clone();<a name="line.184"></a>
+<FONT color="green">185</FONT>        }<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        /**<a name="line.187"></a>
+<FONT color="green">188</FONT>         * Sets the array of stack trace elements. Each {@code StackTraceElement}<a name="line.188"></a>
+<FONT color="green">189</FONT>         * represents an entry in the call stack. A copy of the specified array is<a name="line.189"></a>
+<FONT color="green">190</FONT>         * stored in this {@code Throwable}. will be returned by {@code<a name="line.190"></a>
+<FONT color="green">191</FONT>         * getStackTrace()} and printed by {@code printStackTrace()}.<a name="line.191"></a>
+<FONT color="green">192</FONT>         * <a name="line.192"></a>
+<FONT color="green">193</FONT>         * @param trace<a name="line.193"></a>
+<FONT color="green">194</FONT>         *            the new array of {@code StackTraceElement}s. A copy of the<a name="line.194"></a>
+<FONT color="green">195</FONT>         *            array is stored in this {@code Throwable}, so subsequent<a name="line.195"></a>
+<FONT color="green">196</FONT>         *            changes to {@code trace} will not change the call stack stored<a name="line.196"></a>
+<FONT color="green">197</FONT>         *            in this {@code Throwable}.<a name="line.197"></a>
+<FONT color="green">198</FONT>         * @throws NullPointerException<a name="line.198"></a>
+<FONT color="green">199</FONT>         *             if any element in {@code trace} is {@code null}.<a name="line.199"></a>
+<FONT color="green">200</FONT>         * @see #printStackTrace()<a name="line.200"></a>
+<FONT color="green">201</FONT>         * @since Android 1.0<a name="line.201"></a>
+<FONT color="green">202</FONT>         */<a name="line.202"></a>
+<FONT color="green">203</FONT>        public void setStackTrace(StackTraceElement[] trace) {<a name="line.203"></a>
+<FONT color="green">204</FONT>            StackTraceElement[] newTrace = trace.clone();<a name="line.204"></a>
+<FONT color="green">205</FONT>            for (java.lang.StackTraceElement element : newTrace) {<a name="line.205"></a>
+<FONT color="green">206</FONT>                if (element == null) {<a name="line.206"></a>
+<FONT color="green">207</FONT>                    throw new NullPointerException();<a name="line.207"></a>
+<FONT color="green">208</FONT>                }<a name="line.208"></a>
+<FONT color="green">209</FONT>            }<a name="line.209"></a>
+<FONT color="green">210</FONT>            stackTrace = newTrace;<a name="line.210"></a>
+<FONT color="green">211</FONT>        }<a name="line.211"></a>
+<FONT color="green">212</FONT>    <a name="line.212"></a>
+<FONT color="green">213</FONT>        /**<a name="line.213"></a>
+<FONT color="green">214</FONT>         * Writes a printable representation of this {@code Throwable}'s stack trace<a name="line.214"></a>
+<FONT color="green">215</FONT>         * to the {@code System.err} stream.<a name="line.215"></a>
+<FONT color="green">216</FONT>         * <a name="line.216"></a>
+<FONT color="green">217</FONT>         * @since Android 1.0<a name="line.217"></a>
+<FONT color="green">218</FONT>         */<a name="line.218"></a>
+<FONT color="green">219</FONT>        public void printStackTrace() {<a name="line.219"></a>
+<FONT color="green">220</FONT>            printStackTrace(System.err);<a name="line.220"></a>
+<FONT color="green">221</FONT>        }<a name="line.221"></a>
+<FONT color="green">222</FONT>    <a name="line.222"></a>
+<FONT color="green">223</FONT>        /**<a name="line.223"></a>
+<FONT color="green">224</FONT>         * Counts the number of duplicate stack frames, starting from the<a name="line.224"></a>
+<FONT color="green">225</FONT>         * end of the stack.<a name="line.225"></a>
+<FONT color="green">226</FONT>         * <a name="line.226"></a>
+<FONT color="green">227</FONT>         * @param currentStack a stack to compare<a name="line.227"></a>
+<FONT color="green">228</FONT>         * @param parentStack a stack to compare<a name="line.228"></a>
+<FONT color="green">229</FONT>         * <a name="line.229"></a>
+<FONT color="green">230</FONT>         * @return the number of duplicate stack frames.<a name="line.230"></a>
+<FONT color="green">231</FONT>         */<a name="line.231"></a>
+<FONT color="green">232</FONT>        private static int countDuplicates(StackTraceElement[] currentStack,<a name="line.232"></a>
+<FONT color="green">233</FONT>                StackTraceElement[] parentStack) {<a name="line.233"></a>
+<FONT color="green">234</FONT>            int duplicates = 0;<a name="line.234"></a>
+<FONT color="green">235</FONT>            int parentIndex = parentStack.length;<a name="line.235"></a>
+<FONT color="green">236</FONT>            for (int i = currentStack.length; --i &gt;= 0 &amp;&amp; --parentIndex &gt;= 0;) {<a name="line.236"></a>
+<FONT color="green">237</FONT>                StackTraceElement parentFrame = parentStack[parentIndex];<a name="line.237"></a>
+<FONT color="green">238</FONT>                if (parentFrame.equals(currentStack[i])) {<a name="line.238"></a>
+<FONT color="green">239</FONT>                    duplicates++;<a name="line.239"></a>
+<FONT color="green">240</FONT>                } else {<a name="line.240"></a>
+<FONT color="green">241</FONT>                    break;<a name="line.241"></a>
+<FONT color="green">242</FONT>                }<a name="line.242"></a>
+<FONT color="green">243</FONT>            }<a name="line.243"></a>
+<FONT color="green">244</FONT>            return duplicates;<a name="line.244"></a>
+<FONT color="green">245</FONT>        }<a name="line.245"></a>
+<FONT color="green">246</FONT>    <a name="line.246"></a>
+<FONT color="green">247</FONT>        /**<a name="line.247"></a>
+<FONT color="green">248</FONT>         * Returns an array of StackTraceElement. Each StackTraceElement<a name="line.248"></a>
+<FONT color="green">249</FONT>         * represents a entry on the stack.<a name="line.249"></a>
+<FONT color="green">250</FONT>         * <a name="line.250"></a>
+<FONT color="green">251</FONT>         * @return an array of StackTraceElement representing the stack<a name="line.251"></a>
+<FONT color="green">252</FONT>         */<a name="line.252"></a>
+<FONT color="green">253</FONT>        private StackTraceElement[] getInternalStackTrace() {<a name="line.253"></a>
+<FONT color="green">254</FONT>            if (stackTrace == null) {<a name="line.254"></a>
+<FONT color="green">255</FONT>                // BEGIN android-changed<a name="line.255"></a>
+<FONT color="green">256</FONT>                stackTrace = nativeGetStackTrace(stackState);<a name="line.256"></a>
+<FONT color="green">257</FONT>                stackState = null; // Clean up intermediate representation<a name="line.257"></a>
+<FONT color="green">258</FONT>                // END android-changed<a name="line.258"></a>
+<FONT color="green">259</FONT>            }<a name="line.259"></a>
+<FONT color="green">260</FONT>            return stackTrace;<a name="line.260"></a>
+<FONT color="green">261</FONT>        }<a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>        /**<a name="line.263"></a>
+<FONT color="green">264</FONT>         * Writes a printable representation of this {@code Throwable}'s stack trace<a name="line.264"></a>
+<FONT color="green">265</FONT>         * to the specified print stream. If the {@code Throwable} contains a<a name="line.265"></a>
+<FONT color="green">266</FONT>         * {@link #getCause() cause}, the method will be invoked recursively for<a name="line.266"></a>
+<FONT color="green">267</FONT>         * the nested {@code Throwable}.<a name="line.267"></a>
+<FONT color="green">268</FONT>         * <a name="line.268"></a>
+<FONT color="green">269</FONT>         * @param err<a name="line.269"></a>
+<FONT color="green">270</FONT>         *            the stream to write the stack trace on.<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @since Android 1.0<a name="line.271"></a>
+<FONT color="green">272</FONT>         */<a name="line.272"></a>
+<FONT color="green">273</FONT>        public void printStackTrace(PrintStream err) {<a name="line.273"></a>
+<FONT color="green">274</FONT>            err.println(toString());<a name="line.274"></a>
+<FONT color="green">275</FONT>            // Don't use getStackTrace() as it calls clone()<a name="line.275"></a>
+<FONT color="green">276</FONT>            // Get stackTrace, in case stackTrace is reassigned<a name="line.276"></a>
+<FONT color="green">277</FONT>            StackTraceElement[] stack = getInternalStackTrace();<a name="line.277"></a>
+<FONT color="green">278</FONT>            for (java.lang.StackTraceElement element : stack) {<a name="line.278"></a>
+<FONT color="green">279</FONT>                err.println("\tat " + element);<a name="line.279"></a>
+<FONT color="green">280</FONT>            }<a name="line.280"></a>
+<FONT color="green">281</FONT>    <a name="line.281"></a>
+<FONT color="green">282</FONT>            StackTraceElement[] parentStack = stack;<a name="line.282"></a>
+<FONT color="green">283</FONT>            Throwable throwable = getCause();<a name="line.283"></a>
+<FONT color="green">284</FONT>            while (throwable != null) {<a name="line.284"></a>
+<FONT color="green">285</FONT>                err.print("Caused by: ");<a name="line.285"></a>
+<FONT color="green">286</FONT>                err.println(throwable);<a name="line.286"></a>
+<FONT color="green">287</FONT>                StackTraceElement[] currentStack = throwable.getInternalStackTrace();<a name="line.287"></a>
+<FONT color="green">288</FONT>                int duplicates = countDuplicates(currentStack, parentStack);<a name="line.288"></a>
+<FONT color="green">289</FONT>                for (int i = 0; i &lt; currentStack.length - duplicates; i++) {<a name="line.289"></a>
+<FONT color="green">290</FONT>                    err.println("\tat " + currentStack[i]);<a name="line.290"></a>
+<FONT color="green">291</FONT>                }<a name="line.291"></a>
+<FONT color="green">292</FONT>                if (duplicates &gt; 0) {<a name="line.292"></a>
+<FONT color="green">293</FONT>                    err.println("\t... " + duplicates + " more");<a name="line.293"></a>
+<FONT color="green">294</FONT>                }<a name="line.294"></a>
+<FONT color="green">295</FONT>                parentStack = currentStack;<a name="line.295"></a>
+<FONT color="green">296</FONT>                throwable = throwable.getCause();<a name="line.296"></a>
+<FONT color="green">297</FONT>            }<a name="line.297"></a>
+<FONT color="green">298</FONT>        }<a name="line.298"></a>
+<FONT color="green">299</FONT>    <a name="line.299"></a>
+<FONT color="green">300</FONT>        /**<a name="line.300"></a>
+<FONT color="green">301</FONT>         * Writes a printable representation of this {@code Throwable}'s stack trace<a name="line.301"></a>
+<FONT color="green">302</FONT>         * to the specified print writer. If the {@code Throwable} contains a<a name="line.302"></a>
+<FONT color="green">303</FONT>         * {@link #getCause() cause}, the method will be invoked recursively for the<a name="line.303"></a>
+<FONT color="green">304</FONT>         * nested {@code Throwable}.<a name="line.304"></a>
+<FONT color="green">305</FONT>         * <a name="line.305"></a>
+<FONT color="green">306</FONT>         * @param err<a name="line.306"></a>
+<FONT color="green">307</FONT>         *            the writer to write the stack trace on.<a name="line.307"></a>
+<FONT color="green">308</FONT>         * @since Android 1.0<a name="line.308"></a>
+<FONT color="green">309</FONT>         */<a name="line.309"></a>
+<FONT color="green">310</FONT>        public void printStackTrace(PrintWriter err) {<a name="line.310"></a>
+<FONT color="green">311</FONT>            err.println(toString());<a name="line.311"></a>
+<FONT color="green">312</FONT>            // Don't use getStackTrace() as it calls clone()<a name="line.312"></a>
+<FONT color="green">313</FONT>            // Get stackTrace, in case stackTrace is reassigned<a name="line.313"></a>
+<FONT color="green">314</FONT>            StackTraceElement[] stack = getInternalStackTrace();<a name="line.314"></a>
+<FONT color="green">315</FONT>            for (java.lang.StackTraceElement element : stack) {<a name="line.315"></a>
+<FONT color="green">316</FONT>                err.println("\tat " + element);<a name="line.316"></a>
+<FONT color="green">317</FONT>            }<a name="line.317"></a>
+<FONT color="green">318</FONT>    <a name="line.318"></a>
+<FONT color="green">319</FONT>            StackTraceElement[] parentStack = stack;<a name="line.319"></a>
+<FONT color="green">320</FONT>            Throwable throwable = getCause();<a name="line.320"></a>
+<FONT color="green">321</FONT>            while (throwable != null) {<a name="line.321"></a>
+<FONT color="green">322</FONT>                err.print("Caused by: ");<a name="line.322"></a>
+<FONT color="green">323</FONT>                err.println(throwable);<a name="line.323"></a>
+<FONT color="green">324</FONT>                StackTraceElement[] currentStack = throwable.getInternalStackTrace();<a name="line.324"></a>
+<FONT color="green">325</FONT>                int duplicates = countDuplicates(currentStack, parentStack);<a name="line.325"></a>
+<FONT color="green">326</FONT>                for (int i = 0; i &lt; currentStack.length - duplicates; i++) {<a name="line.326"></a>
+<FONT color="green">327</FONT>                    err.println("\tat " + currentStack[i]);<a name="line.327"></a>
+<FONT color="green">328</FONT>                }<a name="line.328"></a>
+<FONT color="green">329</FONT>                if (duplicates &gt; 0) {<a name="line.329"></a>
+<FONT color="green">330</FONT>                    err.println("\t... " + duplicates + " more");<a name="line.330"></a>
+<FONT color="green">331</FONT>                }<a name="line.331"></a>
+<FONT color="green">332</FONT>                parentStack = currentStack;<a name="line.332"></a>
+<FONT color="green">333</FONT>                throwable = throwable.getCause();<a name="line.333"></a>
+<FONT color="green">334</FONT>            }<a name="line.334"></a>
+<FONT color="green">335</FONT>        }<a name="line.335"></a>
+<FONT color="green">336</FONT>    <a name="line.336"></a>
+<FONT color="green">337</FONT>        @Override<a name="line.337"></a>
+<FONT color="green">338</FONT>        public String toString() {<a name="line.338"></a>
+<FONT color="green">339</FONT>            String msg = getLocalizedMessage();<a name="line.339"></a>
+<FONT color="green">340</FONT>            String name = getClass().getName();<a name="line.340"></a>
+<FONT color="green">341</FONT>            if (msg == null) {<a name="line.341"></a>
+<FONT color="green">342</FONT>                return name;<a name="line.342"></a>
+<FONT color="green">343</FONT>            }<a name="line.343"></a>
+<FONT color="green">344</FONT>            return new StringBuffer(name.length() + 2 + msg.length()).append(name).append(": ")<a name="line.344"></a>
+<FONT color="green">345</FONT>                    .append(msg).toString();<a name="line.345"></a>
+<FONT color="green">346</FONT>        }<a name="line.346"></a>
+<FONT color="green">347</FONT>    <a name="line.347"></a>
+<FONT color="green">348</FONT>        /**<a name="line.348"></a>
+<FONT color="green">349</FONT>         * Initializes the cause of this {@code Throwable}. The cause can only be<a name="line.349"></a>
+<FONT color="green">350</FONT>         * initialized once.<a name="line.350"></a>
+<FONT color="green">351</FONT>         * <a name="line.351"></a>
+<FONT color="green">352</FONT>         * @param throwable<a name="line.352"></a>
+<FONT color="green">353</FONT>         *            the cause of this {@code Throwable}.<a name="line.353"></a>
+<FONT color="green">354</FONT>         * @return this {@code Throwable} instance.<a name="line.354"></a>
+<FONT color="green">355</FONT>         * @throws IllegalArgumentException<a name="line.355"></a>
+<FONT color="green">356</FONT>         *             if {@code Throwable} is this object.<a name="line.356"></a>
+<FONT color="green">357</FONT>         * @throws IllegalStateException<a name="line.357"></a>
+<FONT color="green">358</FONT>         *             if the cause has already been initialized.<a name="line.358"></a>
+<FONT color="green">359</FONT>         * @since Android 1.0<a name="line.359"></a>
+<FONT color="green">360</FONT>         */<a name="line.360"></a>
+<FONT color="green">361</FONT>        public Throwable initCause(Throwable throwable) {<a name="line.361"></a>
+<FONT color="green">362</FONT>            // BEGIN android-note<a name="line.362"></a>
+<FONT color="green">363</FONT>            // removed synchronized modifier<a name="line.363"></a>
+<FONT color="green">364</FONT>            // END android-note<a name="line.364"></a>
+<FONT color="green">365</FONT>            if (cause == this) {<a name="line.365"></a>
+<FONT color="green">366</FONT>                if (throwable != this) {<a name="line.366"></a>
+<FONT color="green">367</FONT>                    cause = throwable;<a name="line.367"></a>
+<FONT color="green">368</FONT>                    return this;<a name="line.368"></a>
+<FONT color="green">369</FONT>                }<a name="line.369"></a>
+<FONT color="green">370</FONT>                throw new IllegalArgumentException("Cause cannot be the receiver");<a name="line.370"></a>
+<FONT color="green">371</FONT>            }<a name="line.371"></a>
+<FONT color="green">372</FONT>            throw new IllegalStateException("Cause already initialized");<a name="line.372"></a>
+<FONT color="green">373</FONT>        }<a name="line.373"></a>
+<FONT color="green">374</FONT>    <a name="line.374"></a>
+<FONT color="green">375</FONT>        /**<a name="line.375"></a>
+<FONT color="green">376</FONT>         * Returns the cause of this {@code Throwable}, or {@code null} if there is<a name="line.376"></a>
+<FONT color="green">377</FONT>         * no cause.<a name="line.377"></a>
+<FONT color="green">378</FONT>         * <a name="line.378"></a>
+<FONT color="green">379</FONT>         * @return Throwable this {@code Throwable}'s cause.<a name="line.379"></a>
+<FONT color="green">380</FONT>         * @since Android 1.0<a name="line.380"></a>
+<FONT color="green">381</FONT>         */<a name="line.381"></a>
+<FONT color="green">382</FONT>        public Throwable getCause() {<a name="line.382"></a>
+<FONT color="green">383</FONT>            if (cause == this) {<a name="line.383"></a>
+<FONT color="green">384</FONT>                return null;<a name="line.384"></a>
+<FONT color="green">385</FONT>            }<a name="line.385"></a>
+<FONT color="green">386</FONT>            return cause;<a name="line.386"></a>
+<FONT color="green">387</FONT>        }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>        private void writeObject(ObjectOutputStream s) throws IOException {<a name="line.389"></a>
+<FONT color="green">390</FONT>            // ensure the stackTrace field is initialized<a name="line.390"></a>
+<FONT color="green">391</FONT>            getInternalStackTrace();<a name="line.391"></a>
+<FONT color="green">392</FONT>            s.defaultWriteObject();<a name="line.392"></a>
+<FONT color="green">393</FONT>        }<a name="line.393"></a>
+<FONT color="green">394</FONT>    <a name="line.394"></a>
+<FONT color="green">395</FONT>        // BEGIN android-added<a name="line.395"></a>
+<FONT color="green">396</FONT>        /*<a name="line.396"></a>
+<FONT color="green">397</FONT>         * Creates a compact, VM-specific collection of goodies, suitable for<a name="line.397"></a>
+<FONT color="green">398</FONT>         * storing in the "stackState" field, based on the current thread's<a name="line.398"></a>
+<FONT color="green">399</FONT>         * call stack.<a name="line.399"></a>
+<FONT color="green">400</FONT>         */<a name="line.400"></a>
+<FONT color="green">401</FONT>        native private static Object nativeFillInStackTrace();<a name="line.401"></a>
+<FONT color="green">402</FONT>    <a name="line.402"></a>
+<FONT color="green">403</FONT>        /*<a name="line.403"></a>
+<FONT color="green">404</FONT>         * Creates an array of StackTraceElement objects from the data held<a name="line.404"></a>
+<FONT color="green">405</FONT>         * in "stackState".<a name="line.405"></a>
+<FONT color="green">406</FONT>         */<a name="line.406"></a>
+<FONT color="green">407</FONT>        native private static StackTraceElement[] nativeGetStackTrace(Object stackState);<a name="line.407"></a>
+<FONT color="green">408</FONT>        // END android-added<a name="line.408"></a>
+<FONT color="green">409</FONT>    }<a name="line.409"></a>
+<FONT color="green">410</FONT>    <a name="line.410"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

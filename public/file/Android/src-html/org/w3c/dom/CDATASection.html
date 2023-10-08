@@ -1,0 +1,114 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (c) 2000 World Wide Web Consortium,<a name="line.2"></a>
+<FONT color="green">003</FONT>     * (Massachusetts Institute of Technology, Institut National de<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Recherche en Informatique et en Automatique, Keio University). All<a name="line.4"></a>
+<FONT color="green">005</FONT>     * Rights Reserved. This program is distributed under the W3C's Software<a name="line.5"></a>
+<FONT color="green">006</FONT>     * Intellectual Property License. This program is distributed in the<a name="line.6"></a>
+<FONT color="green">007</FONT>     * hope that it will be useful, but WITHOUT ANY WARRANTY; without even<a name="line.7"></a>
+<FONT color="green">008</FONT>     * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR<a name="line.8"></a>
+<FONT color="green">009</FONT>     * PURPOSE.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See W3C License http://www.w3.org/Consortium/Legal/ for more details.<a name="line.10"></a>
+<FONT color="green">011</FONT>     */<a name="line.11"></a>
+<FONT color="green">012</FONT>    <a name="line.12"></a>
+<FONT color="green">013</FONT>    package org.w3c.dom;<a name="line.13"></a>
+<FONT color="green">014</FONT>    <a name="line.14"></a>
+<FONT color="green">015</FONT>    /**<a name="line.15"></a>
+<FONT color="green">016</FONT>     * CDATA sections are used to escape blocks of text containing characters that <a name="line.16"></a>
+<FONT color="green">017</FONT>     * would otherwise be regarded as markup. The only delimiter that is <a name="line.17"></a>
+<FONT color="green">018</FONT>     * recognized in a CDATA section is the "]]&amp;gt;" string that ends the CDATA <a name="line.18"></a>
+<FONT color="green">019</FONT>     * section. CDATA sections cannot be nested. Their primary purpose is for <a name="line.19"></a>
+<FONT color="green">020</FONT>     * including material such as XML fragments, without needing to escape all <a name="line.20"></a>
+<FONT color="green">021</FONT>     * the delimiters.<a name="line.21"></a>
+<FONT color="green">022</FONT>     * &lt;p&gt;The &lt;code&gt;DOMString&lt;/code&gt; attribute of the &lt;code&gt;Text&lt;/code&gt; node holds <a name="line.22"></a>
+<FONT color="green">023</FONT>     * the text that is contained by the CDATA section. Note that this may <a name="line.23"></a>
+<FONT color="green">024</FONT>     * contain characters that need to be escaped outside of CDATA sections and <a name="line.24"></a>
+<FONT color="green">025</FONT>     * that, depending on the character encoding ("charset") chosen for <a name="line.25"></a>
+<FONT color="green">026</FONT>     * serialization, it may be impossible to write out some characters as part <a name="line.26"></a>
+<FONT color="green">027</FONT>     * of a CDATA section. <a name="line.27"></a>
+<FONT color="green">028</FONT>     * &lt;p&gt; The &lt;code&gt;CDATASection&lt;/code&gt; interface inherits from the <a name="line.28"></a>
+<FONT color="green">029</FONT>     * &lt;code&gt;CharacterData&lt;/code&gt; interface through the &lt;code&gt;Text&lt;/code&gt; <a name="line.29"></a>
+<FONT color="green">030</FONT>     * interface. Adjacent &lt;code&gt;CDATASection&lt;/code&gt; nodes are not merged by use <a name="line.30"></a>
+<FONT color="green">031</FONT>     * of the &lt;code&gt;normalize&lt;/code&gt; method of the &lt;code&gt;Node&lt;/code&gt; interface.<a name="line.31"></a>
+<FONT color="green">032</FONT>     * Because no markup is recognized within a &lt;code&gt;CDATASection&lt;/code&gt;, <a name="line.32"></a>
+<FONT color="green">033</FONT>     * character numeric references cannot be used as an escape mechanism when <a name="line.33"></a>
+<FONT color="green">034</FONT>     * serializing. Therefore, action needs to be taken when serializing a <a name="line.34"></a>
+<FONT color="green">035</FONT>     * &lt;code&gt;CDATASection&lt;/code&gt; with a character encoding where some of the <a name="line.35"></a>
+<FONT color="green">036</FONT>     * contained characters cannot be represented. Failure to do so would not <a name="line.36"></a>
+<FONT color="green">037</FONT>     * produce well-formed XML.One potential solution in the serialization <a name="line.37"></a>
+<FONT color="green">038</FONT>     * process is to end the CDATA section before the character, output the <a name="line.38"></a>
+<FONT color="green">039</FONT>     * character using a character reference or entity reference, and open a new <a name="line.39"></a>
+<FONT color="green">040</FONT>     * CDATA section for any further characters in the text node. Note, however, <a name="line.40"></a>
+<FONT color="green">041</FONT>     * that some code conversion libraries at the time of writing do not return <a name="line.41"></a>
+<FONT color="green">042</FONT>     * an error or exception when a character is missing from the encoding, <a name="line.42"></a>
+<FONT color="green">043</FONT>     * making the task of ensuring that data is not corrupted on serialization <a name="line.43"></a>
+<FONT color="green">044</FONT>     * more difficult.<a name="line.44"></a>
+<FONT color="green">045</FONT>     * &lt;p&gt;See also the &lt;a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Core-20001113'&gt;Document Object Model (DOM) Level 2 Core Specification&lt;/a&gt;.<a name="line.45"></a>
+<FONT color="green">046</FONT>     */<a name="line.46"></a>
+<FONT color="green">047</FONT>    public interface CDATASection extends Text {<a name="line.47"></a>
+<FONT color="green">048</FONT>    }<a name="line.48"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

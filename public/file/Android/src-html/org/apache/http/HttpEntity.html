@@ -1,0 +1,262 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * $HeadURL: http://svn.apache.org/repos/asf/httpcomponents/httpcore/trunk/module-main/src/main/java/org/apache/http/HttpEntity.java $<a name="line.2"></a>
+<FONT color="green">003</FONT>     * $Revision: 645824 $<a name="line.3"></a>
+<FONT color="green">004</FONT>     * $Date: 2008-04-08 03:12:41 -0700 (Tue, 08 Apr 2008) $<a name="line.4"></a>
+<FONT color="green">005</FONT>     *<a name="line.5"></a>
+<FONT color="green">006</FONT>     * ====================================================================<a name="line.6"></a>
+<FONT color="green">007</FONT>     * Licensed to the Apache Software Foundation (ASF) under one<a name="line.7"></a>
+<FONT color="green">008</FONT>     * or more contributor license agreements.  See the NOTICE file<a name="line.8"></a>
+<FONT color="green">009</FONT>     * distributed with this work for additional information<a name="line.9"></a>
+<FONT color="green">010</FONT>     * regarding copyright ownership.  The ASF licenses this file<a name="line.10"></a>
+<FONT color="green">011</FONT>     * to you under the Apache License, Version 2.0 (the<a name="line.11"></a>
+<FONT color="green">012</FONT>     * "License"); you may not use this file except in compliance<a name="line.12"></a>
+<FONT color="green">013</FONT>     * with the License.  You may obtain a copy of the License at<a name="line.13"></a>
+<FONT color="green">014</FONT>     *<a name="line.14"></a>
+<FONT color="green">015</FONT>     *   http://www.apache.org/licenses/LICENSE-2.0<a name="line.15"></a>
+<FONT color="green">016</FONT>     *<a name="line.16"></a>
+<FONT color="green">017</FONT>     * Unless required by applicable law or agreed to in writing,<a name="line.17"></a>
+<FONT color="green">018</FONT>     * software distributed under the License is distributed on an<a name="line.18"></a>
+<FONT color="green">019</FONT>     * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY<a name="line.19"></a>
+<FONT color="green">020</FONT>     * KIND, either express or implied.  See the License for the<a name="line.20"></a>
+<FONT color="green">021</FONT>     * specific language governing permissions and limitations<a name="line.21"></a>
+<FONT color="green">022</FONT>     * under the License.<a name="line.22"></a>
+<FONT color="green">023</FONT>     * ====================================================================<a name="line.23"></a>
+<FONT color="green">024</FONT>     *<a name="line.24"></a>
+<FONT color="green">025</FONT>     * This software consists of voluntary contributions made by many<a name="line.25"></a>
+<FONT color="green">026</FONT>     * individuals on behalf of the Apache Software Foundation.  For more<a name="line.26"></a>
+<FONT color="green">027</FONT>     * information on the Apache Software Foundation, please see<a name="line.27"></a>
+<FONT color="green">028</FONT>     * &lt;http://www.apache.org/&gt;.<a name="line.28"></a>
+<FONT color="green">029</FONT>     *<a name="line.29"></a>
+<FONT color="green">030</FONT>     */<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    package org.apache.http;<a name="line.32"></a>
+<FONT color="green">033</FONT>    <a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.io.IOException;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.io.InputStream;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.io.OutputStream;<a name="line.36"></a>
+<FONT color="green">037</FONT>    <a name="line.37"></a>
+<FONT color="green">038</FONT>    /**<a name="line.38"></a>
+<FONT color="green">039</FONT>     * An entity that can be sent or received with an HTTP message.<a name="line.39"></a>
+<FONT color="green">040</FONT>     * Entities can be found in some<a name="line.40"></a>
+<FONT color="green">041</FONT>     * {@link HttpEntityEnclosingRequest requests} and in<a name="line.41"></a>
+<FONT color="green">042</FONT>     * {@link HttpResponse responses}, where they are optional.<a name="line.42"></a>
+<FONT color="green">043</FONT>     * &lt;p&gt;<a name="line.43"></a>
+<FONT color="green">044</FONT>     * In some places, the JavaDoc distinguishes three kinds of entities,<a name="line.44"></a>
+<FONT color="green">045</FONT>     * depending on where their {@link #getContent content} originates:<a name="line.45"></a>
+<FONT color="green">046</FONT>     * &lt;ul&gt;<a name="line.46"></a>
+<FONT color="green">047</FONT>     * &lt;li&gt;&lt;b&gt;streamed&lt;/b&gt;: The content is received from a stream, or<a name="line.47"></a>
+<FONT color="green">048</FONT>     *     generated on the fly. In particular, this category includes<a name="line.48"></a>
+<FONT color="green">049</FONT>     *     entities being received from a {@link HttpConnection connection}.<a name="line.49"></a>
+<FONT color="green">050</FONT>     *     {@link #isStreaming Streamed} entities are generally not<a name="line.50"></a>
+<FONT color="green">051</FONT>     *      {@link #isRepeatable repeatable}.<a name="line.51"></a>
+<FONT color="green">052</FONT>     *     &lt;/li&gt;<a name="line.52"></a>
+<FONT color="green">053</FONT>     * &lt;li&gt;&lt;b&gt;self-contained&lt;/b&gt;: The content is in memory or obtained by<a name="line.53"></a>
+<FONT color="green">054</FONT>     *     means that are independent from a connection or other entity.<a name="line.54"></a>
+<FONT color="green">055</FONT>     *     Self-contained entities are generally {@link #isRepeatable repeatable}.<a name="line.55"></a>
+<FONT color="green">056</FONT>     *     &lt;/li&gt;<a name="line.56"></a>
+<FONT color="green">057</FONT>     * &lt;li&gt;&lt;b&gt;wrapping&lt;/b&gt;: The content is obtained from another entity.<a name="line.57"></a>
+<FONT color="green">058</FONT>     *     &lt;/li&gt;<a name="line.58"></a>
+<FONT color="green">059</FONT>     * &lt;/ul&gt;<a name="line.59"></a>
+<FONT color="green">060</FONT>     * This distinction is important for connection management with incoming<a name="line.60"></a>
+<FONT color="green">061</FONT>     * entities. For entities that are created by an application and only sent<a name="line.61"></a>
+<FONT color="green">062</FONT>     * using the HTTP components framework, the difference between streamed<a name="line.62"></a>
+<FONT color="green">063</FONT>     * and self-contained is of little importance. In that case, it is suggested<a name="line.63"></a>
+<FONT color="green">064</FONT>     * to consider non-repeatable entities as streamed, and those that are<a name="line.64"></a>
+<FONT color="green">065</FONT>     * repeatable (without a huge effort) as self-contained.<a name="line.65"></a>
+<FONT color="green">066</FONT>     *<a name="line.66"></a>
+<FONT color="green">067</FONT>     * @author &lt;a href="mailto:oleg at ural.ru"&gt;Oleg Kalnichevski&lt;/a&gt;<a name="line.67"></a>
+<FONT color="green">068</FONT>     *<a name="line.68"></a>
+<FONT color="green">069</FONT>     * @version $Revision: 645824 $<a name="line.69"></a>
+<FONT color="green">070</FONT>     * <a name="line.70"></a>
+<FONT color="green">071</FONT>     * @since 4.0<a name="line.71"></a>
+<FONT color="green">072</FONT>     */<a name="line.72"></a>
+<FONT color="green">073</FONT>    public interface HttpEntity {<a name="line.73"></a>
+<FONT color="green">074</FONT>    <a name="line.74"></a>
+<FONT color="green">075</FONT>        /**<a name="line.75"></a>
+<FONT color="green">076</FONT>         * Tells if the entity is capable to produce its data more than once.<a name="line.76"></a>
+<FONT color="green">077</FONT>         * A repeatable entity's getContent() and writeTo(OutputStream) methods<a name="line.77"></a>
+<FONT color="green">078</FONT>         * can be called more than once whereas a non-repeatable entity's can not.<a name="line.78"></a>
+<FONT color="green">079</FONT>         * @return true if the entity is repeatable, false otherwise.<a name="line.79"></a>
+<FONT color="green">080</FONT>         */<a name="line.80"></a>
+<FONT color="green">081</FONT>        boolean isRepeatable();<a name="line.81"></a>
+<FONT color="green">082</FONT>    <a name="line.82"></a>
+<FONT color="green">083</FONT>        /**<a name="line.83"></a>
+<FONT color="green">084</FONT>         * Tells about chunked encoding for this entity.<a name="line.84"></a>
+<FONT color="green">085</FONT>         * The primary purpose of this method is to indicate whether<a name="line.85"></a>
+<FONT color="green">086</FONT>         * chunked encoding should be used when the entity is sent.<a name="line.86"></a>
+<FONT color="green">087</FONT>         * For entities that are received, it can also indicate whether<a name="line.87"></a>
+<FONT color="green">088</FONT>         * the entity was received with chunked encoding.<a name="line.88"></a>
+<FONT color="green">089</FONT>         * &lt;br/&gt;<a name="line.89"></a>
+<FONT color="green">090</FONT>         * The behavior of wrapping entities is implementation dependent,<a name="line.90"></a>
+<FONT color="green">091</FONT>         * but should respect the primary purpose.<a name="line.91"></a>
+<FONT color="green">092</FONT>         *<a name="line.92"></a>
+<FONT color="green">093</FONT>         * @return  &lt;code&gt;true&lt;/code&gt; if chunked encoding is preferred for this<a name="line.93"></a>
+<FONT color="green">094</FONT>         *          entity, or &lt;code&gt;false&lt;/code&gt; if it is not<a name="line.94"></a>
+<FONT color="green">095</FONT>         */<a name="line.95"></a>
+<FONT color="green">096</FONT>        boolean isChunked();<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>        /**<a name="line.98"></a>
+<FONT color="green">099</FONT>         * Tells the length of the content, if known.<a name="line.99"></a>
+<FONT color="green">100</FONT>         *<a name="line.100"></a>
+<FONT color="green">101</FONT>         * @return  the number of bytes of the content, or<a name="line.101"></a>
+<FONT color="green">102</FONT>         *          a negative number if unknown. If the content length is known<a name="line.102"></a>
+<FONT color="green">103</FONT>         *          but exceeds {@link java.lang.Long#MAX_VALUE Long.MAX_VALUE},<a name="line.103"></a>
+<FONT color="green">104</FONT>         *          a negative number is returned.<a name="line.104"></a>
+<FONT color="green">105</FONT>         */<a name="line.105"></a>
+<FONT color="green">106</FONT>        long getContentLength();<a name="line.106"></a>
+<FONT color="green">107</FONT>    <a name="line.107"></a>
+<FONT color="green">108</FONT>        /**<a name="line.108"></a>
+<FONT color="green">109</FONT>         * Obtains the Content-Type header, if known.<a name="line.109"></a>
+<FONT color="green">110</FONT>         * This is the header that should be used when sending the entity,<a name="line.110"></a>
+<FONT color="green">111</FONT>         * or the one that was received with the entity. It can include a<a name="line.111"></a>
+<FONT color="green">112</FONT>         * charset attribute.<a name="line.112"></a>
+<FONT color="green">113</FONT>         *<a name="line.113"></a>
+<FONT color="green">114</FONT>         * @return  the Content-Type header for this entity, or<a name="line.114"></a>
+<FONT color="green">115</FONT>         *          &lt;code&gt;null&lt;/code&gt; if the content type is unknown<a name="line.115"></a>
+<FONT color="green">116</FONT>         */<a name="line.116"></a>
+<FONT color="green">117</FONT>        Header getContentType();<a name="line.117"></a>
+<FONT color="green">118</FONT>    <a name="line.118"></a>
+<FONT color="green">119</FONT>        /**<a name="line.119"></a>
+<FONT color="green">120</FONT>         * Obtains the Content-Encoding header, if known.<a name="line.120"></a>
+<FONT color="green">121</FONT>         * This is the header that should be used when sending the entity,<a name="line.121"></a>
+<FONT color="green">122</FONT>         * or the one that was received with the entity.<a name="line.122"></a>
+<FONT color="green">123</FONT>         * Wrapping entities that modify the content encoding should<a name="line.123"></a>
+<FONT color="green">124</FONT>         * adjust this header accordingly.<a name="line.124"></a>
+<FONT color="green">125</FONT>         *<a name="line.125"></a>
+<FONT color="green">126</FONT>         * @return  the Content-Encoding header for this entity, or<a name="line.126"></a>
+<FONT color="green">127</FONT>         *          &lt;code&gt;null&lt;/code&gt; if the content encoding is unknown<a name="line.127"></a>
+<FONT color="green">128</FONT>         */<a name="line.128"></a>
+<FONT color="green">129</FONT>        Header getContentEncoding();<a name="line.129"></a>
+<FONT color="green">130</FONT>    <a name="line.130"></a>
+<FONT color="green">131</FONT>        /**<a name="line.131"></a>
+<FONT color="green">132</FONT>         * Creates a new InputStream object of the entity.<a name="line.132"></a>
+<FONT color="green">133</FONT>         * It is a programming error<a name="line.133"></a>
+<FONT color="green">134</FONT>         * to return the same InputStream object more than once.<a name="line.134"></a>
+<FONT color="green">135</FONT>         * Entities that are not {@link #isRepeatable repeatable}<a name="line.135"></a>
+<FONT color="green">136</FONT>         * will throw an exception if this method is called multiple times.<a name="line.136"></a>
+<FONT color="green">137</FONT>         *<a name="line.137"></a>
+<FONT color="green">138</FONT>         * @return a new input stream that returns the entity data.<a name="line.138"></a>
+<FONT color="green">139</FONT>         *<a name="line.139"></a>
+<FONT color="green">140</FONT>         * @throws IOException if the stream could not be created<a name="line.140"></a>
+<FONT color="green">141</FONT>         * @throws IllegalStateException<a name="line.141"></a>
+<FONT color="green">142</FONT>         *  if this entity is not repeatable and the stream<a name="line.142"></a>
+<FONT color="green">143</FONT>         *  has already been obtained previously<a name="line.143"></a>
+<FONT color="green">144</FONT>         */<a name="line.144"></a>
+<FONT color="green">145</FONT>        InputStream getContent() throws IOException, IllegalStateException;<a name="line.145"></a>
+<FONT color="green">146</FONT>    <a name="line.146"></a>
+<FONT color="green">147</FONT>        /**<a name="line.147"></a>
+<FONT color="green">148</FONT>         * Writes the entity content to the output stream.  <a name="line.148"></a>
+<FONT color="green">149</FONT>         * <a name="line.149"></a>
+<FONT color="green">150</FONT>         * @param outstream the output stream to write entity content to<a name="line.150"></a>
+<FONT color="green">151</FONT>         * <a name="line.151"></a>
+<FONT color="green">152</FONT>         * @throws IOException if an I/O error occurs<a name="line.152"></a>
+<FONT color="green">153</FONT>         */<a name="line.153"></a>
+<FONT color="green">154</FONT>        void writeTo(OutputStream outstream) throws IOException;<a name="line.154"></a>
+<FONT color="green">155</FONT>    <a name="line.155"></a>
+<FONT color="green">156</FONT>        /**<a name="line.156"></a>
+<FONT color="green">157</FONT>         * Tells whether this entity depends on an underlying stream.<a name="line.157"></a>
+<FONT color="green">158</FONT>         * Streamed entities should return &lt;code&gt;true&lt;/code&gt; until the<a name="line.158"></a>
+<FONT color="green">159</FONT>         * content has been consumed, &lt;code&gt;false&lt;/code&gt; afterwards.<a name="line.159"></a>
+<FONT color="green">160</FONT>         * Self-contained entities should return &lt;code&gt;false&lt;/code&gt;.<a name="line.160"></a>
+<FONT color="green">161</FONT>         * Wrapping entities should delegate this call to the wrapped entity.<a name="line.161"></a>
+<FONT color="green">162</FONT>         * &lt;br/&gt;<a name="line.162"></a>
+<FONT color="green">163</FONT>         * The content of a streamed entity is consumed when the stream<a name="line.163"></a>
+<FONT color="green">164</FONT>         * returned by {@link #getContent getContent} has been read to EOF,<a name="line.164"></a>
+<FONT color="green">165</FONT>         * or after {@link #consumeContent consumeContent} has been called.<a name="line.165"></a>
+<FONT color="green">166</FONT>         * If a streamed entity can not detect whether the stream has been<a name="line.166"></a>
+<FONT color="green">167</FONT>         * read to EOF, it should return &lt;code&gt;true&lt;/code&gt; until<a name="line.167"></a>
+<FONT color="green">168</FONT>         * {@link #consumeContent consumeContent} is called.<a name="line.168"></a>
+<FONT color="green">169</FONT>         *<a name="line.169"></a>
+<FONT color="green">170</FONT>         * @return  &lt;code&gt;true&lt;/code&gt; if the entity content is streamed and<a name="line.170"></a>
+<FONT color="green">171</FONT>         *          not yet consumed, &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.171"></a>
+<FONT color="green">172</FONT>         */<a name="line.172"></a>
+<FONT color="green">173</FONT>        boolean isStreaming(); // don't expect an exception here<a name="line.173"></a>
+<FONT color="green">174</FONT>    <a name="line.174"></a>
+<FONT color="green">175</FONT>        /**<a name="line.175"></a>
+<FONT color="green">176</FONT>         * TODO: The name of this method is misnomer. It will be renamed to<a name="line.176"></a>
+<FONT color="green">177</FONT>         * #finish() in the next major release.<a name="line.177"></a>
+<FONT color="green">178</FONT>         * &lt;br/&gt;<a name="line.178"></a>
+<FONT color="green">179</FONT>         * This method is called to indicate that the content of this entity<a name="line.179"></a>
+<FONT color="green">180</FONT>         * is no longer required. All entity implementations are expected to<a name="line.180"></a>
+<FONT color="green">181</FONT>         * release all allocated resources as a result of this method <a name="line.181"></a>
+<FONT color="green">182</FONT>         * invocation. Content streaming entities are also expected to <a name="line.182"></a>
+<FONT color="green">183</FONT>         * dispose of the remaining content, if any. Wrapping entities should <a name="line.183"></a>
+<FONT color="green">184</FONT>         * delegate this call to the wrapped entity.<a name="line.184"></a>
+<FONT color="green">185</FONT>         * &lt;br/&gt;<a name="line.185"></a>
+<FONT color="green">186</FONT>         * This method is of particular importance for entities being<a name="line.186"></a>
+<FONT color="green">187</FONT>         * received from a {@link HttpConnection connection}. The entity<a name="line.187"></a>
+<FONT color="green">188</FONT>         * needs to be consumed completely in order to re-use the connection<a name="line.188"></a>
+<FONT color="green">189</FONT>         * with keep-alive.<a name="line.189"></a>
+<FONT color="green">190</FONT>         *<a name="line.190"></a>
+<FONT color="green">191</FONT>         * @throws IOException if an I/O error occurs.<a name="line.191"></a>
+<FONT color="green">192</FONT>         *          This indicates that connection keep-alive is not possible.<a name="line.192"></a>
+<FONT color="green">193</FONT>         */<a name="line.193"></a>
+<FONT color="green">194</FONT>        void consumeContent() throws IOException;<a name="line.194"></a>
+<FONT color="green">195</FONT>    <a name="line.195"></a>
+<FONT color="green">196</FONT>    } // interface HttpEntity<a name="line.196"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

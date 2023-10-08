@@ -1,0 +1,786 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.webkit;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.content.Context;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.net.http.Headers;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.FileUtils;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.util.Config;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.util.Log;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import java.io.File;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.io.FileInputStream;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.io.FileNotFoundException;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.io.FileOutputStream;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.io.IOException;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.io.InputStream;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.io.OutputStream;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.ArrayList;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.Map;<a name="line.32"></a>
+<FONT color="green">033</FONT>    <a name="line.33"></a>
+<FONT color="green">034</FONT>    import org.bouncycastle.crypto.Digest;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import org.bouncycastle.crypto.digests.SHA1Digest;<a name="line.35"></a>
+<FONT color="green">036</FONT>    <a name="line.36"></a>
+<FONT color="green">037</FONT>    /**<a name="line.37"></a>
+<FONT color="green">038</FONT>     * The class CacheManager provides the persistent cache of content that is<a name="line.38"></a>
+<FONT color="green">039</FONT>     * received over the network. The component handles parsing of HTTP headers and<a name="line.39"></a>
+<FONT color="green">040</FONT>     * utilizes the relevant cache headers to determine if the content should be<a name="line.40"></a>
+<FONT color="green">041</FONT>     * stored and if so, how long it is valid for. Network requests are provided to<a name="line.41"></a>
+<FONT color="green">042</FONT>     * this component and if they can not be resolved by the cache, the HTTP headers<a name="line.42"></a>
+<FONT color="green">043</FONT>     * are attached, as appropriate, to the request for revalidation of content. The<a name="line.43"></a>
+<FONT color="green">044</FONT>     * class also manages the cache size.<a name="line.44"></a>
+<FONT color="green">045</FONT>     */<a name="line.45"></a>
+<FONT color="green">046</FONT>    public final class CacheManager {<a name="line.46"></a>
+<FONT color="green">047</FONT>    <a name="line.47"></a>
+<FONT color="green">048</FONT>        private static final String LOGTAG = "cache";<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>        static final String HEADER_KEY_IFMODIFIEDSINCE = "if-modified-since";<a name="line.50"></a>
+<FONT color="green">051</FONT>        static final String HEADER_KEY_IFNONEMATCH = "if-none-match";<a name="line.51"></a>
+<FONT color="green">052</FONT>    <a name="line.52"></a>
+<FONT color="green">053</FONT>        private static final String NO_STORE = "no-store";<a name="line.53"></a>
+<FONT color="green">054</FONT>        private static final String NO_CACHE = "no-cache";<a name="line.54"></a>
+<FONT color="green">055</FONT>        private static final String PRIVATE  = "private";<a name="line.55"></a>
+<FONT color="green">056</FONT>        private static final String MAX_AGE = "max-age";<a name="line.56"></a>
+<FONT color="green">057</FONT>    <a name="line.57"></a>
+<FONT color="green">058</FONT>        private static long CACHE_THRESHOLD = 6 * 1024 * 1024;<a name="line.58"></a>
+<FONT color="green">059</FONT>        private static long CACHE_TRIM_AMOUNT = 2 * 1024 * 1024;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>        private static boolean mDisabled;<a name="line.61"></a>
+<FONT color="green">062</FONT>    <a name="line.62"></a>
+<FONT color="green">063</FONT>        // Reference count the enable/disable transaction<a name="line.63"></a>
+<FONT color="green">064</FONT>        private static int mRefCount;<a name="line.64"></a>
+<FONT color="green">065</FONT>    <a name="line.65"></a>
+<FONT color="green">066</FONT>        // trimCacheIfNeeded() is called when a page is fully loaded. But JavaScript<a name="line.66"></a>
+<FONT color="green">067</FONT>        // can load the content, e.g. in a slideshow, continuously, so we need to<a name="line.67"></a>
+<FONT color="green">068</FONT>        // trim the cache on a timer base too. endCacheTransaction() is called on a <a name="line.68"></a>
+<FONT color="green">069</FONT>        // timer base. We share the same timer with less frequent update.<a name="line.69"></a>
+<FONT color="green">070</FONT>        private static int mTrimCacheCount = 0;<a name="line.70"></a>
+<FONT color="green">071</FONT>        private static final int TRIM_CACHE_INTERVAL = 5;<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        private static WebViewDatabase mDataBase;<a name="line.73"></a>
+<FONT color="green">074</FONT>        private static File mBaseDir;<a name="line.74"></a>
+<FONT color="green">075</FONT>        <a name="line.75"></a>
+<FONT color="green">076</FONT>        // Flag to clear the cache when the CacheManager is initialized<a name="line.76"></a>
+<FONT color="green">077</FONT>        private static boolean mClearCacheOnInit = false;<a name="line.77"></a>
+<FONT color="green">078</FONT>    <a name="line.78"></a>
+<FONT color="green">079</FONT>        public static class CacheResult {<a name="line.79"></a>
+<FONT color="green">080</FONT>            // these fields are saved to the database<a name="line.80"></a>
+<FONT color="green">081</FONT>            int httpStatusCode;<a name="line.81"></a>
+<FONT color="green">082</FONT>            long contentLength;<a name="line.82"></a>
+<FONT color="green">083</FONT>            long expires;<a name="line.83"></a>
+<FONT color="green">084</FONT>            String localPath;<a name="line.84"></a>
+<FONT color="green">085</FONT>            String lastModified;<a name="line.85"></a>
+<FONT color="green">086</FONT>            String etag;<a name="line.86"></a>
+<FONT color="green">087</FONT>            String mimeType;<a name="line.87"></a>
+<FONT color="green">088</FONT>            String location;<a name="line.88"></a>
+<FONT color="green">089</FONT>            String encoding;<a name="line.89"></a>
+<FONT color="green">090</FONT>    <a name="line.90"></a>
+<FONT color="green">091</FONT>            // these fields are NOT saved to the database<a name="line.91"></a>
+<FONT color="green">092</FONT>            InputStream inStream;<a name="line.92"></a>
+<FONT color="green">093</FONT>            OutputStream outStream;<a name="line.93"></a>
+<FONT color="green">094</FONT>            File outFile;<a name="line.94"></a>
+<FONT color="green">095</FONT>    <a name="line.95"></a>
+<FONT color="green">096</FONT>            public int getHttpStatusCode() {<a name="line.96"></a>
+<FONT color="green">097</FONT>                return httpStatusCode;<a name="line.97"></a>
+<FONT color="green">098</FONT>            }<a name="line.98"></a>
+<FONT color="green">099</FONT>    <a name="line.99"></a>
+<FONT color="green">100</FONT>            public long getContentLength() {<a name="line.100"></a>
+<FONT color="green">101</FONT>                return contentLength;<a name="line.101"></a>
+<FONT color="green">102</FONT>            }<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>            public String getLocalPath() {<a name="line.104"></a>
+<FONT color="green">105</FONT>                return localPath;<a name="line.105"></a>
+<FONT color="green">106</FONT>            }<a name="line.106"></a>
+<FONT color="green">107</FONT>    <a name="line.107"></a>
+<FONT color="green">108</FONT>            public long getExpires() {<a name="line.108"></a>
+<FONT color="green">109</FONT>                return expires;<a name="line.109"></a>
+<FONT color="green">110</FONT>            }<a name="line.110"></a>
+<FONT color="green">111</FONT>    <a name="line.111"></a>
+<FONT color="green">112</FONT>            public String getLastModified() {<a name="line.112"></a>
+<FONT color="green">113</FONT>                return lastModified;<a name="line.113"></a>
+<FONT color="green">114</FONT>            }<a name="line.114"></a>
+<FONT color="green">115</FONT>    <a name="line.115"></a>
+<FONT color="green">116</FONT>            public String getETag() {<a name="line.116"></a>
+<FONT color="green">117</FONT>                return etag;<a name="line.117"></a>
+<FONT color="green">118</FONT>            }<a name="line.118"></a>
+<FONT color="green">119</FONT>    <a name="line.119"></a>
+<FONT color="green">120</FONT>            public String getMimeType() {<a name="line.120"></a>
+<FONT color="green">121</FONT>                return mimeType;<a name="line.121"></a>
+<FONT color="green">122</FONT>            }<a name="line.122"></a>
+<FONT color="green">123</FONT>    <a name="line.123"></a>
+<FONT color="green">124</FONT>            public String getLocation() {<a name="line.124"></a>
+<FONT color="green">125</FONT>                return location;<a name="line.125"></a>
+<FONT color="green">126</FONT>            }<a name="line.126"></a>
+<FONT color="green">127</FONT>    <a name="line.127"></a>
+<FONT color="green">128</FONT>            public String getEncoding() {<a name="line.128"></a>
+<FONT color="green">129</FONT>                return encoding;<a name="line.129"></a>
+<FONT color="green">130</FONT>            }<a name="line.130"></a>
+<FONT color="green">131</FONT>    <a name="line.131"></a>
+<FONT color="green">132</FONT>            // For out-of-package access to the underlying streams.<a name="line.132"></a>
+<FONT color="green">133</FONT>            public InputStream getInputStream() {<a name="line.133"></a>
+<FONT color="green">134</FONT>                return inStream;<a name="line.134"></a>
+<FONT color="green">135</FONT>            }<a name="line.135"></a>
+<FONT color="green">136</FONT>    <a name="line.136"></a>
+<FONT color="green">137</FONT>            public OutputStream getOutputStream() {<a name="line.137"></a>
+<FONT color="green">138</FONT>                return outStream;<a name="line.138"></a>
+<FONT color="green">139</FONT>            }<a name="line.139"></a>
+<FONT color="green">140</FONT>    <a name="line.140"></a>
+<FONT color="green">141</FONT>            // These fields can be set manually.<a name="line.141"></a>
+<FONT color="green">142</FONT>            public void setInputStream(InputStream stream) {<a name="line.142"></a>
+<FONT color="green">143</FONT>                this.inStream = stream;<a name="line.143"></a>
+<FONT color="green">144</FONT>            }<a name="line.144"></a>
+<FONT color="green">145</FONT>    <a name="line.145"></a>
+<FONT color="green">146</FONT>            public void setEncoding(String encoding) {<a name="line.146"></a>
+<FONT color="green">147</FONT>                this.encoding = encoding;<a name="line.147"></a>
+<FONT color="green">148</FONT>            }<a name="line.148"></a>
+<FONT color="green">149</FONT>        }<a name="line.149"></a>
+<FONT color="green">150</FONT>    <a name="line.150"></a>
+<FONT color="green">151</FONT>        /**<a name="line.151"></a>
+<FONT color="green">152</FONT>         * initialize the CacheManager. WebView should handle this for each process.<a name="line.152"></a>
+<FONT color="green">153</FONT>         * <a name="line.153"></a>
+<FONT color="green">154</FONT>         * @param context The application context.<a name="line.154"></a>
+<FONT color="green">155</FONT>         */<a name="line.155"></a>
+<FONT color="green">156</FONT>        static void init(Context context) {<a name="line.156"></a>
+<FONT color="green">157</FONT>            mDataBase = WebViewDatabase.getInstance(context);<a name="line.157"></a>
+<FONT color="green">158</FONT>            mBaseDir = new File(context.getCacheDir(), "webviewCache");<a name="line.158"></a>
+<FONT color="green">159</FONT>            if (createCacheDirectory() &amp;&amp; mClearCacheOnInit) {<a name="line.159"></a>
+<FONT color="green">160</FONT>                removeAllCacheFiles();<a name="line.160"></a>
+<FONT color="green">161</FONT>                mClearCacheOnInit = false;<a name="line.161"></a>
+<FONT color="green">162</FONT>            }<a name="line.162"></a>
+<FONT color="green">163</FONT>        }<a name="line.163"></a>
+<FONT color="green">164</FONT>        <a name="line.164"></a>
+<FONT color="green">165</FONT>        /**<a name="line.165"></a>
+<FONT color="green">166</FONT>         * Create the cache directory if it does not already exist.<a name="line.166"></a>
+<FONT color="green">167</FONT>         * <a name="line.167"></a>
+<FONT color="green">168</FONT>         * @return true if the cache directory didn't exist and was created.<a name="line.168"></a>
+<FONT color="green">169</FONT>         */<a name="line.169"></a>
+<FONT color="green">170</FONT>        static private boolean createCacheDirectory() {<a name="line.170"></a>
+<FONT color="green">171</FONT>            if (!mBaseDir.exists()) {<a name="line.171"></a>
+<FONT color="green">172</FONT>                if(!mBaseDir.mkdirs()) {<a name="line.172"></a>
+<FONT color="green">173</FONT>                    Log.w(LOGTAG, "Unable to create webviewCache directory");<a name="line.173"></a>
+<FONT color="green">174</FONT>                    return false;<a name="line.174"></a>
+<FONT color="green">175</FONT>                }<a name="line.175"></a>
+<FONT color="green">176</FONT>                FileUtils.setPermissions(<a name="line.176"></a>
+<FONT color="green">177</FONT>                        mBaseDir.toString(),<a name="line.177"></a>
+<FONT color="green">178</FONT>                        FileUtils.S_IRWXU|FileUtils.S_IRWXG|FileUtils.S_IXOTH,<a name="line.178"></a>
+<FONT color="green">179</FONT>                        -1, -1);<a name="line.179"></a>
+<FONT color="green">180</FONT>                // If we did create the directory, we need to flush <a name="line.180"></a>
+<FONT color="green">181</FONT>                // the cache database. The directory could be recreated<a name="line.181"></a>
+<FONT color="green">182</FONT>                // because the system flushed all the data/cache directories<a name="line.182"></a>
+<FONT color="green">183</FONT>                // to free up disk space.<a name="line.183"></a>
+<FONT color="green">184</FONT>                WebViewCore.endCacheTransaction();<a name="line.184"></a>
+<FONT color="green">185</FONT>                mDataBase.clearCache();<a name="line.185"></a>
+<FONT color="green">186</FONT>                WebViewCore.startCacheTransaction();<a name="line.186"></a>
+<FONT color="green">187</FONT>                return true;<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>            return false;<a name="line.189"></a>
+<FONT color="green">190</FONT>        }<a name="line.190"></a>
+<FONT color="green">191</FONT>    <a name="line.191"></a>
+<FONT color="green">192</FONT>        /**<a name="line.192"></a>
+<FONT color="green">193</FONT>         * get the base directory of the cache. With localPath of the CacheResult,<a name="line.193"></a>
+<FONT color="green">194</FONT>         * it identifies the cache file.<a name="line.194"></a>
+<FONT color="green">195</FONT>         * <a name="line.195"></a>
+<FONT color="green">196</FONT>         * @return File The base directory of the cache.<a name="line.196"></a>
+<FONT color="green">197</FONT>         */<a name="line.197"></a>
+<FONT color="green">198</FONT>        public static File getCacheFileBaseDir() {<a name="line.198"></a>
+<FONT color="green">199</FONT>            return mBaseDir;<a name="line.199"></a>
+<FONT color="green">200</FONT>        }<a name="line.200"></a>
+<FONT color="green">201</FONT>    <a name="line.201"></a>
+<FONT color="green">202</FONT>        /**<a name="line.202"></a>
+<FONT color="green">203</FONT>         * set the flag to control whether cache is enabled or disabled<a name="line.203"></a>
+<FONT color="green">204</FONT>         * <a name="line.204"></a>
+<FONT color="green">205</FONT>         * @param disabled true to disable the cache<a name="line.205"></a>
+<FONT color="green">206</FONT>         */<a name="line.206"></a>
+<FONT color="green">207</FONT>        // only called from WebCore thread<a name="line.207"></a>
+<FONT color="green">208</FONT>        static void setCacheDisabled(boolean disabled) {<a name="line.208"></a>
+<FONT color="green">209</FONT>            if (disabled == mDisabled) {<a name="line.209"></a>
+<FONT color="green">210</FONT>                return;<a name="line.210"></a>
+<FONT color="green">211</FONT>            }<a name="line.211"></a>
+<FONT color="green">212</FONT>            mDisabled = disabled;<a name="line.212"></a>
+<FONT color="green">213</FONT>            if (mDisabled) {<a name="line.213"></a>
+<FONT color="green">214</FONT>                removeAllCacheFiles();<a name="line.214"></a>
+<FONT color="green">215</FONT>            }<a name="line.215"></a>
+<FONT color="green">216</FONT>        }<a name="line.216"></a>
+<FONT color="green">217</FONT>    <a name="line.217"></a>
+<FONT color="green">218</FONT>        /**<a name="line.218"></a>
+<FONT color="green">219</FONT>         * get the state of the current cache, enabled or disabled<a name="line.219"></a>
+<FONT color="green">220</FONT>         * <a name="line.220"></a>
+<FONT color="green">221</FONT>         * @return return if it is disabled<a name="line.221"></a>
+<FONT color="green">222</FONT>         */<a name="line.222"></a>
+<FONT color="green">223</FONT>        public static boolean cacheDisabled() {<a name="line.223"></a>
+<FONT color="green">224</FONT>            return mDisabled;<a name="line.224"></a>
+<FONT color="green">225</FONT>        }<a name="line.225"></a>
+<FONT color="green">226</FONT>    <a name="line.226"></a>
+<FONT color="green">227</FONT>        // only called from WebCore thread<a name="line.227"></a>
+<FONT color="green">228</FONT>        // make sure to call enableTransaction/disableTransaction in pair<a name="line.228"></a>
+<FONT color="green">229</FONT>        static boolean enableTransaction() {<a name="line.229"></a>
+<FONT color="green">230</FONT>            if (++mRefCount == 1) {<a name="line.230"></a>
+<FONT color="green">231</FONT>                mDataBase.startCacheTransaction();<a name="line.231"></a>
+<FONT color="green">232</FONT>                return true;<a name="line.232"></a>
+<FONT color="green">233</FONT>            }<a name="line.233"></a>
+<FONT color="green">234</FONT>            return false;<a name="line.234"></a>
+<FONT color="green">235</FONT>        }<a name="line.235"></a>
+<FONT color="green">236</FONT>    <a name="line.236"></a>
+<FONT color="green">237</FONT>        // only called from WebCore thread<a name="line.237"></a>
+<FONT color="green">238</FONT>        // make sure to call enableTransaction/disableTransaction in pair<a name="line.238"></a>
+<FONT color="green">239</FONT>        static boolean disableTransaction() {<a name="line.239"></a>
+<FONT color="green">240</FONT>            if (mRefCount == 0) {<a name="line.240"></a>
+<FONT color="green">241</FONT>                Log.e(LOGTAG, "disableTransaction is out of sync");<a name="line.241"></a>
+<FONT color="green">242</FONT>            }<a name="line.242"></a>
+<FONT color="green">243</FONT>            if (--mRefCount == 0) {<a name="line.243"></a>
+<FONT color="green">244</FONT>                mDataBase.endCacheTransaction();<a name="line.244"></a>
+<FONT color="green">245</FONT>                return true;<a name="line.245"></a>
+<FONT color="green">246</FONT>            }<a name="line.246"></a>
+<FONT color="green">247</FONT>            return false;<a name="line.247"></a>
+<FONT color="green">248</FONT>        }<a name="line.248"></a>
+<FONT color="green">249</FONT>    <a name="line.249"></a>
+<FONT color="green">250</FONT>        // only called from WebCore thread<a name="line.250"></a>
+<FONT color="green">251</FONT>        // make sure to call startCacheTransaction/endCacheTransaction in pair<a name="line.251"></a>
+<FONT color="green">252</FONT>        public static boolean startCacheTransaction() {<a name="line.252"></a>
+<FONT color="green">253</FONT>            return mDataBase.startCacheTransaction();<a name="line.253"></a>
+<FONT color="green">254</FONT>        }<a name="line.254"></a>
+<FONT color="green">255</FONT>    <a name="line.255"></a>
+<FONT color="green">256</FONT>        // only called from WebCore thread<a name="line.256"></a>
+<FONT color="green">257</FONT>        // make sure to call startCacheTransaction/endCacheTransaction in pair<a name="line.257"></a>
+<FONT color="green">258</FONT>        public static boolean endCacheTransaction() {<a name="line.258"></a>
+<FONT color="green">259</FONT>            boolean ret = mDataBase.endCacheTransaction();<a name="line.259"></a>
+<FONT color="green">260</FONT>            if (++mTrimCacheCount &gt;= TRIM_CACHE_INTERVAL) {<a name="line.260"></a>
+<FONT color="green">261</FONT>                mTrimCacheCount = 0;<a name="line.261"></a>
+<FONT color="green">262</FONT>                trimCacheIfNeeded();<a name="line.262"></a>
+<FONT color="green">263</FONT>            }<a name="line.263"></a>
+<FONT color="green">264</FONT>            return ret;<a name="line.264"></a>
+<FONT color="green">265</FONT>        }<a name="line.265"></a>
+<FONT color="green">266</FONT>    <a name="line.266"></a>
+<FONT color="green">267</FONT>        /**<a name="line.267"></a>
+<FONT color="green">268</FONT>         * Given a url, returns the CacheResult if exists. Otherwise returns null.<a name="line.268"></a>
+<FONT color="green">269</FONT>         * If headers are provided and a cache needs validation,<a name="line.269"></a>
+<FONT color="green">270</FONT>         * HEADER_KEY_IFNONEMATCH or HEADER_KEY_IFMODIFIEDSINCE will be set in the<a name="line.270"></a>
+<FONT color="green">271</FONT>         * cached headers.<a name="line.271"></a>
+<FONT color="green">272</FONT>         * <a name="line.272"></a>
+<FONT color="green">273</FONT>         * @return the CacheResult for a given url<a name="line.273"></a>
+<FONT color="green">274</FONT>         */<a name="line.274"></a>
+<FONT color="green">275</FONT>        // only called from WebCore thread<a name="line.275"></a>
+<FONT color="green">276</FONT>        public static CacheResult getCacheFile(String url,<a name="line.276"></a>
+<FONT color="green">277</FONT>                Map&lt;String, String&gt; headers) {<a name="line.277"></a>
+<FONT color="green">278</FONT>            if (mDisabled) {<a name="line.278"></a>
+<FONT color="green">279</FONT>                return null;<a name="line.279"></a>
+<FONT color="green">280</FONT>            }<a name="line.280"></a>
+<FONT color="green">281</FONT>    <a name="line.281"></a>
+<FONT color="green">282</FONT>            CacheResult result = mDataBase.getCache(url);<a name="line.282"></a>
+<FONT color="green">283</FONT>            if (result != null) {<a name="line.283"></a>
+<FONT color="green">284</FONT>                if (result.contentLength == 0) {<a name="line.284"></a>
+<FONT color="green">285</FONT>                    if (!checkCacheRedirect(result.httpStatusCode)) {<a name="line.285"></a>
+<FONT color="green">286</FONT>                        // this should not happen. If it does, remove it.<a name="line.286"></a>
+<FONT color="green">287</FONT>                        mDataBase.removeCache(url);<a name="line.287"></a>
+<FONT color="green">288</FONT>                        return null;<a name="line.288"></a>
+<FONT color="green">289</FONT>                    }<a name="line.289"></a>
+<FONT color="green">290</FONT>                } else {<a name="line.290"></a>
+<FONT color="green">291</FONT>                    File src = new File(mBaseDir, result.localPath);<a name="line.291"></a>
+<FONT color="green">292</FONT>                    try {<a name="line.292"></a>
+<FONT color="green">293</FONT>                        // open here so that even the file is deleted, the content<a name="line.293"></a>
+<FONT color="green">294</FONT>                        // is still readable by the caller until close() is called<a name="line.294"></a>
+<FONT color="green">295</FONT>                        result.inStream = new FileInputStream(src);<a name="line.295"></a>
+<FONT color="green">296</FONT>                    } catch (FileNotFoundException e) {<a name="line.296"></a>
+<FONT color="green">297</FONT>                        // the files in the cache directory can be removed by the<a name="line.297"></a>
+<FONT color="green">298</FONT>                        // system. If it is gone, clean up the database<a name="line.298"></a>
+<FONT color="green">299</FONT>                        mDataBase.removeCache(url);<a name="line.299"></a>
+<FONT color="green">300</FONT>                        return null;<a name="line.300"></a>
+<FONT color="green">301</FONT>                    }<a name="line.301"></a>
+<FONT color="green">302</FONT>                }<a name="line.302"></a>
+<FONT color="green">303</FONT>            } else {<a name="line.303"></a>
+<FONT color="green">304</FONT>                return null;<a name="line.304"></a>
+<FONT color="green">305</FONT>            }<a name="line.305"></a>
+<FONT color="green">306</FONT>    <a name="line.306"></a>
+<FONT color="green">307</FONT>            // null headers request coming from CACHE_MODE_CACHE_ONLY<a name="line.307"></a>
+<FONT color="green">308</FONT>            // which implies that it needs cache even it is expired.<a name="line.308"></a>
+<FONT color="green">309</FONT>            // negative expires means time in the far future.<a name="line.309"></a>
+<FONT color="green">310</FONT>            if (headers != null &amp;&amp; result.expires &gt;= 0<a name="line.310"></a>
+<FONT color="green">311</FONT>                    &amp;&amp; result.expires &lt;= System.currentTimeMillis()) {<a name="line.311"></a>
+<FONT color="green">312</FONT>                if (result.lastModified == null &amp;&amp; result.etag == null) {<a name="line.312"></a>
+<FONT color="green">313</FONT>                    return null;<a name="line.313"></a>
+<FONT color="green">314</FONT>                }<a name="line.314"></a>
+<FONT color="green">315</FONT>                // return HEADER_KEY_IFNONEMATCH or HEADER_KEY_IFMODIFIEDSINCE<a name="line.315"></a>
+<FONT color="green">316</FONT>                // for requesting validation<a name="line.316"></a>
+<FONT color="green">317</FONT>                if (result.etag != null) {<a name="line.317"></a>
+<FONT color="green">318</FONT>                    headers.put(HEADER_KEY_IFNONEMATCH, result.etag);<a name="line.318"></a>
+<FONT color="green">319</FONT>                }<a name="line.319"></a>
+<FONT color="green">320</FONT>                if (result.lastModified != null) {<a name="line.320"></a>
+<FONT color="green">321</FONT>                    headers.put(HEADER_KEY_IFMODIFIEDSINCE, result.lastModified);<a name="line.321"></a>
+<FONT color="green">322</FONT>                }<a name="line.322"></a>
+<FONT color="green">323</FONT>            }<a name="line.323"></a>
+<FONT color="green">324</FONT>    <a name="line.324"></a>
+<FONT color="green">325</FONT>            if (Config.LOGV) {<a name="line.325"></a>
+<FONT color="green">326</FONT>                Log.v(LOGTAG, "getCacheFile for url " + url);<a name="line.326"></a>
+<FONT color="green">327</FONT>            }<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>            return result;<a name="line.329"></a>
+<FONT color="green">330</FONT>        }<a name="line.330"></a>
+<FONT color="green">331</FONT>    <a name="line.331"></a>
+<FONT color="green">332</FONT>        /**<a name="line.332"></a>
+<FONT color="green">333</FONT>         * Given a url and its full headers, returns CacheResult if a local cache<a name="line.333"></a>
+<FONT color="green">334</FONT>         * can be stored. Otherwise returns null. The mimetype is passed in so that<a name="line.334"></a>
+<FONT color="green">335</FONT>         * the function can use the mimetype that will be passed to WebCore which<a name="line.335"></a>
+<FONT color="green">336</FONT>         * could be different from the mimetype defined in the headers.<a name="line.336"></a>
+<FONT color="green">337</FONT>         * forceCache is for out-of-package callers to force creation of a<a name="line.337"></a>
+<FONT color="green">338</FONT>         * CacheResult, and is used to supply surrogate responses for URL<a name="line.338"></a>
+<FONT color="green">339</FONT>         * interception.<a name="line.339"></a>
+<FONT color="green">340</FONT>         * @return CacheResult for a given url<a name="line.340"></a>
+<FONT color="green">341</FONT>         * @hide - hide createCacheFile since it has a parameter of type headers, which is<a name="line.341"></a>
+<FONT color="green">342</FONT>         * in a hidden package.<a name="line.342"></a>
+<FONT color="green">343</FONT>         */<a name="line.343"></a>
+<FONT color="green">344</FONT>        // can be called from any thread<a name="line.344"></a>
+<FONT color="green">345</FONT>        public static CacheResult createCacheFile(String url, int statusCode,<a name="line.345"></a>
+<FONT color="green">346</FONT>                Headers headers, String mimeType, boolean forceCache) {<a name="line.346"></a>
+<FONT color="green">347</FONT>            if (!forceCache &amp;&amp; mDisabled) {<a name="line.347"></a>
+<FONT color="green">348</FONT>                return null;<a name="line.348"></a>
+<FONT color="green">349</FONT>            }<a name="line.349"></a>
+<FONT color="green">350</FONT>    <a name="line.350"></a>
+<FONT color="green">351</FONT>            // according to the rfc 2616, the 303 response MUST NOT be cached.<a name="line.351"></a>
+<FONT color="green">352</FONT>            if (statusCode == 303) {<a name="line.352"></a>
+<FONT color="green">353</FONT>                return null;<a name="line.353"></a>
+<FONT color="green">354</FONT>            }<a name="line.354"></a>
+<FONT color="green">355</FONT>    <a name="line.355"></a>
+<FONT color="green">356</FONT>            // like the other browsers, do not cache redirects containing a cookie<a name="line.356"></a>
+<FONT color="green">357</FONT>            // header.<a name="line.357"></a>
+<FONT color="green">358</FONT>            if (checkCacheRedirect(statusCode) &amp;&amp; !headers.getSetCookie().isEmpty()) {<a name="line.358"></a>
+<FONT color="green">359</FONT>                return null;<a name="line.359"></a>
+<FONT color="green">360</FONT>            }<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>            CacheResult ret = parseHeaders(statusCode, headers, mimeType);<a name="line.362"></a>
+<FONT color="green">363</FONT>            if (ret != null) {<a name="line.363"></a>
+<FONT color="green">364</FONT>                setupFiles(url, ret);<a name="line.364"></a>
+<FONT color="green">365</FONT>                try {<a name="line.365"></a>
+<FONT color="green">366</FONT>                    ret.outStream = new FileOutputStream(ret.outFile);<a name="line.366"></a>
+<FONT color="green">367</FONT>                } catch (FileNotFoundException e) {<a name="line.367"></a>
+<FONT color="green">368</FONT>                    // This can happen with the system did a purge and our<a name="line.368"></a>
+<FONT color="green">369</FONT>                    // subdirectory has gone, so lets try to create it again<a name="line.369"></a>
+<FONT color="green">370</FONT>                    if (createCacheDirectory()) {<a name="line.370"></a>
+<FONT color="green">371</FONT>                        try {<a name="line.371"></a>
+<FONT color="green">372</FONT>                            ret.outStream = new FileOutputStream(ret.outFile);<a name="line.372"></a>
+<FONT color="green">373</FONT>                        } catch  (FileNotFoundException e2) {<a name="line.373"></a>
+<FONT color="green">374</FONT>                            // We failed to create the file again, so there<a name="line.374"></a>
+<FONT color="green">375</FONT>                            // is something else wrong. Return null.<a name="line.375"></a>
+<FONT color="green">376</FONT>                            return null;<a name="line.376"></a>
+<FONT color="green">377</FONT>                        }<a name="line.377"></a>
+<FONT color="green">378</FONT>                    } else {<a name="line.378"></a>
+<FONT color="green">379</FONT>                        // Failed to create cache directory<a name="line.379"></a>
+<FONT color="green">380</FONT>                        return null;<a name="line.380"></a>
+<FONT color="green">381</FONT>                    }<a name="line.381"></a>
+<FONT color="green">382</FONT>                }<a name="line.382"></a>
+<FONT color="green">383</FONT>                ret.mimeType = mimeType;<a name="line.383"></a>
+<FONT color="green">384</FONT>            }<a name="line.384"></a>
+<FONT color="green">385</FONT>    <a name="line.385"></a>
+<FONT color="green">386</FONT>            return ret;<a name="line.386"></a>
+<FONT color="green">387</FONT>        }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>        /**<a name="line.389"></a>
+<FONT color="green">390</FONT>         * Save the info of a cache file for a given url to the CacheMap so that it<a name="line.390"></a>
+<FONT color="green">391</FONT>         * can be reused later<a name="line.391"></a>
+<FONT color="green">392</FONT>         */<a name="line.392"></a>
+<FONT color="green">393</FONT>        // only called from WebCore thread<a name="line.393"></a>
+<FONT color="green">394</FONT>        public static void saveCacheFile(String url, CacheResult cacheRet) {<a name="line.394"></a>
+<FONT color="green">395</FONT>            try {<a name="line.395"></a>
+<FONT color="green">396</FONT>                cacheRet.outStream.close();<a name="line.396"></a>
+<FONT color="green">397</FONT>            } catch (IOException e) {<a name="line.397"></a>
+<FONT color="green">398</FONT>                return;<a name="line.398"></a>
+<FONT color="green">399</FONT>            }<a name="line.399"></a>
+<FONT color="green">400</FONT>    <a name="line.400"></a>
+<FONT color="green">401</FONT>            if (!cacheRet.outFile.exists()) {<a name="line.401"></a>
+<FONT color="green">402</FONT>                // the file in the cache directory can be removed by the system<a name="line.402"></a>
+<FONT color="green">403</FONT>                return;<a name="line.403"></a>
+<FONT color="green">404</FONT>            }<a name="line.404"></a>
+<FONT color="green">405</FONT>    <a name="line.405"></a>
+<FONT color="green">406</FONT>            cacheRet.contentLength = cacheRet.outFile.length();<a name="line.406"></a>
+<FONT color="green">407</FONT>            if (checkCacheRedirect(cacheRet.httpStatusCode)) {<a name="line.407"></a>
+<FONT color="green">408</FONT>                // location is in database, no need to keep the file<a name="line.408"></a>
+<FONT color="green">409</FONT>                cacheRet.contentLength = 0;<a name="line.409"></a>
+<FONT color="green">410</FONT>                cacheRet.localPath = new String();<a name="line.410"></a>
+<FONT color="green">411</FONT>                cacheRet.outFile.delete();<a name="line.411"></a>
+<FONT color="green">412</FONT>            } else if (cacheRet.contentLength == 0) {<a name="line.412"></a>
+<FONT color="green">413</FONT>                cacheRet.outFile.delete();<a name="line.413"></a>
+<FONT color="green">414</FONT>                return;<a name="line.414"></a>
+<FONT color="green">415</FONT>            }<a name="line.415"></a>
+<FONT color="green">416</FONT>    <a name="line.416"></a>
+<FONT color="green">417</FONT>            mDataBase.addCache(url, cacheRet);<a name="line.417"></a>
+<FONT color="green">418</FONT>    <a name="line.418"></a>
+<FONT color="green">419</FONT>            if (Config.LOGV) {<a name="line.419"></a>
+<FONT color="green">420</FONT>                Log.v(LOGTAG, "saveCacheFile for url " + url);<a name="line.420"></a>
+<FONT color="green">421</FONT>            }<a name="line.421"></a>
+<FONT color="green">422</FONT>        }<a name="line.422"></a>
+<FONT color="green">423</FONT>    <a name="line.423"></a>
+<FONT color="green">424</FONT>        /**<a name="line.424"></a>
+<FONT color="green">425</FONT>         * remove all cache files<a name="line.425"></a>
+<FONT color="green">426</FONT>         * <a name="line.426"></a>
+<FONT color="green">427</FONT>         * @return true if it succeeds<a name="line.427"></a>
+<FONT color="green">428</FONT>         */<a name="line.428"></a>
+<FONT color="green">429</FONT>        // only called from WebCore thread<a name="line.429"></a>
+<FONT color="green">430</FONT>        static boolean removeAllCacheFiles() {<a name="line.430"></a>
+<FONT color="green">431</FONT>            // Note, this is called before init() when the database is<a name="line.431"></a>
+<FONT color="green">432</FONT>            // created or upgraded.<a name="line.432"></a>
+<FONT color="green">433</FONT>            if (mBaseDir == null) {<a name="line.433"></a>
+<FONT color="green">434</FONT>                // Init() has not been called yet, so just flag that<a name="line.434"></a>
+<FONT color="green">435</FONT>                // we need to clear the cache when init() is called.<a name="line.435"></a>
+<FONT color="green">436</FONT>                mClearCacheOnInit = true;<a name="line.436"></a>
+<FONT color="green">437</FONT>                return true;<a name="line.437"></a>
+<FONT color="green">438</FONT>            }<a name="line.438"></a>
+<FONT color="green">439</FONT>            // delete cache in a separate thread to not block UI.<a name="line.439"></a>
+<FONT color="green">440</FONT>            final Runnable clearCache = new Runnable() {<a name="line.440"></a>
+<FONT color="green">441</FONT>                public void run() {<a name="line.441"></a>
+<FONT color="green">442</FONT>                    // delete all cache files<a name="line.442"></a>
+<FONT color="green">443</FONT>                    try {<a name="line.443"></a>
+<FONT color="green">444</FONT>                        String[] files = mBaseDir.list();<a name="line.444"></a>
+<FONT color="green">445</FONT>                        // if mBaseDir doesn't exist, files can be null.<a name="line.445"></a>
+<FONT color="green">446</FONT>                        if (files != null) {<a name="line.446"></a>
+<FONT color="green">447</FONT>                            for (int i = 0; i &lt; files.length; i++) {<a name="line.447"></a>
+<FONT color="green">448</FONT>                                new File(mBaseDir, files[i]).delete();<a name="line.448"></a>
+<FONT color="green">449</FONT>                            }<a name="line.449"></a>
+<FONT color="green">450</FONT>                        }<a name="line.450"></a>
+<FONT color="green">451</FONT>                    } catch (SecurityException e) {<a name="line.451"></a>
+<FONT color="green">452</FONT>                        // Ignore SecurityExceptions.<a name="line.452"></a>
+<FONT color="green">453</FONT>                    }<a name="line.453"></a>
+<FONT color="green">454</FONT>                    // delete database<a name="line.454"></a>
+<FONT color="green">455</FONT>                    mDataBase.clearCache();<a name="line.455"></a>
+<FONT color="green">456</FONT>                }<a name="line.456"></a>
+<FONT color="green">457</FONT>            };<a name="line.457"></a>
+<FONT color="green">458</FONT>            new Thread(clearCache).start();<a name="line.458"></a>
+<FONT color="green">459</FONT>            return true;<a name="line.459"></a>
+<FONT color="green">460</FONT>        }<a name="line.460"></a>
+<FONT color="green">461</FONT>    <a name="line.461"></a>
+<FONT color="green">462</FONT>        /**<a name="line.462"></a>
+<FONT color="green">463</FONT>         * Return true if the cache is empty.<a name="line.463"></a>
+<FONT color="green">464</FONT>         */<a name="line.464"></a>
+<FONT color="green">465</FONT>        // only called from WebCore thread<a name="line.465"></a>
+<FONT color="green">466</FONT>        static boolean cacheEmpty() {<a name="line.466"></a>
+<FONT color="green">467</FONT>            return mDataBase.hasCache();<a name="line.467"></a>
+<FONT color="green">468</FONT>        }<a name="line.468"></a>
+<FONT color="green">469</FONT>    <a name="line.469"></a>
+<FONT color="green">470</FONT>        // only called from WebCore thread<a name="line.470"></a>
+<FONT color="green">471</FONT>        static void trimCacheIfNeeded() {<a name="line.471"></a>
+<FONT color="green">472</FONT>            if (mDataBase.getCacheTotalSize() &gt; CACHE_THRESHOLD) {<a name="line.472"></a>
+<FONT color="green">473</FONT>                ArrayList&lt;String&gt; pathList = mDataBase.trimCache(CACHE_TRIM_AMOUNT);<a name="line.473"></a>
+<FONT color="green">474</FONT>                int size = pathList.size();<a name="line.474"></a>
+<FONT color="green">475</FONT>                for (int i = 0; i &lt; size; i++) {<a name="line.475"></a>
+<FONT color="green">476</FONT>                    new File(mBaseDir, pathList.get(i)).delete();<a name="line.476"></a>
+<FONT color="green">477</FONT>                }<a name="line.477"></a>
+<FONT color="green">478</FONT>            }<a name="line.478"></a>
+<FONT color="green">479</FONT>        }<a name="line.479"></a>
+<FONT color="green">480</FONT>    <a name="line.480"></a>
+<FONT color="green">481</FONT>        private static boolean checkCacheRedirect(int statusCode) {<a name="line.481"></a>
+<FONT color="green">482</FONT>            if (statusCode == 301 || statusCode == 302 || statusCode == 307) {<a name="line.482"></a>
+<FONT color="green">483</FONT>                // as 303 can't be cached, we do not return true<a name="line.483"></a>
+<FONT color="green">484</FONT>                return true;<a name="line.484"></a>
+<FONT color="green">485</FONT>            } else {<a name="line.485"></a>
+<FONT color="green">486</FONT>                return false;<a name="line.486"></a>
+<FONT color="green">487</FONT>            }<a name="line.487"></a>
+<FONT color="green">488</FONT>        }<a name="line.488"></a>
+<FONT color="green">489</FONT>    <a name="line.489"></a>
+<FONT color="green">490</FONT>        @SuppressWarnings("deprecation")<a name="line.490"></a>
+<FONT color="green">491</FONT>        private static void setupFiles(String url, CacheResult cacheRet) {<a name="line.491"></a>
+<FONT color="green">492</FONT>            if (true) {<a name="line.492"></a>
+<FONT color="green">493</FONT>                // Note: SHA1 is much stronger hash. But the cost of setupFiles() is<a name="line.493"></a>
+<FONT color="green">494</FONT>                // 3.2% cpu time for a fresh load of nytimes.com. While a simple<a name="line.494"></a>
+<FONT color="green">495</FONT>                // String.hashCode() is only 0.6%. If adding the collision resolving<a name="line.495"></a>
+<FONT color="green">496</FONT>                // to String.hashCode(), it makes the cpu time to be 1.6% for a <a name="line.496"></a>
+<FONT color="green">497</FONT>                // fresh load, but 5.3% for the worst case where all the files <a name="line.497"></a>
+<FONT color="green">498</FONT>                // already exist in the file system, but database is gone. So it<a name="line.498"></a>
+<FONT color="green">499</FONT>                // needs to resolve collision for every file at least once.<a name="line.499"></a>
+<FONT color="green">500</FONT>                int hashCode = url.hashCode();<a name="line.500"></a>
+<FONT color="green">501</FONT>                StringBuffer ret = new StringBuffer(8);<a name="line.501"></a>
+<FONT color="green">502</FONT>                appendAsHex(hashCode, ret);<a name="line.502"></a>
+<FONT color="green">503</FONT>                String path = ret.toString();<a name="line.503"></a>
+<FONT color="green">504</FONT>                File file = new File(mBaseDir, path);<a name="line.504"></a>
+<FONT color="green">505</FONT>                if (true) {<a name="line.505"></a>
+<FONT color="green">506</FONT>                    boolean checkOldPath = true;<a name="line.506"></a>
+<FONT color="green">507</FONT>                    // Check hash collision. If the hash file doesn't exist, just<a name="line.507"></a>
+<FONT color="green">508</FONT>                    // continue. There is a chance that the old cache file is not<a name="line.508"></a>
+<FONT color="green">509</FONT>                    // same as the hash file. As mDataBase.getCache() is more <a name="line.509"></a>
+<FONT color="green">510</FONT>                    // expansive than "leak" a file until clear cache, don't bother.<a name="line.510"></a>
+<FONT color="green">511</FONT>                    // If the hash file exists, make sure that it is same as the <a name="line.511"></a>
+<FONT color="green">512</FONT>                    // cache file. If it is not, resolve the collision.<a name="line.512"></a>
+<FONT color="green">513</FONT>                    while (file.exists()) {<a name="line.513"></a>
+<FONT color="green">514</FONT>                        if (checkOldPath) {<a name="line.514"></a>
+<FONT color="green">515</FONT>                            // as this is called from http thread through <a name="line.515"></a>
+<FONT color="green">516</FONT>                            // createCacheFile, we need endCacheTransaction before <a name="line.516"></a>
+<FONT color="green">517</FONT>                            // database access.<a name="line.517"></a>
+<FONT color="green">518</FONT>                            WebViewCore.endCacheTransaction();<a name="line.518"></a>
+<FONT color="green">519</FONT>                            CacheResult oldResult = mDataBase.getCache(url);<a name="line.519"></a>
+<FONT color="green">520</FONT>                            WebViewCore.startCacheTransaction();<a name="line.520"></a>
+<FONT color="green">521</FONT>                            if (oldResult != null &amp;&amp; oldResult.contentLength &gt; 0) {<a name="line.521"></a>
+<FONT color="green">522</FONT>                                if (path.equals(oldResult.localPath)) {<a name="line.522"></a>
+<FONT color="green">523</FONT>                                    path = oldResult.localPath;<a name="line.523"></a>
+<FONT color="green">524</FONT>                                } else {<a name="line.524"></a>
+<FONT color="green">525</FONT>                                    path = oldResult.localPath;<a name="line.525"></a>
+<FONT color="green">526</FONT>                                    file = new File(mBaseDir, path);<a name="line.526"></a>
+<FONT color="green">527</FONT>                                }<a name="line.527"></a>
+<FONT color="green">528</FONT>                                break;<a name="line.528"></a>
+<FONT color="green">529</FONT>                            }<a name="line.529"></a>
+<FONT color="green">530</FONT>                            checkOldPath = false;<a name="line.530"></a>
+<FONT color="green">531</FONT>                        }<a name="line.531"></a>
+<FONT color="green">532</FONT>                        ret = new StringBuffer(8);<a name="line.532"></a>
+<FONT color="green">533</FONT>                        appendAsHex(++hashCode, ret);<a name="line.533"></a>
+<FONT color="green">534</FONT>                        path = ret.toString();<a name="line.534"></a>
+<FONT color="green">535</FONT>                        file = new File(mBaseDir, path);<a name="line.535"></a>
+<FONT color="green">536</FONT>                    }<a name="line.536"></a>
+<FONT color="green">537</FONT>                }<a name="line.537"></a>
+<FONT color="green">538</FONT>                cacheRet.localPath = path;<a name="line.538"></a>
+<FONT color="green">539</FONT>                cacheRet.outFile = file;<a name="line.539"></a>
+<FONT color="green">540</FONT>            } else {<a name="line.540"></a>
+<FONT color="green">541</FONT>                // get hash in byte[]<a name="line.541"></a>
+<FONT color="green">542</FONT>                Digest digest = new SHA1Digest();<a name="line.542"></a>
+<FONT color="green">543</FONT>                int digestLen = digest.getDigestSize();<a name="line.543"></a>
+<FONT color="green">544</FONT>                byte[] hash = new byte[digestLen];<a name="line.544"></a>
+<FONT color="green">545</FONT>                int urlLen = url.length();<a name="line.545"></a>
+<FONT color="green">546</FONT>                byte[] data = new byte[urlLen];<a name="line.546"></a>
+<FONT color="green">547</FONT>                url.getBytes(0, urlLen, data, 0);<a name="line.547"></a>
+<FONT color="green">548</FONT>                digest.update(data, 0, urlLen);<a name="line.548"></a>
+<FONT color="green">549</FONT>                digest.doFinal(hash, 0);<a name="line.549"></a>
+<FONT color="green">550</FONT>                // convert byte[] to hex String<a name="line.550"></a>
+<FONT color="green">551</FONT>                StringBuffer result = new StringBuffer(2 * digestLen);<a name="line.551"></a>
+<FONT color="green">552</FONT>                for (int i = 0; i &lt; digestLen; i = i + 4) {<a name="line.552"></a>
+<FONT color="green">553</FONT>                    int h = (0x00ff &amp; hash[i]) &lt;&lt; 24 | (0x00ff &amp; hash[i + 1]) &lt;&lt; 16<a name="line.553"></a>
+<FONT color="green">554</FONT>                            | (0x00ff &amp; hash[i + 2]) &lt;&lt; 8 | (0x00ff &amp; hash[i + 3]);<a name="line.554"></a>
+<FONT color="green">555</FONT>                    appendAsHex(h, result);<a name="line.555"></a>
+<FONT color="green">556</FONT>                }<a name="line.556"></a>
+<FONT color="green">557</FONT>                cacheRet.localPath = result.toString();<a name="line.557"></a>
+<FONT color="green">558</FONT>                cacheRet.outFile = new File(mBaseDir, cacheRet.localPath);<a name="line.558"></a>
+<FONT color="green">559</FONT>            }<a name="line.559"></a>
+<FONT color="green">560</FONT>        }<a name="line.560"></a>
+<FONT color="green">561</FONT>    <a name="line.561"></a>
+<FONT color="green">562</FONT>        private static void appendAsHex(int i, StringBuffer ret) {<a name="line.562"></a>
+<FONT color="green">563</FONT>            String hex = Integer.toHexString(i);<a name="line.563"></a>
+<FONT color="green">564</FONT>            switch (hex.length()) {<a name="line.564"></a>
+<FONT color="green">565</FONT>                case 1:<a name="line.565"></a>
+<FONT color="green">566</FONT>                    ret.append("0000000");<a name="line.566"></a>
+<FONT color="green">567</FONT>                    break;<a name="line.567"></a>
+<FONT color="green">568</FONT>                case 2:<a name="line.568"></a>
+<FONT color="green">569</FONT>                    ret.append("000000");<a name="line.569"></a>
+<FONT color="green">570</FONT>                    break;<a name="line.570"></a>
+<FONT color="green">571</FONT>                case 3:<a name="line.571"></a>
+<FONT color="green">572</FONT>                    ret.append("00000");<a name="line.572"></a>
+<FONT color="green">573</FONT>                    break;<a name="line.573"></a>
+<FONT color="green">574</FONT>                case 4:<a name="line.574"></a>
+<FONT color="green">575</FONT>                    ret.append("0000");<a name="line.575"></a>
+<FONT color="green">576</FONT>                    break;<a name="line.576"></a>
+<FONT color="green">577</FONT>                case 5:<a name="line.577"></a>
+<FONT color="green">578</FONT>                    ret.append("000");<a name="line.578"></a>
+<FONT color="green">579</FONT>                    break;<a name="line.579"></a>
+<FONT color="green">580</FONT>                case 6:<a name="line.580"></a>
+<FONT color="green">581</FONT>                    ret.append("00");<a name="line.581"></a>
+<FONT color="green">582</FONT>                    break;<a name="line.582"></a>
+<FONT color="green">583</FONT>                case 7:<a name="line.583"></a>
+<FONT color="green">584</FONT>                    ret.append("0");<a name="line.584"></a>
+<FONT color="green">585</FONT>                    break;<a name="line.585"></a>
+<FONT color="green">586</FONT>            }<a name="line.586"></a>
+<FONT color="green">587</FONT>            ret.append(hex);<a name="line.587"></a>
+<FONT color="green">588</FONT>        }<a name="line.588"></a>
+<FONT color="green">589</FONT>    <a name="line.589"></a>
+<FONT color="green">590</FONT>        private static CacheResult parseHeaders(int statusCode, Headers headers,<a name="line.590"></a>
+<FONT color="green">591</FONT>                String mimeType) {<a name="line.591"></a>
+<FONT color="green">592</FONT>            // TODO: if authenticated or secure, return null<a name="line.592"></a>
+<FONT color="green">593</FONT>            CacheResult ret = new CacheResult();<a name="line.593"></a>
+<FONT color="green">594</FONT>            ret.httpStatusCode = statusCode;<a name="line.594"></a>
+<FONT color="green">595</FONT>    <a name="line.595"></a>
+<FONT color="green">596</FONT>            String location = headers.getLocation();<a name="line.596"></a>
+<FONT color="green">597</FONT>            if (location != null) ret.location = location;<a name="line.597"></a>
+<FONT color="green">598</FONT>    <a name="line.598"></a>
+<FONT color="green">599</FONT>            ret.expires = -1;<a name="line.599"></a>
+<FONT color="green">600</FONT>            String expires = headers.getExpires();<a name="line.600"></a>
+<FONT color="green">601</FONT>            if (expires != null) {<a name="line.601"></a>
+<FONT color="green">602</FONT>                try {<a name="line.602"></a>
+<FONT color="green">603</FONT>                    ret.expires = HttpDateTime.parse(expires);<a name="line.603"></a>
+<FONT color="green">604</FONT>                } catch (IllegalArgumentException ex) {<a name="line.604"></a>
+<FONT color="green">605</FONT>                    // Take care of the special "-1" and "0" cases<a name="line.605"></a>
+<FONT color="green">606</FONT>                    if ("-1".equals(expires) || "0".equals(expires)) {<a name="line.606"></a>
+<FONT color="green">607</FONT>                        // make it expired, but can be used for history navigation<a name="line.607"></a>
+<FONT color="green">608</FONT>                        ret.expires = 0;<a name="line.608"></a>
+<FONT color="green">609</FONT>                    } else {<a name="line.609"></a>
+<FONT color="green">610</FONT>                        Log.e(LOGTAG, "illegal expires: " + expires);<a name="line.610"></a>
+<FONT color="green">611</FONT>                    }<a name="line.611"></a>
+<FONT color="green">612</FONT>                }<a name="line.612"></a>
+<FONT color="green">613</FONT>            }<a name="line.613"></a>
+<FONT color="green">614</FONT>    <a name="line.614"></a>
+<FONT color="green">615</FONT>            String lastModified = headers.getLastModified();<a name="line.615"></a>
+<FONT color="green">616</FONT>            if (lastModified != null) ret.lastModified = lastModified;<a name="line.616"></a>
+<FONT color="green">617</FONT>    <a name="line.617"></a>
+<FONT color="green">618</FONT>            String etag = headers.getEtag();<a name="line.618"></a>
+<FONT color="green">619</FONT>            if (etag != null) ret.etag = etag;<a name="line.619"></a>
+<FONT color="green">620</FONT>    <a name="line.620"></a>
+<FONT color="green">621</FONT>            String cacheControl = headers.getCacheControl();<a name="line.621"></a>
+<FONT color="green">622</FONT>            if (cacheControl != null) {<a name="line.622"></a>
+<FONT color="green">623</FONT>                String[] controls = cacheControl.toLowerCase().split("[ ,;]");<a name="line.623"></a>
+<FONT color="green">624</FONT>                for (int i = 0; i &lt; controls.length; i++) {<a name="line.624"></a>
+<FONT color="green">625</FONT>                    if (NO_STORE.equals(controls[i])) {<a name="line.625"></a>
+<FONT color="green">626</FONT>                        return null;<a name="line.626"></a>
+<FONT color="green">627</FONT>                    }<a name="line.627"></a>
+<FONT color="green">628</FONT>                    // According to the spec, 'no-cache' means that the content<a name="line.628"></a>
+<FONT color="green">629</FONT>                    // must be re-validated on every load. It does not mean that<a name="line.629"></a>
+<FONT color="green">630</FONT>                    // the content can not be cached. set to expire 0 means it<a name="line.630"></a>
+<FONT color="green">631</FONT>                    // can only be used in CACHE_MODE_CACHE_ONLY case<a name="line.631"></a>
+<FONT color="green">632</FONT>                    if (NO_CACHE.equals(controls[i]) || PRIVATE.equals(controls[i])) {<a name="line.632"></a>
+<FONT color="green">633</FONT>                        ret.expires = 0;<a name="line.633"></a>
+<FONT color="green">634</FONT>                    } else if (controls[i].startsWith(MAX_AGE)) {<a name="line.634"></a>
+<FONT color="green">635</FONT>                        int separator = controls[i].indexOf('=');<a name="line.635"></a>
+<FONT color="green">636</FONT>                        if (separator &lt; 0) {<a name="line.636"></a>
+<FONT color="green">637</FONT>                            separator = controls[i].indexOf(':');<a name="line.637"></a>
+<FONT color="green">638</FONT>                        }<a name="line.638"></a>
+<FONT color="green">639</FONT>                        if (separator &gt; 0) {<a name="line.639"></a>
+<FONT color="green">640</FONT>                            String s = controls[i].substring(separator + 1);<a name="line.640"></a>
+<FONT color="green">641</FONT>                            try {<a name="line.641"></a>
+<FONT color="green">642</FONT>                                long sec = Long.parseLong(s);<a name="line.642"></a>
+<FONT color="green">643</FONT>                                if (sec &gt;= 0) {<a name="line.643"></a>
+<FONT color="green">644</FONT>                                    ret.expires = System.currentTimeMillis() + 1000<a name="line.644"></a>
+<FONT color="green">645</FONT>                                            * sec;<a name="line.645"></a>
+<FONT color="green">646</FONT>                                }<a name="line.646"></a>
+<FONT color="green">647</FONT>                            } catch (NumberFormatException ex) {<a name="line.647"></a>
+<FONT color="green">648</FONT>                                if ("1d".equals(s)) {<a name="line.648"></a>
+<FONT color="green">649</FONT>                                    // Take care of the special "1d" case<a name="line.649"></a>
+<FONT color="green">650</FONT>                                    ret.expires = System.currentTimeMillis() + 86400000; // 24*60*60*1000<a name="line.650"></a>
+<FONT color="green">651</FONT>                                } else {<a name="line.651"></a>
+<FONT color="green">652</FONT>                                    Log.e(LOGTAG, "exception in parseHeaders for "<a name="line.652"></a>
+<FONT color="green">653</FONT>                                            + "max-age:"<a name="line.653"></a>
+<FONT color="green">654</FONT>                                            + controls[i].substring(separator + 1));<a name="line.654"></a>
+<FONT color="green">655</FONT>                                    ret.expires = 0;<a name="line.655"></a>
+<FONT color="green">656</FONT>                                }<a name="line.656"></a>
+<FONT color="green">657</FONT>                            }<a name="line.657"></a>
+<FONT color="green">658</FONT>                        }<a name="line.658"></a>
+<FONT color="green">659</FONT>                    }<a name="line.659"></a>
+<FONT color="green">660</FONT>                }<a name="line.660"></a>
+<FONT color="green">661</FONT>            }<a name="line.661"></a>
+<FONT color="green">662</FONT>    <a name="line.662"></a>
+<FONT color="green">663</FONT>            // According to RFC 2616 section 14.32:<a name="line.663"></a>
+<FONT color="green">664</FONT>            // HTTP/1.1 caches SHOULD treat "Pragma: no-cache" as if the<a name="line.664"></a>
+<FONT color="green">665</FONT>            // client had sent "Cache-Control: no-cache"<a name="line.665"></a>
+<FONT color="green">666</FONT>            if (NO_CACHE.equals(headers.getPragma())) {<a name="line.666"></a>
+<FONT color="green">667</FONT>                ret.expires = 0;<a name="line.667"></a>
+<FONT color="green">668</FONT>            }<a name="line.668"></a>
+<FONT color="green">669</FONT>    <a name="line.669"></a>
+<FONT color="green">670</FONT>            // According to RFC 2616 section 13.2.4, if an expiration has not been<a name="line.670"></a>
+<FONT color="green">671</FONT>            // explicitly defined a heuristic to set an expiration may be used.<a name="line.671"></a>
+<FONT color="green">672</FONT>            if (ret.expires == -1) {<a name="line.672"></a>
+<FONT color="green">673</FONT>                if (ret.httpStatusCode == 301) {<a name="line.673"></a>
+<FONT color="green">674</FONT>                    // If it is a permanent redirect, and it did not have an<a name="line.674"></a>
+<FONT color="green">675</FONT>                    // explicit cache directive, then it never expires<a name="line.675"></a>
+<FONT color="green">676</FONT>                    ret.expires = Long.MAX_VALUE;<a name="line.676"></a>
+<FONT color="green">677</FONT>                } else if (ret.httpStatusCode == 302 || ret.httpStatusCode == 307) {<a name="line.677"></a>
+<FONT color="green">678</FONT>                    // If it is temporary redirect, expires<a name="line.678"></a>
+<FONT color="green">679</FONT>                    ret.expires = 0;<a name="line.679"></a>
+<FONT color="green">680</FONT>                } else if (ret.lastModified == null) {<a name="line.680"></a>
+<FONT color="green">681</FONT>                    // When we have no last-modified, then expire the content with<a name="line.681"></a>
+<FONT color="green">682</FONT>                    // in 24hrs as, according to the RFC, longer time requires a<a name="line.682"></a>
+<FONT color="green">683</FONT>                    // warning 113 to be added to the response.<a name="line.683"></a>
+<FONT color="green">684</FONT>    <a name="line.684"></a>
+<FONT color="green">685</FONT>                    // Only add the default expiration for non-html markup. Some<a name="line.685"></a>
+<FONT color="green">686</FONT>                    // sites like news.google.com have no cache directives.<a name="line.686"></a>
+<FONT color="green">687</FONT>                    if (!mimeType.startsWith("text/html")) {<a name="line.687"></a>
+<FONT color="green">688</FONT>                        ret.expires = System.currentTimeMillis() + 86400000; // 24*60*60*1000<a name="line.688"></a>
+<FONT color="green">689</FONT>                    } else {<a name="line.689"></a>
+<FONT color="green">690</FONT>                        // Setting a expires as zero will cache the result for<a name="line.690"></a>
+<FONT color="green">691</FONT>                        // forward/back nav.<a name="line.691"></a>
+<FONT color="green">692</FONT>                        ret.expires = 0;<a name="line.692"></a>
+<FONT color="green">693</FONT>                    }<a name="line.693"></a>
+<FONT color="green">694</FONT>                } else {<a name="line.694"></a>
+<FONT color="green">695</FONT>                    // If we have a last-modified value, we could use it to set the<a name="line.695"></a>
+<FONT color="green">696</FONT>                    // expiration. Suggestion from RFC is 10% of time since<a name="line.696"></a>
+<FONT color="green">697</FONT>                    // last-modified. As we are on mobile, loads are expensive,<a name="line.697"></a>
+<FONT color="green">698</FONT>                    // increasing this to 20%.<a name="line.698"></a>
+<FONT color="green">699</FONT>    <a name="line.699"></a>
+<FONT color="green">700</FONT>                    // 24 * 60 * 60 * 1000<a name="line.700"></a>
+<FONT color="green">701</FONT>                    long lastmod = System.currentTimeMillis() + 86400000;<a name="line.701"></a>
+<FONT color="green">702</FONT>                    try {<a name="line.702"></a>
+<FONT color="green">703</FONT>                        lastmod = HttpDateTime.parse(ret.lastModified);<a name="line.703"></a>
+<FONT color="green">704</FONT>                    } catch (IllegalArgumentException ex) {<a name="line.704"></a>
+<FONT color="green">705</FONT>                        Log.e(LOGTAG, "illegal lastModified: " + ret.lastModified);<a name="line.705"></a>
+<FONT color="green">706</FONT>                    }<a name="line.706"></a>
+<FONT color="green">707</FONT>                    long difference = System.currentTimeMillis() - lastmod;<a name="line.707"></a>
+<FONT color="green">708</FONT>                    if (difference &gt; 0) {<a name="line.708"></a>
+<FONT color="green">709</FONT>                        ret.expires = System.currentTimeMillis() + difference / 5;<a name="line.709"></a>
+<FONT color="green">710</FONT>                    } else {<a name="line.710"></a>
+<FONT color="green">711</FONT>                        // last modified is in the future, expire the content<a name="line.711"></a>
+<FONT color="green">712</FONT>                        // on the last modified<a name="line.712"></a>
+<FONT color="green">713</FONT>                        ret.expires = lastmod;<a name="line.713"></a>
+<FONT color="green">714</FONT>                    }<a name="line.714"></a>
+<FONT color="green">715</FONT>                }<a name="line.715"></a>
+<FONT color="green">716</FONT>            }<a name="line.716"></a>
+<FONT color="green">717</FONT>    <a name="line.717"></a>
+<FONT color="green">718</FONT>            return ret;<a name="line.718"></a>
+<FONT color="green">719</FONT>        }<a name="line.719"></a>
+<FONT color="green">720</FONT>    }<a name="line.720"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

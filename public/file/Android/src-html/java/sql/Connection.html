@@ -1,0 +1,875 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /* <a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    <a name="line.17"></a>
+<FONT color="green">018</FONT>    package java.sql;<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    import java.util.Map;<a name="line.20"></a>
+<FONT color="green">021</FONT>    <a name="line.21"></a>
+<FONT color="green">022</FONT>    /**<a name="line.22"></a>
+<FONT color="green">023</FONT>     * A connection represents a link from a Java application to a database. All SQL<a name="line.23"></a>
+<FONT color="green">024</FONT>     * statements and results are returned within the context of a connection.<a name="line.24"></a>
+<FONT color="green">025</FONT>     * Database statements that are executed within this context form a<a name="line.25"></a>
+<FONT color="green">026</FONT>     * database session which forms one or more closed transactions. Especially In distributed applications, multiple concurrent connections may exist accessing the same values of the database.<a name="line.26"></a>
+<FONT color="green">027</FONT>     * which may lead to the following phenomena (referred to as &lt;i&gt;transaction isolation levels&lt;/i&gt;):<a name="line.27"></a>
+<FONT color="green">028</FONT>     * &lt;ul&gt;<a name="line.28"></a>
+<FONT color="green">029</FONT>     * &lt;li&gt;&lt;i&gt;dirty reads&lt;/i&gt;:&lt;br&gt;<a name="line.29"></a>
+<FONT color="green">030</FONT>     * reading values from table rows that are not committed.&lt;/br&gt;&lt;/li&gt;<a name="line.30"></a>
+<FONT color="green">031</FONT>     * &lt;li&gt;&lt;i&gt;non-repeatable reads&lt;/i&gt;:&lt;br&gt;<a name="line.31"></a>
+<FONT color="green">032</FONT>     * reading table rows more than once in a transaction but getting back different<a name="line.32"></a>
+<FONT color="green">033</FONT>     * data because other transactions have altered the rows between the reads.&lt;/br&gt;&lt;/li&gt;<a name="line.33"></a>
+<FONT color="green">034</FONT>     * &lt;li&gt;&lt;i&gt;phantom reads&lt;/i&gt;:&lt;br&gt;<a name="line.34"></a>
+<FONT color="green">035</FONT>     * retrieving additional "phantom" rows in the course of repeated table reads<a name="line.35"></a>
+<FONT color="green">036</FONT>     * because other transactions have inserted additional rows that satisfy an<a name="line.36"></a>
+<FONT color="green">037</FONT>     * SQL {@code WHERE} clause&lt;/br&gt;&lt;/li&gt;<a name="line.37"></a>
+<FONT color="green">038</FONT>     * &lt;/ul&gt;<a name="line.38"></a>
+<FONT color="green">039</FONT>     *  <a name="line.39"></a>
+<FONT color="green">040</FONT>     * @since Android 1.0<a name="line.40"></a>
+<FONT color="green">041</FONT>     */<a name="line.41"></a>
+<FONT color="green">042</FONT>    public interface Connection {<a name="line.42"></a>
+<FONT color="green">043</FONT>    <a name="line.43"></a>
+<FONT color="green">044</FONT>        /**<a name="line.44"></a>
+<FONT color="green">045</FONT>         * A constant indicating that transactions are not supported.<a name="line.45"></a>
+<FONT color="green">046</FONT>         * <a name="line.46"></a>
+<FONT color="green">047</FONT>         * @since Android 1.0<a name="line.47"></a>
+<FONT color="green">048</FONT>         */<a name="line.48"></a>
+<FONT color="green">049</FONT>        public static final int TRANSACTION_NONE = 0;<a name="line.49"></a>
+<FONT color="green">050</FONT>    <a name="line.50"></a>
+<FONT color="green">051</FONT>        /**<a name="line.51"></a>
+<FONT color="green">052</FONT>         * No &lt;i&gt;dirty reads&lt;/i&gt; are permitted, therefore transactions may not read<a name="line.52"></a>
+<FONT color="green">053</FONT>         * a row containing uncommitted values - but does not prevent an application<a name="line.53"></a>
+<FONT color="green">054</FONT>         * from &lt;i&gt;non-repeatable reads&lt;/i&gt; and &lt;i&gt;phantom reads&lt;/i&gt;.<a name="line.54"></a>
+<FONT color="green">055</FONT>         * <a name="line.55"></a>
+<FONT color="green">056</FONT>         * @since Android 1.0<a name="line.56"></a>
+<FONT color="green">057</FONT>         */<a name="line.57"></a>
+<FONT color="green">058</FONT>        public static final int TRANSACTION_READ_COMMITTED = 2;<a name="line.58"></a>
+<FONT color="green">059</FONT>    <a name="line.59"></a>
+<FONT color="green">060</FONT>        /**<a name="line.60"></a>
+<FONT color="green">061</FONT>         * In the case that reading uncommitted values is allowed, the following<a name="line.61"></a>
+<FONT color="green">062</FONT>         * incidents may happen which may lead to an invalid results:<a name="line.62"></a>
+<FONT color="green">063</FONT>         * &lt;ul&gt;<a name="line.63"></a>
+<FONT color="green">064</FONT>         * &lt;li&gt;&lt;i&gt;dirty reads&lt;/i&gt;&lt;/li&gt;<a name="line.64"></a>
+<FONT color="green">065</FONT>         * &lt;li&gt;&lt;i&gt;non-repeatable reads&lt;/i&gt;&lt;/li&gt;<a name="line.65"></a>
+<FONT color="green">066</FONT>         * &lt;li&gt;&lt;i&gt;phantom reads&lt;/i&gt;&lt;/li&gt;<a name="line.66"></a>
+<FONT color="green">067</FONT>         * &lt;/ul&gt;<a name="line.67"></a>
+<FONT color="green">068</FONT>         * <a name="line.68"></a>
+<FONT color="green">069</FONT>         * @since Android 1.0<a name="line.69"></a>
+<FONT color="green">070</FONT>         */<a name="line.70"></a>
+<FONT color="green">071</FONT>        public static final int TRANSACTION_READ_UNCOMMITTED = 1;<a name="line.71"></a>
+<FONT color="green">072</FONT>    <a name="line.72"></a>
+<FONT color="green">073</FONT>        /**<a name="line.73"></a>
+<FONT color="green">074</FONT>         * A constant indicating that &lt;i&gt;dirty reads&lt;/i&gt; and &lt;i&gt;non-repeatable<a name="line.74"></a>
+<FONT color="green">075</FONT>         * reads&lt;/i&gt; are &lt;b&gt;prevented&lt;/b&gt; but &lt;i&gt;phantom reads&lt;/i&gt; can occur.<a name="line.75"></a>
+<FONT color="green">076</FONT>         * <a name="line.76"></a>
+<FONT color="green">077</FONT>         * @since Android 1.0<a name="line.77"></a>
+<FONT color="green">078</FONT>         */<a name="line.78"></a>
+<FONT color="green">079</FONT>        public static final int TRANSACTION_REPEATABLE_READ = 4;<a name="line.79"></a>
+<FONT color="green">080</FONT>    <a name="line.80"></a>
+<FONT color="green">081</FONT>        /**<a name="line.81"></a>
+<FONT color="green">082</FONT>         * The constant that indicates that the following incidents are &lt;b&gt;all<a name="line.82"></a>
+<FONT color="green">083</FONT>         * prevented&lt;/b&gt; (the opposite of {@link #TRANSACTION_READ_UNCOMMITTED}):<a name="line.83"></a>
+<FONT color="green">084</FONT>         * &lt;ul&gt;<a name="line.84"></a>
+<FONT color="green">085</FONT>         * &lt;li&gt;&lt;i&gt;dirty reads&lt;/i&gt;&lt;/li&gt;<a name="line.85"></a>
+<FONT color="green">086</FONT>         * &lt;li&gt;&lt;i&gt;non-repeatable reads&lt;/i&gt;&lt;/li&gt;<a name="line.86"></a>
+<FONT color="green">087</FONT>         * &lt;li&gt;&lt;i&gt;phantom reads&lt;/i&gt;&lt;/li&gt;<a name="line.87"></a>
+<FONT color="green">088</FONT>         * &lt;/ul&gt;<a name="line.88"></a>
+<FONT color="green">089</FONT>         * <a name="line.89"></a>
+<FONT color="green">090</FONT>         * @since Android 1.0<a name="line.90"></a>
+<FONT color="green">091</FONT>         */<a name="line.91"></a>
+<FONT color="green">092</FONT>        public static final int TRANSACTION_SERIALIZABLE = 8;<a name="line.92"></a>
+<FONT color="green">093</FONT>    <a name="line.93"></a>
+<FONT color="green">094</FONT>        /**<a name="line.94"></a>
+<FONT color="green">095</FONT>         * Discards all warnings that may have arisen for this connection.<a name="line.95"></a>
+<FONT color="green">096</FONT>         * Subsequent calls to {@link #getWarnings()} will return {@code null}<a name="line.96"></a>
+<FONT color="green">097</FONT>         * up until a new warning condition occurs.<a name="line.97"></a>
+<FONT color="green">098</FONT>         * <a name="line.98"></a>
+<FONT color="green">099</FONT>         * @throws SQLException<a name="line.99"></a>
+<FONT color="green">100</FONT>         *             if there is a problem accessing the database.<a name="line.100"></a>
+<FONT color="green">101</FONT>         */<a name="line.101"></a>
+<FONT color="green">102</FONT>        public void clearWarnings() throws SQLException;<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>        /**<a name="line.104"></a>
+<FONT color="green">105</FONT>         * Causes the instant release of all database and driver connection<a name="line.105"></a>
+<FONT color="green">106</FONT>         * resources associated with this object. Any subsequent invocations of this<a name="line.106"></a>
+<FONT color="green">107</FONT>         * method have no effect.<a name="line.107"></a>
+<FONT color="green">108</FONT>         * &lt;p&gt;<a name="line.108"></a>
+<FONT color="green">109</FONT>         * It is strongly recommended that all connections are closed before they<a name="line.109"></a>
+<FONT color="green">110</FONT>         * are dereferenced by the application ready for garbage collection.<a name="line.110"></a>
+<FONT color="green">111</FONT>         * Although the {@code finalize} method of the connection closes the<a name="line.111"></a>
+<FONT color="green">112</FONT>         * connection before garbage collection takes place, it is not advisable to<a name="line.112"></a>
+<FONT color="green">113</FONT>         * leave the {@code close} operation to take place in this way. Mainly<a name="line.113"></a>
+<FONT color="green">114</FONT>         * because undesired side-effects may appear.<a name="line.114"></a>
+<FONT color="green">115</FONT>         * &lt;/p&gt;<a name="line.115"></a>
+<FONT color="green">116</FONT>         * <a name="line.116"></a>
+<FONT color="green">117</FONT>         * @throws SQLException<a name="line.117"></a>
+<FONT color="green">118</FONT>         *             if there is a problem accessing the database.<a name="line.118"></a>
+<FONT color="green">119</FONT>         */<a name="line.119"></a>
+<FONT color="green">120</FONT>        public void close() throws SQLException;<a name="line.120"></a>
+<FONT color="green">121</FONT>    <a name="line.121"></a>
+<FONT color="green">122</FONT>        /**<a name="line.122"></a>
+<FONT color="green">123</FONT>         * Commits all of the changes made since the last {@code commit} or<a name="line.123"></a>
+<FONT color="green">124</FONT>         * {@code rollback} of the associated transaction. All locks in the database<a name="line.124"></a>
+<FONT color="green">125</FONT>         * held by this connection are also relinquished. Calling this operation on<a name="line.125"></a>
+<FONT color="green">126</FONT>         * connection objects in {@code auto-commit} mode leads to an error.<a name="line.126"></a>
+<FONT color="green">127</FONT>         * <a name="line.127"></a>
+<FONT color="green">128</FONT>         * @throws SQLException<a name="line.128"></a>
+<FONT color="green">129</FONT>         *             if there is a problem accessing the database or if the target<a name="line.129"></a>
+<FONT color="green">130</FONT>         *             connection instance is in auto-commit mode.<a name="line.130"></a>
+<FONT color="green">131</FONT>         */<a name="line.131"></a>
+<FONT color="green">132</FONT>        public void commit() throws SQLException;<a name="line.132"></a>
+<FONT color="green">133</FONT>    <a name="line.133"></a>
+<FONT color="green">134</FONT>        /**<a name="line.134"></a>
+<FONT color="green">135</FONT>         * Returns a new instance of {@code Statement} for issuing SQL commands to<a name="line.135"></a>
+<FONT color="green">136</FONT>         * the remote database.<a name="line.136"></a>
+<FONT color="green">137</FONT>         * &lt;p&gt;<a name="line.137"></a>
+<FONT color="green">138</FONT>         * {@code ResultSets} generated by the returned statement will default to<a name="line.138"></a>
+<FONT color="green">139</FONT>         * type {@code ResultSet.TYPE_FORWARD_ONLY} and concurrency level {@code<a name="line.139"></a>
+<FONT color="green">140</FONT>         * ResultSet.CONCUR_READ_ONLY}.<a name="line.140"></a>
+<FONT color="green">141</FONT>         * <a name="line.141"></a>
+<FONT color="green">142</FONT>         * @return a {@code Statement} object with default settings.<a name="line.142"></a>
+<FONT color="green">143</FONT>         * @throws SQLException<a name="line.143"></a>
+<FONT color="green">144</FONT>         *             if there is a problem accessing the database.<a name="line.144"></a>
+<FONT color="green">145</FONT>         * @see ResultSet<a name="line.145"></a>
+<FONT color="green">146</FONT>         */<a name="line.146"></a>
+<FONT color="green">147</FONT>        public Statement createStatement() throws SQLException;<a name="line.147"></a>
+<FONT color="green">148</FONT>    <a name="line.148"></a>
+<FONT color="green">149</FONT>        /**<a name="line.149"></a>
+<FONT color="green">150</FONT>         * Returns a new instance of {@code Statement} whose associated {@code<a name="line.150"></a>
+<FONT color="green">151</FONT>         * ResultSet}s have the characteristics specified in the type and<a name="line.151"></a>
+<FONT color="green">152</FONT>         * concurrency arguments.<a name="line.152"></a>
+<FONT color="green">153</FONT>         * <a name="line.153"></a>
+<FONT color="green">154</FONT>         * @param resultSetType<a name="line.154"></a>
+<FONT color="green">155</FONT>         *            one of the following type specifiers:<a name="line.155"></a>
+<FONT color="green">156</FONT>         *            &lt;ul&gt;<a name="line.156"></a>
+<FONT color="green">157</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE} &lt;/li&gt; &lt;li&gt;<a name="line.157"></a>
+<FONT color="green">158</FONT>         *            {@link ResultSet#TYPE_SCROLL_INSENSITIVE} &lt;/li&gt; &lt;li&gt;<a name="line.158"></a>
+<FONT color="green">159</FONT>         *            {@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.159"></a>
+<FONT color="green">160</FONT>         *            &lt;/ul&gt;<a name="line.160"></a>
+<FONT color="green">161</FONT>         * @param resultSetConcurrency<a name="line.161"></a>
+<FONT color="green">162</FONT>         *            one of the following concurrency mode specifiers:<a name="line.162"></a>
+<FONT color="green">163</FONT>         *            &lt;ul&gt;<a name="line.163"></a>
+<FONT color="green">164</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt; &lt;li&gt;<a name="line.164"></a>
+<FONT color="green">165</FONT>         *            {@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.165"></a>
+<FONT color="green">166</FONT>         *            &lt;/ul&gt;<a name="line.166"></a>
+<FONT color="green">167</FONT>         * @return a new instance of {@code Statement} capable of manufacturing<a name="line.167"></a>
+<FONT color="green">168</FONT>         *         {@code ResultSet}s that satisfy the specified {@code<a name="line.168"></a>
+<FONT color="green">169</FONT>         *         resultSetType} and {@code resultSetConcurrency} values.<a name="line.169"></a>
+<FONT color="green">170</FONT>         * @throws SQLException<a name="line.170"></a>
+<FONT color="green">171</FONT>         *             if there is a problem accessing the database<a name="line.171"></a>
+<FONT color="green">172</FONT>         */<a name="line.172"></a>
+<FONT color="green">173</FONT>        public Statement createStatement(int resultSetType, int resultSetConcurrency)<a name="line.173"></a>
+<FONT color="green">174</FONT>                throws SQLException;<a name="line.174"></a>
+<FONT color="green">175</FONT>    <a name="line.175"></a>
+<FONT color="green">176</FONT>        /**<a name="line.176"></a>
+<FONT color="green">177</FONT>         * Returns a new instance of {@code Statement} whose associated<a name="line.177"></a>
+<FONT color="green">178</FONT>         * {@code ResultSet}s will have the characteristics specified in the<a name="line.178"></a>
+<FONT color="green">179</FONT>         * type, concurrency and holdability arguments.<a name="line.179"></a>
+<FONT color="green">180</FONT>         * <a name="line.180"></a>
+<FONT color="green">181</FONT>         * @param resultSetType<a name="line.181"></a>
+<FONT color="green">182</FONT>         *            one of the following type specifiers:<a name="line.182"></a>
+<FONT color="green">183</FONT>         *            &lt;ul&gt;<a name="line.183"></a>
+<FONT color="green">184</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE}&lt;/li&gt;<a name="line.184"></a>
+<FONT color="green">185</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_INSENSITIVE}&lt;/li&gt;<a name="line.185"></a>
+<FONT color="green">186</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.186"></a>
+<FONT color="green">187</FONT>         *            &lt;/ul&gt;<a name="line.187"></a>
+<FONT color="green">188</FONT>         * @param resultSetConcurrency<a name="line.188"></a>
+<FONT color="green">189</FONT>         *            one of the following concurrency mode specifiers:<a name="line.189"></a>
+<FONT color="green">190</FONT>         *            &lt;ul&gt;<a name="line.190"></a>
+<FONT color="green">191</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt;<a name="line.191"></a>
+<FONT color="green">192</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.192"></a>
+<FONT color="green">193</FONT>         *            &lt;/ul&gt;<a name="line.193"></a>
+<FONT color="green">194</FONT>         * @param resultSetHoldability<a name="line.194"></a>
+<FONT color="green">195</FONT>         *            one of the following holdability mode specifiers:<a name="line.195"></a>
+<FONT color="green">196</FONT>         *            &lt;ul&gt;<a name="line.196"></a>
+<FONT color="green">197</FONT>         *            &lt;li&gt;{@link ResultSet#HOLD_CURSORS_OVER_COMMIT}&lt;/li&gt;<a name="line.197"></a>
+<FONT color="green">198</FONT>         *            &lt;li&gt;{@link ResultSet#CLOSE_CURSORS_AT_COMMIT}&lt;/li&gt;<a name="line.198"></a>
+<FONT color="green">199</FONT>         *            &lt;/ul&gt;<a name="line.199"></a>
+<FONT color="green">200</FONT>         * @return a new instance of {@code Statement} capable of<a name="line.200"></a>
+<FONT color="green">201</FONT>         *         manufacturing {@code ResultSet}s that satisfy the<a name="line.201"></a>
+<FONT color="green">202</FONT>         *         specified {@code resultSetType},<a name="line.202"></a>
+<FONT color="green">203</FONT>         *         {@code resultSetConcurrency} and<a name="line.203"></a>
+<FONT color="green">204</FONT>         *         {@code resultSetHoldability} values.<a name="line.204"></a>
+<FONT color="green">205</FONT>         * @throws SQLException<a name="line.205"></a>
+<FONT color="green">206</FONT>         *             if there is a problem accessing the database.<a name="line.206"></a>
+<FONT color="green">207</FONT>         */<a name="line.207"></a>
+<FONT color="green">208</FONT>        public Statement createStatement(int resultSetType,<a name="line.208"></a>
+<FONT color="green">209</FONT>                int resultSetConcurrency, int resultSetHoldability)<a name="line.209"></a>
+<FONT color="green">210</FONT>                throws SQLException;<a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>        /**<a name="line.212"></a>
+<FONT color="green">213</FONT>         * Returns a {@code boolean} indicating whether or not this connection is in<a name="line.213"></a>
+<FONT color="green">214</FONT>         * the {@code auto-commit} operating mode.<a name="line.214"></a>
+<FONT color="green">215</FONT>         * <a name="line.215"></a>
+<FONT color="green">216</FONT>         * @return {@code true} if {@code auto-commit} is on, otherwise {@code<a name="line.216"></a>
+<FONT color="green">217</FONT>         *         false}.<a name="line.217"></a>
+<FONT color="green">218</FONT>         * @throws SQLException<a name="line.218"></a>
+<FONT color="green">219</FONT>         *             if there is a problem accessing the database.<a name="line.219"></a>
+<FONT color="green">220</FONT>         * @since Android 1.0<a name="line.220"></a>
+<FONT color="green">221</FONT>         */<a name="line.221"></a>
+<FONT color="green">222</FONT>        public boolean getAutoCommit() throws SQLException;<a name="line.222"></a>
+<FONT color="green">223</FONT>    <a name="line.223"></a>
+<FONT color="green">224</FONT>        /**<a name="line.224"></a>
+<FONT color="green">225</FONT>         * Gets this {@code Connection} object's current catalog name.<a name="line.225"></a>
+<FONT color="green">226</FONT>         * <a name="line.226"></a>
+<FONT color="green">227</FONT>         * @return the catalog name. {@code null} if there is no catalog<a name="line.227"></a>
+<FONT color="green">228</FONT>         *         name.<a name="line.228"></a>
+<FONT color="green">229</FONT>         * @throws SQLException<a name="line.229"></a>
+<FONT color="green">230</FONT>         *             if there is a problem accessing the database.<a name="line.230"></a>
+<FONT color="green">231</FONT>         */<a name="line.231"></a>
+<FONT color="green">232</FONT>        public String getCatalog() throws SQLException;<a name="line.232"></a>
+<FONT color="green">233</FONT>    <a name="line.233"></a>
+<FONT color="green">234</FONT>        /**<a name="line.234"></a>
+<FONT color="green">235</FONT>         * Returns the holdability property that any {@code ResultSet} produced by<a name="line.235"></a>
+<FONT color="green">236</FONT>         * this instance will have.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * <a name="line.237"></a>
+<FONT color="green">238</FONT>         * @return one of the following holdability mode specifiers:<a name="line.238"></a>
+<FONT color="green">239</FONT>         *         &lt;ul&gt;<a name="line.239"></a>
+<FONT color="green">240</FONT>         *         &lt;li&gt;{@link ResultSet#HOLD_CURSORS_OVER_COMMIT}&lt;/li&gt; &lt;li&gt;<a name="line.240"></a>
+<FONT color="green">241</FONT>         *         {@link ResultSet#CLOSE_CURSORS_AT_COMMIT}&lt;/li&gt;<a name="line.241"></a>
+<FONT color="green">242</FONT>         *         &lt;/ul&gt;<a name="line.242"></a>
+<FONT color="green">243</FONT>         * @throws SQLException<a name="line.243"></a>
+<FONT color="green">244</FONT>         *             if there is a problem accessing the a database.<a name="line.244"></a>
+<FONT color="green">245</FONT>         * @since Android 1.0<a name="line.245"></a>
+<FONT color="green">246</FONT>         */<a name="line.246"></a>
+<FONT color="green">247</FONT>        public int getHoldability() throws SQLException;<a name="line.247"></a>
+<FONT color="green">248</FONT>    <a name="line.248"></a>
+<FONT color="green">249</FONT>        /**<a name="line.249"></a>
+<FONT color="green">250</FONT>         * Gets the metadata about the database referenced by this connection. The<a name="line.250"></a>
+<FONT color="green">251</FONT>         * returned {@code DatabaseMetaData} describes the database topography,<a name="line.251"></a>
+<FONT color="green">252</FONT>         * available stored procedures, SQL syntax and so on.<a name="line.252"></a>
+<FONT color="green">253</FONT>         * <a name="line.253"></a>
+<FONT color="green">254</FONT>         * @return a {@code DatabaseMetaData} object containing the database<a name="line.254"></a>
+<FONT color="green">255</FONT>         *         description.<a name="line.255"></a>
+<FONT color="green">256</FONT>         * @throws SQLException<a name="line.256"></a>
+<FONT color="green">257</FONT>         *             if there is a problem accessing the a database.<a name="line.257"></a>
+<FONT color="green">258</FONT>         * @since Android 1.0<a name="line.258"></a>
+<FONT color="green">259</FONT>         */<a name="line.259"></a>
+<FONT color="green">260</FONT>        public DatabaseMetaData getMetaData() throws SQLException;<a name="line.260"></a>
+<FONT color="green">261</FONT>    <a name="line.261"></a>
+<FONT color="green">262</FONT>        /**<a name="line.262"></a>
+<FONT color="green">263</FONT>         * Returns the transaction isolation level for this connection.<a name="line.263"></a>
+<FONT color="green">264</FONT>         * <a name="line.264"></a>
+<FONT color="green">265</FONT>         * @return the transaction isolation value.<a name="line.265"></a>
+<FONT color="green">266</FONT>         * @throws SQLException<a name="line.266"></a>
+<FONT color="green">267</FONT>         *             if there is a problem accessing the database.<a name="line.267"></a>
+<FONT color="green">268</FONT>         * @see #TRANSACTION_NONE<a name="line.268"></a>
+<FONT color="green">269</FONT>         * @see #TRANSACTION_READ_COMMITTED<a name="line.269"></a>
+<FONT color="green">270</FONT>         * @see #TRANSACTION_READ_UNCOMMITTED<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @see #TRANSACTION_REPEATABLE_READ<a name="line.271"></a>
+<FONT color="green">272</FONT>         * @see #TRANSACTION_SERIALIZABLE<a name="line.272"></a>
+<FONT color="green">273</FONT>         * @since Android 1.0<a name="line.273"></a>
+<FONT color="green">274</FONT>         */<a name="line.274"></a>
+<FONT color="green">275</FONT>        public int getTransactionIsolation() throws SQLException;<a name="line.275"></a>
+<FONT color="green">276</FONT>    <a name="line.276"></a>
+<FONT color="green">277</FONT>        /**<a name="line.277"></a>
+<FONT color="green">278</FONT>         * Returns the type mapping associated with this {@code Connection} object.<a name="line.278"></a>
+<FONT color="green">279</FONT>         * The type mapping must be set on the application level.<a name="line.279"></a>
+<FONT color="green">280</FONT>         * <a name="line.280"></a>
+<FONT color="green">281</FONT>         * @return the Type Map as a {@code java.util.Map}.<a name="line.281"></a>
+<FONT color="green">282</FONT>         * @throws SQLException<a name="line.282"></a>
+<FONT color="green">283</FONT>         *             if there is a problem accessing the database.<a name="line.283"></a>
+<FONT color="green">284</FONT>         * @since Android 1.0<a name="line.284"></a>
+<FONT color="green">285</FONT>         */<a name="line.285"></a>
+<FONT color="green">286</FONT>        public Map&lt;String, Class&lt;?&gt;&gt; getTypeMap() throws SQLException;<a name="line.286"></a>
+<FONT color="green">287</FONT>    <a name="line.287"></a>
+<FONT color="green">288</FONT>        /**<a name="line.288"></a>
+<FONT color="green">289</FONT>         * Gets the first instance of any {@code SQLWarning} objects that may have<a name="line.289"></a>
+<FONT color="green">290</FONT>         * been created in the use of this connection. If at least one warning has<a name="line.290"></a>
+<FONT color="green">291</FONT>         * occurred then this operation returns the first one reported. A {@code<a name="line.291"></a>
+<FONT color="green">292</FONT>         * null} indicates that no warnings have occurred.<a name="line.292"></a>
+<FONT color="green">293</FONT>         * &lt;p&gt;<a name="line.293"></a>
+<FONT color="green">294</FONT>         * By invoking the {@link SQLWarning#getNextWarning()} method of the<a name="line.294"></a>
+<FONT color="green">295</FONT>         * returned {@code SQLWarning} object it is possible to obtain all of<a name="line.295"></a>
+<FONT color="green">296</FONT>         * this connection's warning objects.<a name="line.296"></a>
+<FONT color="green">297</FONT>         * &lt;/p&gt;<a name="line.297"></a>
+<FONT color="green">298</FONT>         * <a name="line.298"></a>
+<FONT color="green">299</FONT>         * @return the first warning as an SQLWarning object (may be {@code null}).<a name="line.299"></a>
+<FONT color="green">300</FONT>         * @throws SQLException<a name="line.300"></a>
+<FONT color="green">301</FONT>         *             if there is a problem accessing the database or if the call<a name="line.301"></a>
+<FONT color="green">302</FONT>         *             has been made on a connection which has been previously<a name="line.302"></a>
+<FONT color="green">303</FONT>         *             closed.<a name="line.303"></a>
+<FONT color="green">304</FONT>         * @since Android 1.0<a name="line.304"></a>
+<FONT color="green">305</FONT>         */<a name="line.305"></a>
+<FONT color="green">306</FONT>        public SQLWarning getWarnings() throws SQLException;<a name="line.306"></a>
+<FONT color="green">307</FONT>    <a name="line.307"></a>
+<FONT color="green">308</FONT>        /**<a name="line.308"></a>
+<FONT color="green">309</FONT>         * Returns a {@code boolean} indicating whether or not this connection is in<a name="line.309"></a>
+<FONT color="green">310</FONT>         * the {@code closed} state. The {@code closed} state may be entered into as<a name="line.310"></a>
+<FONT color="green">311</FONT>         * a consequence of a successful invocation of the {@link #close()} method<a name="line.311"></a>
+<FONT color="green">312</FONT>         * or else if an error has occurred that prevents the connection from<a name="line.312"></a>
+<FONT color="green">313</FONT>         * functioning normally.<a name="line.313"></a>
+<FONT color="green">314</FONT>         * <a name="line.314"></a>
+<FONT color="green">315</FONT>         * @return {@code true} if closed, otherwise {@code false}.<a name="line.315"></a>
+<FONT color="green">316</FONT>         * @throws SQLException<a name="line.316"></a>
+<FONT color="green">317</FONT>         *             if there is a problem accessing the database.<a name="line.317"></a>
+<FONT color="green">318</FONT>         * @since Android 1.0<a name="line.318"></a>
+<FONT color="green">319</FONT>         */<a name="line.319"></a>
+<FONT color="green">320</FONT>        public boolean isClosed() throws SQLException;<a name="line.320"></a>
+<FONT color="green">321</FONT>    <a name="line.321"></a>
+<FONT color="green">322</FONT>        /**<a name="line.322"></a>
+<FONT color="green">323</FONT>         * Returns a {@code boolean} indicating whether or not this connection is<a name="line.323"></a>
+<FONT color="green">324</FONT>         * currently in the {@code read-only} state.<a name="line.324"></a>
+<FONT color="green">325</FONT>         * <a name="line.325"></a>
+<FONT color="green">326</FONT>         * @return {@code true} if in read-only state, otherwise {@code false}.<a name="line.326"></a>
+<FONT color="green">327</FONT>         * @throws SQLException<a name="line.327"></a>
+<FONT color="green">328</FONT>         *             if there is a problem accessing the database.<a name="line.328"></a>
+<FONT color="green">329</FONT>         * @since Android 1.0<a name="line.329"></a>
+<FONT color="green">330</FONT>         */<a name="line.330"></a>
+<FONT color="green">331</FONT>        public boolean isReadOnly() throws SQLException;<a name="line.331"></a>
+<FONT color="green">332</FONT>    <a name="line.332"></a>
+<FONT color="green">333</FONT>        /**<a name="line.333"></a>
+<FONT color="green">334</FONT>         * Returns a string representation of the input SQL statement<a name="line.334"></a>
+<FONT color="green">335</FONT>         * {@code sql} expressed in the underlying system's native SQL<a name="line.335"></a>
+<FONT color="green">336</FONT>         * syntax.<a name="line.336"></a>
+<FONT color="green">337</FONT>         * <a name="line.337"></a>
+<FONT color="green">338</FONT>         * @param sql<a name="line.338"></a>
+<FONT color="green">339</FONT>         *            the JDBC form of an SQL statement.<a name="line.339"></a>
+<FONT color="green">340</FONT>         * @return the SQL statement in native database format.<a name="line.340"></a>
+<FONT color="green">341</FONT>         * @throws SQLException<a name="line.341"></a>
+<FONT color="green">342</FONT>         *             if there is a problem accessing the database<a name="line.342"></a>
+<FONT color="green">343</FONT>         */<a name="line.343"></a>
+<FONT color="green">344</FONT>        public String nativeSQL(String sql) throws SQLException;<a name="line.344"></a>
+<FONT color="green">345</FONT>    <a name="line.345"></a>
+<FONT color="green">346</FONT>        /**<a name="line.346"></a>
+<FONT color="green">347</FONT>         * Returns a new instance of {@code CallableStatement} that may be used for<a name="line.347"></a>
+<FONT color="green">348</FONT>         * making stored procedure calls to the database.<a name="line.348"></a>
+<FONT color="green">349</FONT>         * <a name="line.349"></a>
+<FONT color="green">350</FONT>         * @param sql<a name="line.350"></a>
+<FONT color="green">351</FONT>         *            the SQL statement that calls the stored function<a name="line.351"></a>
+<FONT color="green">352</FONT>         * @return a new instance of {@code CallableStatement} representing the SQL<a name="line.352"></a>
+<FONT color="green">353</FONT>         *         statement. {@code ResultSet}s emitted from this {@code<a name="line.353"></a>
+<FONT color="green">354</FONT>         *         CallableStatement} will default to type<a name="line.354"></a>
+<FONT color="green">355</FONT>         *         {@link ResultSet#TYPE_FORWARD_ONLY} and concurrency<a name="line.355"></a>
+<FONT color="green">356</FONT>         *         {@link ResultSet#CONCUR_READ_ONLY}.<a name="line.356"></a>
+<FONT color="green">357</FONT>         * @throws SQLException<a name="line.357"></a>
+<FONT color="green">358</FONT>         *             if a problem occurs accessing the database.<a name="line.358"></a>
+<FONT color="green">359</FONT>         * @since Android 1.0<a name="line.359"></a>
+<FONT color="green">360</FONT>         */<a name="line.360"></a>
+<FONT color="green">361</FONT>        public CallableStatement prepareCall(String sql) throws SQLException;<a name="line.361"></a>
+<FONT color="green">362</FONT>    <a name="line.362"></a>
+<FONT color="green">363</FONT>        /**<a name="line.363"></a>
+<FONT color="green">364</FONT>         * Returns a new instance of {@code CallableStatement} that may be used for<a name="line.364"></a>
+<FONT color="green">365</FONT>         * making stored procedure calls to the database. {@code ResultSet}s emitted<a name="line.365"></a>
+<FONT color="green">366</FONT>         * from this {@code CallableStatement} will satisfy the specified {@code<a name="line.366"></a>
+<FONT color="green">367</FONT>         * resultSetType} and {@code resultSetConcurrency} values.<a name="line.367"></a>
+<FONT color="green">368</FONT>         * <a name="line.368"></a>
+<FONT color="green">369</FONT>         * @param sql<a name="line.369"></a>
+<FONT color="green">370</FONT>         *            the SQL statement<a name="line.370"></a>
+<FONT color="green">371</FONT>         * @param resultSetType<a name="line.371"></a>
+<FONT color="green">372</FONT>         *            one of the following type specifiers:<a name="line.372"></a>
+<FONT color="green">373</FONT>         *            &lt;ul&gt;<a name="line.373"></a>
+<FONT color="green">374</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE}&lt;/li&gt;<a name="line.374"></a>
+<FONT color="green">375</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_INSENSITIVE}&lt;/li&gt;<a name="line.375"></a>
+<FONT color="green">376</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.376"></a>
+<FONT color="green">377</FONT>         *            &lt;/ul&gt;<a name="line.377"></a>
+<FONT color="green">378</FONT>         * @param resultSetConcurrency<a name="line.378"></a>
+<FONT color="green">379</FONT>         *            one of the following concurrency mode specifiers:<a name="line.379"></a>
+<FONT color="green">380</FONT>         *            &lt;ul&gt;<a name="line.380"></a>
+<FONT color="green">381</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.381"></a>
+<FONT color="green">382</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt;<a name="line.382"></a>
+<FONT color="green">383</FONT>         *            &lt;/ul&gt;<a name="line.383"></a>
+<FONT color="green">384</FONT>         * @return a new instance of {@code CallableStatement} representing the<a name="line.384"></a>
+<FONT color="green">385</FONT>         *         precompiled SQL statement. {@code ResultSet}s emitted from this<a name="line.385"></a>
+<FONT color="green">386</FONT>         *         {@code CallableStatement} will satisfy the specified {@code<a name="line.386"></a>
+<FONT color="green">387</FONT>         *         resultSetType} and {@code resultSetConcurrency} values.<a name="line.387"></a>
+<FONT color="green">388</FONT>         * @throws SQLException<a name="line.388"></a>
+<FONT color="green">389</FONT>         *             if a problem occurs accessing the database<a name="line.389"></a>
+<FONT color="green">390</FONT>         * @since Android 1.0<a name="line.390"></a>
+<FONT color="green">391</FONT>         */<a name="line.391"></a>
+<FONT color="green">392</FONT>        public CallableStatement prepareCall(String sql, int resultSetType,<a name="line.392"></a>
+<FONT color="green">393</FONT>                int resultSetConcurrency) throws SQLException;<a name="line.393"></a>
+<FONT color="green">394</FONT>    <a name="line.394"></a>
+<FONT color="green">395</FONT>        /**<a name="line.395"></a>
+<FONT color="green">396</FONT>         * Returns a new instance of {@code CallableStatement} that may be used for<a name="line.396"></a>
+<FONT color="green">397</FONT>         * making stored procedure calls to the database. {@code ResultSet}s created<a name="line.397"></a>
+<FONT color="green">398</FONT>         * from this {@code CallableStatement} will have characteristics determined<a name="line.398"></a>
+<FONT color="green">399</FONT>         * by the specified type, concurrency and holdability arguments.<a name="line.399"></a>
+<FONT color="green">400</FONT>         * <a name="line.400"></a>
+<FONT color="green">401</FONT>         * @param sql<a name="line.401"></a>
+<FONT color="green">402</FONT>         *            the SQL statement<a name="line.402"></a>
+<FONT color="green">403</FONT>         * @param resultSetType<a name="line.403"></a>
+<FONT color="green">404</FONT>         *            one of the following type specifiers:<a name="line.404"></a>
+<FONT color="green">405</FONT>         *            &lt;ul&gt;<a name="line.405"></a>
+<FONT color="green">406</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE}&lt;/li&gt;<a name="line.406"></a>
+<FONT color="green">407</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_INSENSITIVE}&lt;/li&gt;<a name="line.407"></a>
+<FONT color="green">408</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.408"></a>
+<FONT color="green">409</FONT>         *            &lt;/ul&gt;<a name="line.409"></a>
+<FONT color="green">410</FONT>         * @param resultSetConcurrency<a name="line.410"></a>
+<FONT color="green">411</FONT>         *            one of the following concurrency mode specifiers:<a name="line.411"></a>
+<FONT color="green">412</FONT>         *            &lt;ul&gt;<a name="line.412"></a>
+<FONT color="green">413</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.413"></a>
+<FONT color="green">414</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt;<a name="line.414"></a>
+<FONT color="green">415</FONT>         *            &lt;/ul&gt;<a name="line.415"></a>
+<FONT color="green">416</FONT>         * @param resultSetHoldability<a name="line.416"></a>
+<FONT color="green">417</FONT>         *            one of the following holdability mode specifiers:<a name="line.417"></a>
+<FONT color="green">418</FONT>         *            &lt;ul&gt;<a name="line.418"></a>
+<FONT color="green">419</FONT>         *            &lt;li&gt;{@link ResultSet#HOLD_CURSORS_OVER_COMMIT}&lt;/li&gt;<a name="line.419"></a>
+<FONT color="green">420</FONT>         *            &lt;li&gt;{@link ResultSet#CLOSE_CURSORS_AT_COMMIT}&lt;/li&gt;<a name="line.420"></a>
+<FONT color="green">421</FONT>         *            &lt;/ul&gt;<a name="line.421"></a>
+<FONT color="green">422</FONT>         * @return a new instance of {@code CallableStatement} representing the<a name="line.422"></a>
+<FONT color="green">423</FONT>         *         precompiled SQL statement. {@code ResultSet}s emitted from this<a name="line.423"></a>
+<FONT color="green">424</FONT>         *         {@code CallableStatement} will satisfy the specified {@code<a name="line.424"></a>
+<FONT color="green">425</FONT>         *         resultSetType}, {@code resultSetConcurrency} and {@code<a name="line.425"></a>
+<FONT color="green">426</FONT>         *         resultSetHoldability} values.<a name="line.426"></a>
+<FONT color="green">427</FONT>         * @throws SQLException<a name="line.427"></a>
+<FONT color="green">428</FONT>         *             if a problem occurs accessing the database.<a name="line.428"></a>
+<FONT color="green">429</FONT>         * @since Android 1.0<a name="line.429"></a>
+<FONT color="green">430</FONT>         */<a name="line.430"></a>
+<FONT color="green">431</FONT>        public CallableStatement prepareCall(String sql, int resultSetType,<a name="line.431"></a>
+<FONT color="green">432</FONT>                int resultSetConcurrency, int resultSetHoldability)<a name="line.432"></a>
+<FONT color="green">433</FONT>                throws SQLException;<a name="line.433"></a>
+<FONT color="green">434</FONT>    <a name="line.434"></a>
+<FONT color="green">435</FONT>        /**<a name="line.435"></a>
+<FONT color="green">436</FONT>         * Returns a new instance of {@code PreparedStatement} that may be used any<a name="line.436"></a>
+<FONT color="green">437</FONT>         * number of times to execute parameterized requests on the database server.<a name="line.437"></a>
+<FONT color="green">438</FONT>         * &lt;p&gt;<a name="line.438"></a>
+<FONT color="green">439</FONT>         * Subject to JDBC driver support, this operation will attempt to send the<a name="line.439"></a>
+<FONT color="green">440</FONT>         * precompiled version of the statement to the database. If<a name="line.440"></a>
+<FONT color="green">441</FONT>         * the driver does not support precompiled statements, the statement will<a name="line.441"></a>
+<FONT color="green">442</FONT>         * not reach the database server until it is executed. This distinction<a name="line.442"></a>
+<FONT color="green">443</FONT>         * determines the moment when {@code SQLException}s get raised.<a name="line.443"></a>
+<FONT color="green">444</FONT>         * &lt;/p&gt;<a name="line.444"></a>
+<FONT color="green">445</FONT>         * By default, {@code ResultSet}s from the returned object will be<a name="line.445"></a>
+<FONT color="green">446</FONT>         * {@link ResultSet#TYPE_FORWARD_ONLY} type with a<a name="line.446"></a>
+<FONT color="green">447</FONT>         * {@link ResultSet#CONCUR_READ_ONLY} mode of concurrency.<a name="line.447"></a>
+<FONT color="green">448</FONT>         * <a name="line.448"></a>
+<FONT color="green">449</FONT>         * @param sql<a name="line.449"></a>
+<FONT color="green">450</FONT>         *            the SQL statement.<a name="line.450"></a>
+<FONT color="green">451</FONT>         * @return the {@code PreparedStatement} containing the supplied SQL<a name="line.451"></a>
+<FONT color="green">452</FONT>         *         statement.<a name="line.452"></a>
+<FONT color="green">453</FONT>         * @throws SQLException<a name="line.453"></a>
+<FONT color="green">454</FONT>         *             if there is a problem accessing the database.<a name="line.454"></a>
+<FONT color="green">455</FONT>         * @since Android 1.0<a name="line.455"></a>
+<FONT color="green">456</FONT>         */<a name="line.456"></a>
+<FONT color="green">457</FONT>        public PreparedStatement prepareStatement(String sql) throws SQLException;<a name="line.457"></a>
+<FONT color="green">458</FONT>    <a name="line.458"></a>
+<FONT color="green">459</FONT>        /**<a name="line.459"></a>
+<FONT color="green">460</FONT>         * Creates a default {@code PreparedStatement} that can retrieve<a name="line.460"></a>
+<FONT color="green">461</FONT>         * automatically generated keys. Parameter {@code autoGeneratedKeys} may be<a name="line.461"></a>
+<FONT color="green">462</FONT>         * used to tell the driver whether such keys should be made accessible.<a name="line.462"></a>
+<FONT color="green">463</FONT>         * This is only relevant when the {@code sql} statement is an {@code insert}<a name="line.463"></a>
+<FONT color="green">464</FONT>         * statement.<a name="line.464"></a>
+<FONT color="green">465</FONT>         * &lt;p&gt;<a name="line.465"></a>
+<FONT color="green">466</FONT>         * An SQL statement which may have {@code IN} parameters can be stored and<a name="line.466"></a>
+<FONT color="green">467</FONT>         * precompiled in a {@code PreparedStatement}. The {@code PreparedStatement}<a name="line.467"></a>
+<FONT color="green">468</FONT>         * can then be then be used to execute the statement multiple times in an<a name="line.468"></a>
+<FONT color="green">469</FONT>         * efficient way.<a name="line.469"></a>
+<FONT color="green">470</FONT>         * &lt;/p&gt;<a name="line.470"></a>
+<FONT color="green">471</FONT>         * Subject to JDBC driver support, this operation will attempt to send the<a name="line.471"></a>
+<FONT color="green">472</FONT>         * precompiled version of the statement to the database. If<a name="line.472"></a>
+<FONT color="green">473</FONT>         * the driver does not support precompiled statements, the statement will<a name="line.473"></a>
+<FONT color="green">474</FONT>         * not reach the database server until it is executed. This distinction<a name="line.474"></a>
+<FONT color="green">475</FONT>         * determines the moment when {@code SQLException}s get raised.<a name="line.475"></a>
+<FONT color="green">476</FONT>         * &lt;p&gt;<a name="line.476"></a>
+<FONT color="green">477</FONT>         * By default, {@code ResultSet}s from the returned object will be<a name="line.477"></a>
+<FONT color="green">478</FONT>         * {@link ResultSet#TYPE_FORWARD_ONLY} type with a<a name="line.478"></a>
+<FONT color="green">479</FONT>         * {@link ResultSet#CONCUR_READ_ONLY} mode of concurrency.<a name="line.479"></a>
+<FONT color="green">480</FONT>         * &lt;/p&gt;<a name="line.480"></a>
+<FONT color="green">481</FONT>         * <a name="line.481"></a>
+<FONT color="green">482</FONT>         * @param sql<a name="line.482"></a>
+<FONT color="green">483</FONT>         *            the SQL statement.<a name="line.483"></a>
+<FONT color="green">484</FONT>         * @param autoGeneratedKeys<a name="line.484"></a>
+<FONT color="green">485</FONT>         *            one of the following generated key options:<a name="line.485"></a>
+<FONT color="green">486</FONT>         *            &lt;ul&gt;<a name="line.486"></a>
+<FONT color="green">487</FONT>         *            &lt;li&gt;{@link Statement#RETURN_GENERATED_KEYS}&lt;/li&gt;<a name="line.487"></a>
+<FONT color="green">488</FONT>         *            &lt;li&gt;{@link Statement#NO_GENERATED_KEYS}&lt;/li&gt;<a name="line.488"></a>
+<FONT color="green">489</FONT>         *            &lt;/ul&gt;<a name="line.489"></a>
+<FONT color="green">490</FONT>         * @return a new {@code PreparedStatement} instance representing the input<a name="line.490"></a>
+<FONT color="green">491</FONT>         *         SQL statement.<a name="line.491"></a>
+<FONT color="green">492</FONT>         * @throws SQLException<a name="line.492"></a>
+<FONT color="green">493</FONT>         *             if there is a problem accessing the database.<a name="line.493"></a>
+<FONT color="green">494</FONT>         * @since Android 1.0<a name="line.494"></a>
+<FONT color="green">495</FONT>         */<a name="line.495"></a>
+<FONT color="green">496</FONT>        public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys)<a name="line.496"></a>
+<FONT color="green">497</FONT>                throws SQLException;<a name="line.497"></a>
+<FONT color="green">498</FONT>    <a name="line.498"></a>
+<FONT color="green">499</FONT>        /**<a name="line.499"></a>
+<FONT color="green">500</FONT>         * Creates a default {@code PreparedStatement} that can retrieve the<a name="line.500"></a>
+<FONT color="green">501</FONT>         * auto-generated keys designated by a supplied array. If {@code sql} is an<a name="line.501"></a>
+<FONT color="green">502</FONT>         * SQL {@code INSERT} statement, the parameter {@code columnIndexes} is expected<a name="line.502"></a>
+<FONT color="green">503</FONT>         * to hold the index values for each column in the statement's intended<a name="line.503"></a>
+<FONT color="green">504</FONT>         * database table containing the autogenerated-keys of interest. Otherwise<a name="line.504"></a>
+<FONT color="green">505</FONT>         * {@code columnIndexes} is ignored.<a name="line.505"></a>
+<FONT color="green">506</FONT>         * &lt;p&gt;<a name="line.506"></a>
+<FONT color="green">507</FONT>         * Subject to JDBC driver support, this operation will attempt to send the<a name="line.507"></a>
+<FONT color="green">508</FONT>         * precompiled version of the statement to the database. If<a name="line.508"></a>
+<FONT color="green">509</FONT>         * the driver does not support precompiled statements, the statement will<a name="line.509"></a>
+<FONT color="green">510</FONT>         * not reach the database server until it is executed. This distinction<a name="line.510"></a>
+<FONT color="green">511</FONT>         * determines the moment when {@code SQLException}s get raised.<a name="line.511"></a>
+<FONT color="green">512</FONT>         * &lt;/p&gt;<a name="line.512"></a>
+<FONT color="green">513</FONT>         * &lt;p&gt;<a name="line.513"></a>
+<FONT color="green">514</FONT>         * By default, {@code ResultSet}s from the returned object will be<a name="line.514"></a>
+<FONT color="green">515</FONT>         * {@link ResultSet#TYPE_FORWARD_ONLY} type with a<a name="line.515"></a>
+<FONT color="green">516</FONT>         * {@link ResultSet#CONCUR_READ_ONLY} concurrency mode.<a name="line.516"></a>
+<FONT color="green">517</FONT>         * &lt;/p&gt;<a name="line.517"></a>
+<FONT color="green">518</FONT>         * <a name="line.518"></a>
+<FONT color="green">519</FONT>         * @param sql<a name="line.519"></a>
+<FONT color="green">520</FONT>         *            the SQL statement.<a name="line.520"></a>
+<FONT color="green">521</FONT>         * @param columnIndexes<a name="line.521"></a>
+<FONT color="green">522</FONT>         *            the indexes of the columns for which auto-generated keys<a name="line.522"></a>
+<FONT color="green">523</FONT>         *            should be made available.<a name="line.523"></a>
+<FONT color="green">524</FONT>         * @return the PreparedStatement containing the supplied SQL statement.<a name="line.524"></a>
+<FONT color="green">525</FONT>         * @throws SQLException<a name="line.525"></a>
+<FONT color="green">526</FONT>         *             if a problem occurs accessing the database.<a name="line.526"></a>
+<FONT color="green">527</FONT>         * @since Android 1.0<a name="line.527"></a>
+<FONT color="green">528</FONT>         */<a name="line.528"></a>
+<FONT color="green">529</FONT>        public PreparedStatement prepareStatement(String sql, int[] columnIndexes)<a name="line.529"></a>
+<FONT color="green">530</FONT>                throws SQLException;<a name="line.530"></a>
+<FONT color="green">531</FONT>    <a name="line.531"></a>
+<FONT color="green">532</FONT>        /**<a name="line.532"></a>
+<FONT color="green">533</FONT>         * Creates a {@code PreparedStatement} that generates {@code ResultSet}s<a name="line.533"></a>
+<FONT color="green">534</FONT>         * with the specified values of {@code resultSetType} and {@code<a name="line.534"></a>
+<FONT color="green">535</FONT>         * resultSetConcurrency}.<a name="line.535"></a>
+<FONT color="green">536</FONT>         * <a name="line.536"></a>
+<FONT color="green">537</FONT>         * @param sql<a name="line.537"></a>
+<FONT color="green">538</FONT>         *            the SQL statement. It can contain one or more {@code '?'}<a name="line.538"></a>
+<FONT color="green">539</FONT>         *            {@code IN} parameter placeholders.<a name="line.539"></a>
+<FONT color="green">540</FONT>         * @param resultSetType<a name="line.540"></a>
+<FONT color="green">541</FONT>         *            one of the following type specifiers:<a name="line.541"></a>
+<FONT color="green">542</FONT>         *            &lt;ul&gt;<a name="line.542"></a>
+<FONT color="green">543</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE}&lt;/li&gt;<a name="line.543"></a>
+<FONT color="green">544</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_INSENSITIVE}&lt;/li&gt;<a name="line.544"></a>
+<FONT color="green">545</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.545"></a>
+<FONT color="green">546</FONT>         *            &lt;/ul&gt;<a name="line.546"></a>
+<FONT color="green">547</FONT>         * @param resultSetConcurrency<a name="line.547"></a>
+<FONT color="green">548</FONT>         *            one of the following concurrency mode specifiers:<a name="line.548"></a>
+<FONT color="green">549</FONT>         *            &lt;ul&gt;<a name="line.549"></a>
+<FONT color="green">550</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.550"></a>
+<FONT color="green">551</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt;<a name="line.551"></a>
+<FONT color="green">552</FONT>         *            &lt;/ul&gt;<a name="line.552"></a>
+<FONT color="green">553</FONT>         * @return a new instance of {@code PreparedStatement} containing the SQL<a name="line.553"></a>
+<FONT color="green">554</FONT>         *         statement {@code sql}. {@code ResultSet}s emitted from this<a name="line.554"></a>
+<FONT color="green">555</FONT>         *         {@code PreparedStatement} will satisfy the specified {@code<a name="line.555"></a>
+<FONT color="green">556</FONT>         *         resultSetType} and {@code resultSetConcurrency} values.<a name="line.556"></a>
+<FONT color="green">557</FONT>         * @throws SQLException<a name="line.557"></a>
+<FONT color="green">558</FONT>         *             if a problem occurs accessing the database.<a name="line.558"></a>
+<FONT color="green">559</FONT>         * @since Android 1.0<a name="line.559"></a>
+<FONT color="green">560</FONT>         */<a name="line.560"></a>
+<FONT color="green">561</FONT>        public PreparedStatement prepareStatement(String sql, int resultSetType,<a name="line.561"></a>
+<FONT color="green">562</FONT>                int resultSetConcurrency) throws SQLException;<a name="line.562"></a>
+<FONT color="green">563</FONT>    <a name="line.563"></a>
+<FONT color="green">564</FONT>        /**<a name="line.564"></a>
+<FONT color="green">565</FONT>         * Creates a {@code PreparedStatement} that generates {@code ResultSet}s<a name="line.565"></a>
+<FONT color="green">566</FONT>         * with the specified type, concurrency and holdability<a name="line.566"></a>
+<FONT color="green">567</FONT>         * <a name="line.567"></a>
+<FONT color="green">568</FONT>         * @param sql<a name="line.568"></a>
+<FONT color="green">569</FONT>         *            the SQL statement. It can contain one or more {@code '?' IN}<a name="line.569"></a>
+<FONT color="green">570</FONT>         *            parameter placeholders.<a name="line.570"></a>
+<FONT color="green">571</FONT>         * @param resultSetType<a name="line.571"></a>
+<FONT color="green">572</FONT>         *            one of the following type specifiers:<a name="line.572"></a>
+<FONT color="green">573</FONT>         *            &lt;ul&gt;<a name="line.573"></a>
+<FONT color="green">574</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_SENSITIVE}&lt;/li&gt;<a name="line.574"></a>
+<FONT color="green">575</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_SCROLL_INSENSITIVE}&lt;/li&gt;<a name="line.575"></a>
+<FONT color="green">576</FONT>         *            &lt;li&gt;{@link ResultSet#TYPE_FORWARD_ONLY}&lt;/li&gt;<a name="line.576"></a>
+<FONT color="green">577</FONT>         *            &lt;/ul&gt;<a name="line.577"></a>
+<FONT color="green">578</FONT>         * @param resultSetConcurrency<a name="line.578"></a>
+<FONT color="green">579</FONT>         *            one of the following concurrency mode specifiers:<a name="line.579"></a>
+<FONT color="green">580</FONT>         *            &lt;ul&gt;<a name="line.580"></a>
+<FONT color="green">581</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_READ_ONLY}&lt;/li&gt;<a name="line.581"></a>
+<FONT color="green">582</FONT>         *            &lt;li&gt;{@link ResultSet#CONCUR_UPDATABLE}&lt;/li&gt;<a name="line.582"></a>
+<FONT color="green">583</FONT>         *            &lt;/ul&gt;<a name="line.583"></a>
+<FONT color="green">584</FONT>         * @param resultSetHoldability<a name="line.584"></a>
+<FONT color="green">585</FONT>         *            one of the following holdability mode specifiers:<a name="line.585"></a>
+<FONT color="green">586</FONT>         *            &lt;ul&gt;<a name="line.586"></a>
+<FONT color="green">587</FONT>         *            &lt;li&gt;{@link ResultSet#HOLD_CURSORS_OVER_COMMIT}&lt;/li&gt;<a name="line.587"></a>
+<FONT color="green">588</FONT>         *            &lt;li&gt;{@link ResultSet#CLOSE_CURSORS_AT_COMMIT}&lt;/li&gt;<a name="line.588"></a>
+<FONT color="green">589</FONT>         *            &lt;/ul&gt;<a name="line.589"></a>
+<FONT color="green">590</FONT>         * @return a new instance of {@code PreparedStatement} containing the SQL<a name="line.590"></a>
+<FONT color="green">591</FONT>         *         statement {@code sql}. {@code ResultSet}s emitted from this<a name="line.591"></a>
+<FONT color="green">592</FONT>         *         {@code PreparedStatement} will satisfy the specified {@code<a name="line.592"></a>
+<FONT color="green">593</FONT>         *         resultSetType}, {@code resultSetConcurrency} and {@code<a name="line.593"></a>
+<FONT color="green">594</FONT>         *         resultSetHoldability} values.<a name="line.594"></a>
+<FONT color="green">595</FONT>         * @throws SQLException<a name="line.595"></a>
+<FONT color="green">596</FONT>         *             if a problem occurs accessing the database.<a name="line.596"></a>
+<FONT color="green">597</FONT>         * @since Android 1.0<a name="line.597"></a>
+<FONT color="green">598</FONT>         */<a name="line.598"></a>
+<FONT color="green">599</FONT>        public PreparedStatement prepareStatement(String sql, int resultSetType,<a name="line.599"></a>
+<FONT color="green">600</FONT>                int resultSetConcurrency, int resultSetHoldability)<a name="line.600"></a>
+<FONT color="green">601</FONT>                throws SQLException;<a name="line.601"></a>
+<FONT color="green">602</FONT>    <a name="line.602"></a>
+<FONT color="green">603</FONT>        /**<a name="line.603"></a>
+<FONT color="green">604</FONT>         * Creates a default {@code PreparedStatement} that can retrieve the<a name="line.604"></a>
+<FONT color="green">605</FONT>         * auto-generated keys designated by a supplied array. If {@code sql} is an<a name="line.605"></a>
+<FONT color="green">606</FONT>         * SQL {@code INSERT} statement, {@code columnNames} is expected to hold the<a name="line.606"></a>
+<FONT color="green">607</FONT>         * names of each column in the statement's associated database table<a name="line.607"></a>
+<FONT color="green">608</FONT>         * containing the autogenerated-keys of interest. Otherwise {@code<a name="line.608"></a>
+<FONT color="green">609</FONT>         * columnNames} is ignored.<a name="line.609"></a>
+<FONT color="green">610</FONT>         * &lt;p&gt;<a name="line.610"></a>
+<FONT color="green">611</FONT>         * Subject to JDBC driver support, this operation will attempt to send the<a name="line.611"></a>
+<FONT color="green">612</FONT>         * precompiled version of the statement to the database. Alternatively, if<a name="line.612"></a>
+<FONT color="green">613</FONT>         * the driver is not capable of handling precompiled statements, the<a name="line.613"></a>
+<FONT color="green">614</FONT>         * statement will not reach the database server until it is executed. This<a name="line.614"></a>
+<FONT color="green">615</FONT>         * will have a bearing on precisely &lt;i&gt;when&lt;/i&gt; {@code SQLException}<a name="line.615"></a>
+<FONT color="green">616</FONT>         * instances get raised.<a name="line.616"></a>
+<FONT color="green">617</FONT>         * &lt;/p&gt;<a name="line.617"></a>
+<FONT color="green">618</FONT>         * &lt;p&gt;<a name="line.618"></a>
+<FONT color="green">619</FONT>         * By default, ResultSets from the returned object will be<a name="line.619"></a>
+<FONT color="green">620</FONT>         * {@link ResultSet#TYPE_FORWARD_ONLY} type with a<a name="line.620"></a>
+<FONT color="green">621</FONT>         * {@link ResultSet#CONCUR_READ_ONLY} concurrency mode.<a name="line.621"></a>
+<FONT color="green">622</FONT>         * &lt;/p&gt;<a name="line.622"></a>
+<FONT color="green">623</FONT>         * <a name="line.623"></a>
+<FONT color="green">624</FONT>         * @param sql<a name="line.624"></a>
+<FONT color="green">625</FONT>         *            the SQL statement.<a name="line.625"></a>
+<FONT color="green">626</FONT>         * @param columnNames<a name="line.626"></a>
+<FONT color="green">627</FONT>         *            the names of the columns for which auto-generated keys should<a name="line.627"></a>
+<FONT color="green">628</FONT>         *            be made available.<a name="line.628"></a>
+<FONT color="green">629</FONT>         * @return the PreparedStatement containing the supplied SQL statement.<a name="line.629"></a>
+<FONT color="green">630</FONT>         * @throws SQLException<a name="line.630"></a>
+<FONT color="green">631</FONT>         *             if a problem occurs accessing the database.<a name="line.631"></a>
+<FONT color="green">632</FONT>         * @since Android 1.0<a name="line.632"></a>
+<FONT color="green">633</FONT>         */<a name="line.633"></a>
+<FONT color="green">634</FONT>        public PreparedStatement prepareStatement(String sql, String[] columnNames)<a name="line.634"></a>
+<FONT color="green">635</FONT>                throws SQLException;<a name="line.635"></a>
+<FONT color="green">636</FONT>    <a name="line.636"></a>
+<FONT color="green">637</FONT>        /**<a name="line.637"></a>
+<FONT color="green">638</FONT>         * Releases the specified {@code savepoint} from the present transaction. Once removed,<a name="line.638"></a>
+<FONT color="green">639</FONT>         * the {@code Savepoint} is considered invalid and should not be referenced<a name="line.639"></a>
+<FONT color="green">640</FONT>         * further.<a name="line.640"></a>
+<FONT color="green">641</FONT>         * <a name="line.641"></a>
+<FONT color="green">642</FONT>         * @param savepoint<a name="line.642"></a>
+<FONT color="green">643</FONT>         *            the object targeted for removal.<a name="line.643"></a>
+<FONT color="green">644</FONT>         * @throws SQLException<a name="line.644"></a>
+<FONT color="green">645</FONT>         *             if there is a problem with accessing the database or if<a name="line.645"></a>
+<FONT color="green">646</FONT>         *             {@code savepoint} is considered not valid in this<a name="line.646"></a>
+<FONT color="green">647</FONT>         *             transaction.<a name="line.647"></a>
+<FONT color="green">648</FONT>         * @since Android 1.0<a name="line.648"></a>
+<FONT color="green">649</FONT>         */<a name="line.649"></a>
+<FONT color="green">650</FONT>        public void releaseSavepoint(Savepoint savepoint) throws SQLException;<a name="line.650"></a>
+<FONT color="green">651</FONT>    <a name="line.651"></a>
+<FONT color="green">652</FONT>        /**<a name="line.652"></a>
+<FONT color="green">653</FONT>         * Rolls back all updates made so far in this transaction and<a name="line.653"></a>
+<FONT color="green">654</FONT>         * relinquishes all acquired database locks. It is an error to invoke this<a name="line.654"></a>
+<FONT color="green">655</FONT>         * operation when in auto-commit mode.<a name="line.655"></a>
+<FONT color="green">656</FONT>         * <a name="line.656"></a>
+<FONT color="green">657</FONT>         * @throws SQLException<a name="line.657"></a>
+<FONT color="green">658</FONT>         *             if there is a problem with the database or if the method is<a name="line.658"></a>
+<FONT color="green">659</FONT>         *             called while in auto-commit mode of operation.<a name="line.659"></a>
+<FONT color="green">660</FONT>         * @since Android 1.0<a name="line.660"></a>
+<FONT color="green">661</FONT>         */<a name="line.661"></a>
+<FONT color="green">662</FONT>        public void rollback() throws SQLException;<a name="line.662"></a>
+<FONT color="green">663</FONT>    <a name="line.663"></a>
+<FONT color="green">664</FONT>        /**<a name="line.664"></a>
+<FONT color="green">665</FONT>         * Undoes all changes made after the supplied {@code Savepoint} object was<a name="line.665"></a>
+<FONT color="green">666</FONT>         * set. This method should only be used when auto-commit mode is disabled.<a name="line.666"></a>
+<FONT color="green">667</FONT>         * <a name="line.667"></a>
+<FONT color="green">668</FONT>         * @param savepoint<a name="line.668"></a>
+<FONT color="green">669</FONT>         *            the Savepoint to roll back to<a name="line.669"></a>
+<FONT color="green">670</FONT>         * @throws SQLException<a name="line.670"></a>
+<FONT color="green">671</FONT>         *             if there is a problem accessing the database.<a name="line.671"></a>
+<FONT color="green">672</FONT>         * @since Android 1.0<a name="line.672"></a>
+<FONT color="green">673</FONT>         */<a name="line.673"></a>
+<FONT color="green">674</FONT>        public void rollback(Savepoint savepoint) throws SQLException;<a name="line.674"></a>
+<FONT color="green">675</FONT>    <a name="line.675"></a>
+<FONT color="green">676</FONT>        /**<a name="line.676"></a>
+<FONT color="green">677</FONT>         * Sets this connection's auto-commit mode {@code on} or {@code off}.<a name="line.677"></a>
+<FONT color="green">678</FONT>         * &lt;p&gt;<a name="line.678"></a>
+<FONT color="green">679</FONT>         * Putting a Connection into auto-commit mode means that all associated SQL<a name="line.679"></a>
+<FONT color="green">680</FONT>         * statements are run and committed as separate transactions.<a name="line.680"></a>
+<FONT color="green">681</FONT>         * By contrast, setting auto-commit to {@code off} means that associated SQL<a name="line.681"></a>
+<FONT color="green">682</FONT>         * statements get grouped into transactions that need to be completed by<a name="line.682"></a>
+<FONT color="green">683</FONT>         * explicit calls to either the {@link #commit()} or {@link #rollback()}<a name="line.683"></a>
+<FONT color="green">684</FONT>         * methods.<a name="line.684"></a>
+<FONT color="green">685</FONT>         * &lt;/p&gt;<a name="line.685"></a>
+<FONT color="green">686</FONT>         * Auto-commit is the default mode for new connection instances.<a name="line.686"></a>
+<FONT color="green">687</FONT>         * &lt;p&gt;<a name="line.687"></a>
+<FONT color="green">688</FONT>         * When in this mode, commits will automatically occur upon successful SQL<a name="line.688"></a>
+<FONT color="green">689</FONT>         * statement completion or upon successful completion of an execute.<a name="line.689"></a>
+<FONT color="green">690</FONT>         * Statements are not considered successfully completed until all associated<a name="line.690"></a>
+<FONT color="green">691</FONT>         * {@code ResultSet}s and output parameters have been obtained or closed.<a name="line.691"></a>
+<FONT color="green">692</FONT>         * &lt;/p&gt;<a name="line.692"></a>
+<FONT color="green">693</FONT>         * &lt;p&gt;<a name="line.693"></a>
+<FONT color="green">694</FONT>         * Calling this operation during an uncommitted transaction will result in<a name="line.694"></a>
+<FONT color="green">695</FONT>         * it being committed.<a name="line.695"></a>
+<FONT color="green">696</FONT>         * &lt;/p&gt;<a name="line.696"></a>
+<FONT color="green">697</FONT>         * <a name="line.697"></a>
+<FONT color="green">698</FONT>         * @param autoCommit<a name="line.698"></a>
+<FONT color="green">699</FONT>         *            {@code boolean} indication of whether to put the target<a name="line.699"></a>
+<FONT color="green">700</FONT>         *            connection into auto-commit mode ({@code true}) or not (<a name="line.700"></a>
+<FONT color="green">701</FONT>         *            {@code false}).<a name="line.701"></a>
+<FONT color="green">702</FONT>         * @throws SQLException<a name="line.702"></a>
+<FONT color="green">703</FONT>         *             if there is a problem accessing the database.<a name="line.703"></a>
+<FONT color="green">704</FONT>         * @since Android 1.0<a name="line.704"></a>
+<FONT color="green">705</FONT>         */<a name="line.705"></a>
+<FONT color="green">706</FONT>        public void setAutoCommit(boolean autoCommit) throws SQLException;<a name="line.706"></a>
+<FONT color="green">707</FONT>    <a name="line.707"></a>
+<FONT color="green">708</FONT>        /**<a name="line.708"></a>
+<FONT color="green">709</FONT>         * Sets the catalog name for this connection. This is used to select a<a name="line.709"></a>
+<FONT color="green">710</FONT>         * subspace of the database for future work. If the driver does not support<a name="line.710"></a>
+<FONT color="green">711</FONT>         * catalog names, this method is ignored.<a name="line.711"></a>
+<FONT color="green">712</FONT>         * <a name="line.712"></a>
+<FONT color="green">713</FONT>         * @param catalog<a name="line.713"></a>
+<FONT color="green">714</FONT>         *            the catalog name to use.<a name="line.714"></a>
+<FONT color="green">715</FONT>         * @throws SQLException<a name="line.715"></a>
+<FONT color="green">716</FONT>         *             if there is a problem accessing the database.<a name="line.716"></a>
+<FONT color="green">717</FONT>         * @since Android 1.0<a name="line.717"></a>
+<FONT color="green">718</FONT>         */<a name="line.718"></a>
+<FONT color="green">719</FONT>        public void setCatalog(String catalog) throws SQLException;<a name="line.719"></a>
+<FONT color="green">720</FONT>    <a name="line.720"></a>
+<FONT color="green">721</FONT>        /**<a name="line.721"></a>
+<FONT color="green">722</FONT>         * Sets the holdability of the {@code ResultSet}s created by this Connection.<a name="line.722"></a>
+<FONT color="green">723</FONT>         * <a name="line.723"></a>
+<FONT color="green">724</FONT>         * @param holdability<a name="line.724"></a>
+<FONT color="green">725</FONT>         *            one of the following holdability mode specifiers:<a name="line.725"></a>
+<FONT color="green">726</FONT>         *            &lt;ul&gt;<a name="line.726"></a>
+<FONT color="green">727</FONT>         *            &lt;li&gt;{@link ResultSet#CLOSE_CURSORS_AT_COMMIT}&lt;/li&gt;<a name="line.727"></a>
+<FONT color="green">728</FONT>         *            &lt;li&gt;{@link ResultSet#HOLD_CURSORS_OVER_COMMIT}&lt;/li&gt;<a name="line.728"></a>
+<FONT color="green">729</FONT>         *            &lt;li&gt;<a name="line.729"></a>
+<FONT color="green">730</FONT>         *            &lt;/ul&gt;<a name="line.730"></a>
+<FONT color="green">731</FONT>         * @throws SQLException<a name="line.731"></a>
+<FONT color="green">732</FONT>         *             if there is a problem accessing the database<a name="line.732"></a>
+<FONT color="green">733</FONT>         */<a name="line.733"></a>
+<FONT color="green">734</FONT>        public void setHoldability(int holdability) throws SQLException;<a name="line.734"></a>
+<FONT color="green">735</FONT>    <a name="line.735"></a>
+<FONT color="green">736</FONT>        /**<a name="line.736"></a>
+<FONT color="green">737</FONT>         * Sets this connection to read-only mode.<a name="line.737"></a>
+<FONT color="green">738</FONT>         * &lt;p&gt;<a name="line.738"></a>
+<FONT color="green">739</FONT>         * This serves as a hint to the driver, which can enable database<a name="line.739"></a>
+<FONT color="green">740</FONT>         * optimizations.<a name="line.740"></a>
+<FONT color="green">741</FONT>         * &lt;/p&gt;<a name="line.741"></a>
+<FONT color="green">742</FONT>         * <a name="line.742"></a>
+<FONT color="green">743</FONT>         * @param readOnly<a name="line.743"></a>
+<FONT color="green">744</FONT>         *            {@code true} to set the Connection to read only mode. {@code<a name="line.744"></a>
+<FONT color="green">745</FONT>         *            false} disables read-only mode.<a name="line.745"></a>
+<FONT color="green">746</FONT>         * @throws SQLException<a name="line.746"></a>
+<FONT color="green">747</FONT>         *             if there is a problem accessing the database.<a name="line.747"></a>
+<FONT color="green">748</FONT>         * @since Android 1.0<a name="line.748"></a>
+<FONT color="green">749</FONT>         */<a name="line.749"></a>
+<FONT color="green">750</FONT>        public void setReadOnly(boolean readOnly) throws SQLException;<a name="line.750"></a>
+<FONT color="green">751</FONT>    <a name="line.751"></a>
+<FONT color="green">752</FONT>        /**<a name="line.752"></a>
+<FONT color="green">753</FONT>         * Creates an unnamed {@code Savepoint} in the current transaction.<a name="line.753"></a>
+<FONT color="green">754</FONT>         * <a name="line.754"></a>
+<FONT color="green">755</FONT>         * @return a {@code Savepoint} object for this savepoint.<a name="line.755"></a>
+<FONT color="green">756</FONT>         * @throws SQLException<a name="line.756"></a>
+<FONT color="green">757</FONT>         *             if there is a problem accessing the database.<a name="line.757"></a>
+<FONT color="green">758</FONT>         * @since Android 1.0<a name="line.758"></a>
+<FONT color="green">759</FONT>         */<a name="line.759"></a>
+<FONT color="green">760</FONT>        public Savepoint setSavepoint() throws SQLException;<a name="line.760"></a>
+<FONT color="green">761</FONT>    <a name="line.761"></a>
+<FONT color="green">762</FONT>        /**<a name="line.762"></a>
+<FONT color="green">763</FONT>         * Creates a named {@code Savepoint} in the current transaction.<a name="line.763"></a>
+<FONT color="green">764</FONT>         * <a name="line.764"></a>
+<FONT color="green">765</FONT>         * @param name<a name="line.765"></a>
+<FONT color="green">766</FONT>         *            the name to use for the new {@code Savepoint}.<a name="line.766"></a>
+<FONT color="green">767</FONT>         * @return a {@code Savepoint} object for this savepoint.<a name="line.767"></a>
+<FONT color="green">768</FONT>         * @throws SQLException<a name="line.768"></a>
+<FONT color="green">769</FONT>         *             if there is a problem accessing the database.<a name="line.769"></a>
+<FONT color="green">770</FONT>         * @since Android 1.0<a name="line.770"></a>
+<FONT color="green">771</FONT>         */<a name="line.771"></a>
+<FONT color="green">772</FONT>        public Savepoint setSavepoint(String name) throws SQLException;<a name="line.772"></a>
+<FONT color="green">773</FONT>    <a name="line.773"></a>
+<FONT color="green">774</FONT>        /**<a name="line.774"></a>
+<FONT color="green">775</FONT>         * Sets the transaction isolation level for this Connection.<a name="line.775"></a>
+<FONT color="green">776</FONT>         * &lt;p&gt;<a name="line.776"></a>
+<FONT color="green">777</FONT>         * If this method is called during a transaction, the results are<a name="line.777"></a>
+<FONT color="green">778</FONT>         * implementation defined.<a name="line.778"></a>
+<FONT color="green">779</FONT>         * &lt;/p&gt;<a name="line.779"></a>
+<FONT color="green">780</FONT>         * <a name="line.780"></a>
+<FONT color="green">781</FONT>         * @param level<a name="line.781"></a>
+<FONT color="green">782</FONT>         *            the new transaction isolation level to use from the following<a name="line.782"></a>
+<FONT color="green">783</FONT>         *            list of possible values:<a name="line.783"></a>
+<FONT color="green">784</FONT>         *            &lt;ul&gt;<a name="line.784"></a>
+<FONT color="green">785</FONT>         *            &lt;li&gt;{@link #TRANSACTION_READ_COMMITTED}<a name="line.785"></a>
+<FONT color="green">786</FONT>         *            &lt;li&gt;{@link #TRANSACTION_READ_UNCOMMITTED}<a name="line.786"></a>
+<FONT color="green">787</FONT>         *            &lt;li&gt;{@link #TRANSACTION_REPEATABLE_READ}<a name="line.787"></a>
+<FONT color="green">788</FONT>         *            &lt;li&gt;{@link #TRANSACTION_SERIALIZABLE}<a name="line.788"></a>
+<FONT color="green">789</FONT>         *            &lt;/ul&gt;<a name="line.789"></a>
+<FONT color="green">790</FONT>         * @throws SQLException<a name="line.790"></a>
+<FONT color="green">791</FONT>         *             if there is a problem with the database or if the value of<a name="line.791"></a>
+<FONT color="green">792</FONT>         *             {@code level} is not one of the expected constant values.<a name="line.792"></a>
+<FONT color="green">793</FONT>         * @since Android 1.0<a name="line.793"></a>
+<FONT color="green">794</FONT>         */<a name="line.794"></a>
+<FONT color="green">795</FONT>        public void setTransactionIsolation(int level) throws SQLException;<a name="line.795"></a>
+<FONT color="green">796</FONT>    <a name="line.796"></a>
+<FONT color="green">797</FONT>        /**<a name="line.797"></a>
+<FONT color="green">798</FONT>         * Sets the {@code TypeMap} for this connection. The input {@code map}<a name="line.798"></a>
+<FONT color="green">799</FONT>         * should contain mappings between complex Java and SQL types.<a name="line.799"></a>
+<FONT color="green">800</FONT>         * <a name="line.800"></a>
+<FONT color="green">801</FONT>         * @param map<a name="line.801"></a>
+<FONT color="green">802</FONT>         *            the new type map.<a name="line.802"></a>
+<FONT color="green">803</FONT>         * @throws SQLException<a name="line.803"></a>
+<FONT color="green">804</FONT>         *             if there is a problem accessing the database or if {@code<a name="line.804"></a>
+<FONT color="green">805</FONT>         *             map} is not an instance of {@link Map}.<a name="line.805"></a>
+<FONT color="green">806</FONT>         * @since Android 1.0<a name="line.806"></a>
+<FONT color="green">807</FONT>         */<a name="line.807"></a>
+<FONT color="green">808</FONT>        public void setTypeMap(Map&lt;String, Class&lt;?&gt;&gt; map) throws SQLException;<a name="line.808"></a>
+<FONT color="green">809</FONT>    }<a name="line.809"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,1334 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.location;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.app.PendingIntent;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.content.Intent;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.Bundle;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.os.Looper;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.os.RemoteException;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.os.Handler;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.os.Message;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import android.util.Config;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import android.util.Log;<a name="line.27"></a>
+<FONT color="green">028</FONT>    <a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.ArrayList;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Collections;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.Comparator;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.HashMap;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.List;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    /**<a name="line.35"></a>
+<FONT color="green">036</FONT>     * This class provides access to the system location services.  These<a name="line.36"></a>
+<FONT color="green">037</FONT>     * services allow applications to obtain periodic updates of the<a name="line.37"></a>
+<FONT color="green">038</FONT>     * device's geographical location, or to fire an application-specified<a name="line.38"></a>
+<FONT color="green">039</FONT>     * {@link Intent} when the device enters the proximity of a given<a name="line.39"></a>
+<FONT color="green">040</FONT>     * geographical location.<a name="line.40"></a>
+<FONT color="green">041</FONT>     *<a name="line.41"></a>
+<FONT color="green">042</FONT>     * &lt;p&gt;You do not<a name="line.42"></a>
+<FONT color="green">043</FONT>     * instantiate this class directly; instead, retrieve it through<a name="line.43"></a>
+<FONT color="green">044</FONT>     * {@link android.content.Context#getSystemService<a name="line.44"></a>
+<FONT color="green">045</FONT>     * Context.getSystemService(Context.LOCATION_SERVICE)}.<a name="line.45"></a>
+<FONT color="green">046</FONT>     */<a name="line.46"></a>
+<FONT color="green">047</FONT>    public class LocationManager {<a name="line.47"></a>
+<FONT color="green">048</FONT>        private static final String TAG = "LocationManager";<a name="line.48"></a>
+<FONT color="green">049</FONT>        private ILocationManager mService;<a name="line.49"></a>
+<FONT color="green">050</FONT>        private final HashMap&lt;GpsStatus.Listener, GpsStatusListenerTransport&gt; mGpsStatusListeners =<a name="line.50"></a>
+<FONT color="green">051</FONT>                new HashMap&lt;GpsStatus.Listener, GpsStatusListenerTransport&gt;();<a name="line.51"></a>
+<FONT color="green">052</FONT>        private final GpsStatus mGpsStatus = new GpsStatus();<a name="line.52"></a>
+<FONT color="green">053</FONT>    <a name="line.53"></a>
+<FONT color="green">054</FONT>        /**<a name="line.54"></a>
+<FONT color="green">055</FONT>         * Name of the network location provider.  This provider determines location based on<a name="line.55"></a>
+<FONT color="green">056</FONT>         * availability of cell tower and WiFi access points. Results are retrieved<a name="line.56"></a>
+<FONT color="green">057</FONT>         * by means of a network lookup.<a name="line.57"></a>
+<FONT color="green">058</FONT>         *<a name="line.58"></a>
+<FONT color="green">059</FONT>         * Requires either of the permissions android.permission.ACCESS_COARSE_LOCATION<a name="line.59"></a>
+<FONT color="green">060</FONT>         * or android.permission.ACCESS_FINE_LOCATION.<a name="line.60"></a>
+<FONT color="green">061</FONT>         */<a name="line.61"></a>
+<FONT color="green">062</FONT>        public static final String NETWORK_PROVIDER = "network";<a name="line.62"></a>
+<FONT color="green">063</FONT>    <a name="line.63"></a>
+<FONT color="green">064</FONT>        /**<a name="line.64"></a>
+<FONT color="green">065</FONT>         * Name of the GPS location provider. This provider determines location using<a name="line.65"></a>
+<FONT color="green">066</FONT>         * satellites. Depending on conditions, this provider may take a while to return<a name="line.66"></a>
+<FONT color="green">067</FONT>         * a location fix.<a name="line.67"></a>
+<FONT color="green">068</FONT>         *<a name="line.68"></a>
+<FONT color="green">069</FONT>         * Requires the permission android.permissions.ACCESS_FINE_LOCATION.<a name="line.69"></a>
+<FONT color="green">070</FONT>         *<a name="line.70"></a>
+<FONT color="green">071</FONT>         * &lt;p&gt; The extras Bundle for the GPS location provider can contain the<a name="line.71"></a>
+<FONT color="green">072</FONT>         * following key/value pairs:<a name="line.72"></a>
+<FONT color="green">073</FONT>         *<a name="line.73"></a>
+<FONT color="green">074</FONT>         * &lt;ul&gt;<a name="line.74"></a>
+<FONT color="green">075</FONT>         * &lt;li&gt; satellites - the number of satellites used to derive the fix<a name="line.75"></a>
+<FONT color="green">076</FONT>         * &lt;/ul&gt;<a name="line.76"></a>
+<FONT color="green">077</FONT>         */<a name="line.77"></a>
+<FONT color="green">078</FONT>        public static final String GPS_PROVIDER = "gps";<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>        /**<a name="line.80"></a>
+<FONT color="green">081</FONT>         * Key used for the Bundle extra holding a boolean indicating whether<a name="line.81"></a>
+<FONT color="green">082</FONT>         * a proximity alert is entering (true) or exiting (false)..<a name="line.82"></a>
+<FONT color="green">083</FONT>         */<a name="line.83"></a>
+<FONT color="green">084</FONT>        public static final String KEY_PROXIMITY_ENTERING = "entering";<a name="line.84"></a>
+<FONT color="green">085</FONT>    <a name="line.85"></a>
+<FONT color="green">086</FONT>        /**<a name="line.86"></a>
+<FONT color="green">087</FONT>         * Key used for a Bundle extra holding an Integer status value<a name="line.87"></a>
+<FONT color="green">088</FONT>         * when a status change is broadcast using a PendingIntent.<a name="line.88"></a>
+<FONT color="green">089</FONT>         */<a name="line.89"></a>
+<FONT color="green">090</FONT>        public static final String KEY_STATUS_CHANGED = "status";<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        /**<a name="line.92"></a>
+<FONT color="green">093</FONT>         * Key used for a Bundle extra holding an Boolean status value<a name="line.93"></a>
+<FONT color="green">094</FONT>         * when a provider enabled/disabled event is broadcast using a PendingIntent.<a name="line.94"></a>
+<FONT color="green">095</FONT>         */<a name="line.95"></a>
+<FONT color="green">096</FONT>        public static final String KEY_PROVIDER_ENABLED = "providerEnabled";<a name="line.96"></a>
+<FONT color="green">097</FONT>    <a name="line.97"></a>
+<FONT color="green">098</FONT>        /**<a name="line.98"></a>
+<FONT color="green">099</FONT>         * Key used for a Bundle extra holding a Location value<a name="line.99"></a>
+<FONT color="green">100</FONT>         * when a location change is broadcast using a PendingIntent.<a name="line.100"></a>
+<FONT color="green">101</FONT>         */<a name="line.101"></a>
+<FONT color="green">102</FONT>        public static final String KEY_LOCATION_CHANGED = "location";<a name="line.102"></a>
+<FONT color="green">103</FONT>    <a name="line.103"></a>
+<FONT color="green">104</FONT>        /** @hide -- does this belong here? */<a name="line.104"></a>
+<FONT color="green">105</FONT>        public static final String PROVIDER_DIR = "/data/location";<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>        /** @hide */<a name="line.107"></a>
+<FONT color="green">108</FONT>        public static final String SYSTEM_DIR = "/data/system/location";<a name="line.108"></a>
+<FONT color="green">109</FONT>    <a name="line.109"></a>
+<FONT color="green">110</FONT>        // Map from LocationListeners to their associated ListenerTransport objects<a name="line.110"></a>
+<FONT color="green">111</FONT>        private HashMap&lt;LocationListener,ListenerTransport&gt; mListeners =<a name="line.111"></a>
+<FONT color="green">112</FONT>            new HashMap&lt;LocationListener,ListenerTransport&gt;();<a name="line.112"></a>
+<FONT color="green">113</FONT>    <a name="line.113"></a>
+<FONT color="green">114</FONT>        private class ListenerTransport extends ILocationListener.Stub {<a name="line.114"></a>
+<FONT color="green">115</FONT>            private static final int TYPE_LOCATION_CHANGED = 1;<a name="line.115"></a>
+<FONT color="green">116</FONT>            private static final int TYPE_STATUS_CHANGED = 2;<a name="line.116"></a>
+<FONT color="green">117</FONT>            private static final int TYPE_PROVIDER_ENABLED = 3;<a name="line.117"></a>
+<FONT color="green">118</FONT>            private static final int TYPE_PROVIDER_DISABLED = 4;<a name="line.118"></a>
+<FONT color="green">119</FONT>    <a name="line.119"></a>
+<FONT color="green">120</FONT>            private LocationListener mListener;<a name="line.120"></a>
+<FONT color="green">121</FONT>            private final Handler mListenerHandler;<a name="line.121"></a>
+<FONT color="green">122</FONT>    <a name="line.122"></a>
+<FONT color="green">123</FONT>            ListenerTransport(LocationListener listener, Looper looper) {<a name="line.123"></a>
+<FONT color="green">124</FONT>                mListener = listener;<a name="line.124"></a>
+<FONT color="green">125</FONT>    <a name="line.125"></a>
+<FONT color="green">126</FONT>                if (looper == null) {<a name="line.126"></a>
+<FONT color="green">127</FONT>                    mListenerHandler = new Handler() {<a name="line.127"></a>
+<FONT color="green">128</FONT>                        @Override<a name="line.128"></a>
+<FONT color="green">129</FONT>                        public void handleMessage(Message msg) {<a name="line.129"></a>
+<FONT color="green">130</FONT>                            _handleMessage(msg);<a name="line.130"></a>
+<FONT color="green">131</FONT>                        }<a name="line.131"></a>
+<FONT color="green">132</FONT>                    };<a name="line.132"></a>
+<FONT color="green">133</FONT>                } else {<a name="line.133"></a>
+<FONT color="green">134</FONT>                    mListenerHandler = new Handler(looper) {<a name="line.134"></a>
+<FONT color="green">135</FONT>                        @Override<a name="line.135"></a>
+<FONT color="green">136</FONT>                        public void handleMessage(Message msg) {<a name="line.136"></a>
+<FONT color="green">137</FONT>                            _handleMessage(msg);<a name="line.137"></a>
+<FONT color="green">138</FONT>                        }<a name="line.138"></a>
+<FONT color="green">139</FONT>                    };<a name="line.139"></a>
+<FONT color="green">140</FONT>                }<a name="line.140"></a>
+<FONT color="green">141</FONT>            }<a name="line.141"></a>
+<FONT color="green">142</FONT>    <a name="line.142"></a>
+<FONT color="green">143</FONT>            public void onLocationChanged(Location location) {<a name="line.143"></a>
+<FONT color="green">144</FONT>                Message msg = Message.obtain();<a name="line.144"></a>
+<FONT color="green">145</FONT>                msg.what = TYPE_LOCATION_CHANGED;<a name="line.145"></a>
+<FONT color="green">146</FONT>                msg.obj = location;<a name="line.146"></a>
+<FONT color="green">147</FONT>                mListenerHandler.sendMessage(msg);<a name="line.147"></a>
+<FONT color="green">148</FONT>            }<a name="line.148"></a>
+<FONT color="green">149</FONT>    <a name="line.149"></a>
+<FONT color="green">150</FONT>            public void onStatusChanged(String provider, int status, Bundle extras) {<a name="line.150"></a>
+<FONT color="green">151</FONT>                Message msg = Message.obtain();<a name="line.151"></a>
+<FONT color="green">152</FONT>                msg.what = TYPE_STATUS_CHANGED;<a name="line.152"></a>
+<FONT color="green">153</FONT>                Bundle b = new Bundle();<a name="line.153"></a>
+<FONT color="green">154</FONT>                b.putString("provider", provider);<a name="line.154"></a>
+<FONT color="green">155</FONT>                b.putInt("status", status);<a name="line.155"></a>
+<FONT color="green">156</FONT>                if (extras != null) {<a name="line.156"></a>
+<FONT color="green">157</FONT>                    b.putBundle("extras", extras);<a name="line.157"></a>
+<FONT color="green">158</FONT>                }<a name="line.158"></a>
+<FONT color="green">159</FONT>                msg.obj = b;<a name="line.159"></a>
+<FONT color="green">160</FONT>                mListenerHandler.sendMessage(msg);<a name="line.160"></a>
+<FONT color="green">161</FONT>            }<a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>            public void onProviderEnabled(String provider) {<a name="line.163"></a>
+<FONT color="green">164</FONT>                Message msg = Message.obtain();<a name="line.164"></a>
+<FONT color="green">165</FONT>                msg.what = TYPE_PROVIDER_ENABLED;<a name="line.165"></a>
+<FONT color="green">166</FONT>                msg.obj = provider;<a name="line.166"></a>
+<FONT color="green">167</FONT>                mListenerHandler.sendMessage(msg);<a name="line.167"></a>
+<FONT color="green">168</FONT>            }<a name="line.168"></a>
+<FONT color="green">169</FONT>    <a name="line.169"></a>
+<FONT color="green">170</FONT>            public void onProviderDisabled(String provider) {<a name="line.170"></a>
+<FONT color="green">171</FONT>                Message msg = Message.obtain();<a name="line.171"></a>
+<FONT color="green">172</FONT>                msg.what = TYPE_PROVIDER_DISABLED;<a name="line.172"></a>
+<FONT color="green">173</FONT>                msg.obj = provider;<a name="line.173"></a>
+<FONT color="green">174</FONT>                mListenerHandler.sendMessage(msg);<a name="line.174"></a>
+<FONT color="green">175</FONT>            }<a name="line.175"></a>
+<FONT color="green">176</FONT>    <a name="line.176"></a>
+<FONT color="green">177</FONT>            private void _handleMessage(Message msg) {<a name="line.177"></a>
+<FONT color="green">178</FONT>                switch (msg.what) {<a name="line.178"></a>
+<FONT color="green">179</FONT>                    case TYPE_LOCATION_CHANGED:<a name="line.179"></a>
+<FONT color="green">180</FONT>                        Location location = new Location((Location) msg.obj);<a name="line.180"></a>
+<FONT color="green">181</FONT>                        mListener.onLocationChanged(location);<a name="line.181"></a>
+<FONT color="green">182</FONT>                        break;<a name="line.182"></a>
+<FONT color="green">183</FONT>                    case TYPE_STATUS_CHANGED:<a name="line.183"></a>
+<FONT color="green">184</FONT>                        Bundle b = (Bundle) msg.obj;<a name="line.184"></a>
+<FONT color="green">185</FONT>                        String provider = b.getString("provider");<a name="line.185"></a>
+<FONT color="green">186</FONT>                        int status = b.getInt("status");<a name="line.186"></a>
+<FONT color="green">187</FONT>                        Bundle extras = b.getBundle("extras");<a name="line.187"></a>
+<FONT color="green">188</FONT>                        mListener.onStatusChanged(provider, status, extras);<a name="line.188"></a>
+<FONT color="green">189</FONT>                        break;<a name="line.189"></a>
+<FONT color="green">190</FONT>                    case TYPE_PROVIDER_ENABLED:<a name="line.190"></a>
+<FONT color="green">191</FONT>                        mListener.onProviderEnabled((String) msg.obj);<a name="line.191"></a>
+<FONT color="green">192</FONT>                        break;<a name="line.192"></a>
+<FONT color="green">193</FONT>                    case TYPE_PROVIDER_DISABLED:<a name="line.193"></a>
+<FONT color="green">194</FONT>                        mListener.onProviderDisabled((String) msg.obj);<a name="line.194"></a>
+<FONT color="green">195</FONT>                        break;<a name="line.195"></a>
+<FONT color="green">196</FONT>                }<a name="line.196"></a>
+<FONT color="green">197</FONT>            }<a name="line.197"></a>
+<FONT color="green">198</FONT>        }<a name="line.198"></a>
+<FONT color="green">199</FONT>        /**<a name="line.199"></a>
+<FONT color="green">200</FONT>         * @hide - hide this constructor because it has a parameter<a name="line.200"></a>
+<FONT color="green">201</FONT>         * of type ILocationManager, which is a system private class. The<a name="line.201"></a>
+<FONT color="green">202</FONT>         * right way to create an instance of this class is using the<a name="line.202"></a>
+<FONT color="green">203</FONT>         * factory Context.getSystemService.<a name="line.203"></a>
+<FONT color="green">204</FONT>         */<a name="line.204"></a>
+<FONT color="green">205</FONT>        public LocationManager(ILocationManager service) {<a name="line.205"></a>
+<FONT color="green">206</FONT>            if (Config.LOGD) {<a name="line.206"></a>
+<FONT color="green">207</FONT>                Log.d(TAG, "Constructor: service = " + service);<a name="line.207"></a>
+<FONT color="green">208</FONT>            }<a name="line.208"></a>
+<FONT color="green">209</FONT>            mService = service;<a name="line.209"></a>
+<FONT color="green">210</FONT>        }<a name="line.210"></a>
+<FONT color="green">211</FONT>    <a name="line.211"></a>
+<FONT color="green">212</FONT>        private LocationProvider createProvider(String name, Bundle info) {<a name="line.212"></a>
+<FONT color="green">213</FONT>            DummyLocationProvider provider =<a name="line.213"></a>
+<FONT color="green">214</FONT>                new DummyLocationProvider(name);<a name="line.214"></a>
+<FONT color="green">215</FONT>            provider.setRequiresNetwork(info.getBoolean("network"));<a name="line.215"></a>
+<FONT color="green">216</FONT>            provider.setRequiresSatellite(info.getBoolean("satellite"));<a name="line.216"></a>
+<FONT color="green">217</FONT>            provider.setRequiresCell(info.getBoolean("cell"));<a name="line.217"></a>
+<FONT color="green">218</FONT>            provider.setHasMonetaryCost(info.getBoolean("cost"));<a name="line.218"></a>
+<FONT color="green">219</FONT>            provider.setSupportsAltitude(info.getBoolean("altitude"));<a name="line.219"></a>
+<FONT color="green">220</FONT>            provider.setSupportsSpeed(info.getBoolean("speed"));<a name="line.220"></a>
+<FONT color="green">221</FONT>            provider.setSupportsBearing(info.getBoolean("bearing"));<a name="line.221"></a>
+<FONT color="green">222</FONT>            provider.setPowerRequirement(info.getInt("power"));<a name="line.222"></a>
+<FONT color="green">223</FONT>            provider.setAccuracy(info.getInt("accuracy"));<a name="line.223"></a>
+<FONT color="green">224</FONT>            return provider;<a name="line.224"></a>
+<FONT color="green">225</FONT>        }<a name="line.225"></a>
+<FONT color="green">226</FONT>    <a name="line.226"></a>
+<FONT color="green">227</FONT>        /**<a name="line.227"></a>
+<FONT color="green">228</FONT>         * Returns a list of the names of all known location providers.  All<a name="line.228"></a>
+<FONT color="green">229</FONT>         * providers are returned, including ones that are not permitted to be<a name="line.229"></a>
+<FONT color="green">230</FONT>         * accessed by the calling activity or are currently disabled.<a name="line.230"></a>
+<FONT color="green">231</FONT>         *<a name="line.231"></a>
+<FONT color="green">232</FONT>         * @return list of Strings containing names of the providers<a name="line.232"></a>
+<FONT color="green">233</FONT>         */<a name="line.233"></a>
+<FONT color="green">234</FONT>        public List&lt;String&gt; getAllProviders() {<a name="line.234"></a>
+<FONT color="green">235</FONT>            if (Config.LOGD) {<a name="line.235"></a>
+<FONT color="green">236</FONT>                Log.d(TAG, "getAllProviders");<a name="line.236"></a>
+<FONT color="green">237</FONT>            }<a name="line.237"></a>
+<FONT color="green">238</FONT>            try {<a name="line.238"></a>
+<FONT color="green">239</FONT>                return mService.getAllProviders();<a name="line.239"></a>
+<FONT color="green">240</FONT>            } catch (RemoteException ex) {<a name="line.240"></a>
+<FONT color="green">241</FONT>                Log.e(TAG, "getAllProviders: RemoteException", ex);<a name="line.241"></a>
+<FONT color="green">242</FONT>            }<a name="line.242"></a>
+<FONT color="green">243</FONT>            return null;<a name="line.243"></a>
+<FONT color="green">244</FONT>        }<a name="line.244"></a>
+<FONT color="green">245</FONT>    <a name="line.245"></a>
+<FONT color="green">246</FONT>        /**<a name="line.246"></a>
+<FONT color="green">247</FONT>         * Returns a list of the names of location providers.  Only providers that<a name="line.247"></a>
+<FONT color="green">248</FONT>         * are permitted to be accessed by the calling activity will be returned.<a name="line.248"></a>
+<FONT color="green">249</FONT>         *<a name="line.249"></a>
+<FONT color="green">250</FONT>         * @param enabledOnly if true then only the providers which are currently<a name="line.250"></a>
+<FONT color="green">251</FONT>         * enabled are returned.<a name="line.251"></a>
+<FONT color="green">252</FONT>         * @return list of Strings containing names of the providers<a name="line.252"></a>
+<FONT color="green">253</FONT>         */<a name="line.253"></a>
+<FONT color="green">254</FONT>        public List&lt;String&gt; getProviders(boolean enabledOnly) {<a name="line.254"></a>
+<FONT color="green">255</FONT>            try {<a name="line.255"></a>
+<FONT color="green">256</FONT>                return mService.getProviders(enabledOnly);<a name="line.256"></a>
+<FONT color="green">257</FONT>            } catch (RemoteException ex) {<a name="line.257"></a>
+<FONT color="green">258</FONT>                Log.e(TAG, "getProviders: RemoteException", ex);<a name="line.258"></a>
+<FONT color="green">259</FONT>            }<a name="line.259"></a>
+<FONT color="green">260</FONT>            return null;<a name="line.260"></a>
+<FONT color="green">261</FONT>        }<a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>        /**<a name="line.263"></a>
+<FONT color="green">264</FONT>         * Returns the information associated with the location provider of the<a name="line.264"></a>
+<FONT color="green">265</FONT>         * given name, or null if no provider exists by that name.<a name="line.265"></a>
+<FONT color="green">266</FONT>         *<a name="line.266"></a>
+<FONT color="green">267</FONT>         * @param name the provider name<a name="line.267"></a>
+<FONT color="green">268</FONT>         * @return a LocationProvider, or null<a name="line.268"></a>
+<FONT color="green">269</FONT>         *<a name="line.269"></a>
+<FONT color="green">270</FONT>         * @throws IllegalArgumentException if name is null<a name="line.270"></a>
+<FONT color="green">271</FONT>         * @throws SecurityException if the caller is not permitted to access the<a name="line.271"></a>
+<FONT color="green">272</FONT>         * given provider.<a name="line.272"></a>
+<FONT color="green">273</FONT>         */<a name="line.273"></a>
+<FONT color="green">274</FONT>        public LocationProvider getProvider(String name) {<a name="line.274"></a>
+<FONT color="green">275</FONT>            if (name == null) {<a name="line.275"></a>
+<FONT color="green">276</FONT>                throw new IllegalArgumentException("name==null");<a name="line.276"></a>
+<FONT color="green">277</FONT>            }<a name="line.277"></a>
+<FONT color="green">278</FONT>            try {<a name="line.278"></a>
+<FONT color="green">279</FONT>                Bundle info = mService.getProviderInfo(name);<a name="line.279"></a>
+<FONT color="green">280</FONT>                if (info == null) {<a name="line.280"></a>
+<FONT color="green">281</FONT>                    return null;<a name="line.281"></a>
+<FONT color="green">282</FONT>                }<a name="line.282"></a>
+<FONT color="green">283</FONT>                return createProvider(name, info);<a name="line.283"></a>
+<FONT color="green">284</FONT>            } catch (RemoteException ex) {<a name="line.284"></a>
+<FONT color="green">285</FONT>                Log.e(TAG, "getProvider: RemoteException", ex);<a name="line.285"></a>
+<FONT color="green">286</FONT>            }<a name="line.286"></a>
+<FONT color="green">287</FONT>            return null;<a name="line.287"></a>
+<FONT color="green">288</FONT>        }<a name="line.288"></a>
+<FONT color="green">289</FONT>    <a name="line.289"></a>
+<FONT color="green">290</FONT>        /**<a name="line.290"></a>
+<FONT color="green">291</FONT>         * Returns a list of the names of LocationProviders that satisfy the given<a name="line.291"></a>
+<FONT color="green">292</FONT>         * criteria, or null if none do.  Only providers that are permitted to be<a name="line.292"></a>
+<FONT color="green">293</FONT>         * accessed by the calling activity will be returned.<a name="line.293"></a>
+<FONT color="green">294</FONT>         *<a name="line.294"></a>
+<FONT color="green">295</FONT>         * @param criteria the criteria that the returned providers must match<a name="line.295"></a>
+<FONT color="green">296</FONT>         * @param enabledOnly if true then only the providers which are currently<a name="line.296"></a>
+<FONT color="green">297</FONT>         * enabled are returned.<a name="line.297"></a>
+<FONT color="green">298</FONT>         * @return list of Strings containing names of the providers<a name="line.298"></a>
+<FONT color="green">299</FONT>         */<a name="line.299"></a>
+<FONT color="green">300</FONT>        public List&lt;String&gt; getProviders(Criteria criteria, boolean enabledOnly) {<a name="line.300"></a>
+<FONT color="green">301</FONT>            List&lt;String&gt; goodProviders = Collections.emptyList();<a name="line.301"></a>
+<FONT color="green">302</FONT>            List&lt;String&gt; providers = getProviders(enabledOnly);<a name="line.302"></a>
+<FONT color="green">303</FONT>            for (String providerName : providers) {<a name="line.303"></a>
+<FONT color="green">304</FONT>                LocationProvider provider = getProvider(providerName);<a name="line.304"></a>
+<FONT color="green">305</FONT>                if (provider.meetsCriteria(criteria)) {<a name="line.305"></a>
+<FONT color="green">306</FONT>                    if (goodProviders.isEmpty()) {<a name="line.306"></a>
+<FONT color="green">307</FONT>                        goodProviders = new ArrayList&lt;String&gt;();<a name="line.307"></a>
+<FONT color="green">308</FONT>                    }<a name="line.308"></a>
+<FONT color="green">309</FONT>                    goodProviders.add(providerName);<a name="line.309"></a>
+<FONT color="green">310</FONT>                }<a name="line.310"></a>
+<FONT color="green">311</FONT>            }<a name="line.311"></a>
+<FONT color="green">312</FONT>            return goodProviders;<a name="line.312"></a>
+<FONT color="green">313</FONT>        }<a name="line.313"></a>
+<FONT color="green">314</FONT>    <a name="line.314"></a>
+<FONT color="green">315</FONT>        /**<a name="line.315"></a>
+<FONT color="green">316</FONT>         * Propagates the enabled/disabled state of the providers from the system<a name="line.316"></a>
+<FONT color="green">317</FONT>         * settings to the providers themselves.<a name="line.317"></a>
+<FONT color="green">318</FONT>         *<a name="line.318"></a>
+<FONT color="green">319</FONT>         * {@hide}<a name="line.319"></a>
+<FONT color="green">320</FONT>         */<a name="line.320"></a>
+<FONT color="green">321</FONT>        public void updateProviders() {<a name="line.321"></a>
+<FONT color="green">322</FONT>            try {<a name="line.322"></a>
+<FONT color="green">323</FONT>                mService.updateProviders();<a name="line.323"></a>
+<FONT color="green">324</FONT>            } catch (RemoteException ex) {<a name="line.324"></a>
+<FONT color="green">325</FONT>                Log.e(TAG, "updateProviders: RemoteException", ex);<a name="line.325"></a>
+<FONT color="green">326</FONT>            }<a name="line.326"></a>
+<FONT color="green">327</FONT>        }<a name="line.327"></a>
+<FONT color="green">328</FONT>    <a name="line.328"></a>
+<FONT color="green">329</FONT>        /**<a name="line.329"></a>
+<FONT color="green">330</FONT>         * Returns the next looser power requirement, in the sequence:<a name="line.330"></a>
+<FONT color="green">331</FONT>         *<a name="line.331"></a>
+<FONT color="green">332</FONT>         * POWER_LOW -&gt; POWER_MEDIUM -&gt; POWER_HIGH -&gt; NO_REQUIREMENT<a name="line.332"></a>
+<FONT color="green">333</FONT>         */<a name="line.333"></a>
+<FONT color="green">334</FONT>        private int nextPower(int power) {<a name="line.334"></a>
+<FONT color="green">335</FONT>            switch (power) {<a name="line.335"></a>
+<FONT color="green">336</FONT>            case Criteria.POWER_LOW:<a name="line.336"></a>
+<FONT color="green">337</FONT>                return Criteria.POWER_MEDIUM;<a name="line.337"></a>
+<FONT color="green">338</FONT>            case Criteria.POWER_MEDIUM:<a name="line.338"></a>
+<FONT color="green">339</FONT>                return Criteria.POWER_HIGH;<a name="line.339"></a>
+<FONT color="green">340</FONT>            case Criteria.POWER_HIGH:<a name="line.340"></a>
+<FONT color="green">341</FONT>                return Criteria.NO_REQUIREMENT;<a name="line.341"></a>
+<FONT color="green">342</FONT>            case Criteria.NO_REQUIREMENT:<a name="line.342"></a>
+<FONT color="green">343</FONT>            default:<a name="line.343"></a>
+<FONT color="green">344</FONT>                return Criteria.NO_REQUIREMENT;<a name="line.344"></a>
+<FONT color="green">345</FONT>            }<a name="line.345"></a>
+<FONT color="green">346</FONT>        }<a name="line.346"></a>
+<FONT color="green">347</FONT>    <a name="line.347"></a>
+<FONT color="green">348</FONT>        /**<a name="line.348"></a>
+<FONT color="green">349</FONT>         * Returns the next looser accuracy requirement, in the sequence:<a name="line.349"></a>
+<FONT color="green">350</FONT>         *<a name="line.350"></a>
+<FONT color="green">351</FONT>         * ACCURACY_FINE -&gt; ACCURACY_APPROXIMATE-&gt; NO_REQUIREMENT<a name="line.351"></a>
+<FONT color="green">352</FONT>         */<a name="line.352"></a>
+<FONT color="green">353</FONT>        private int nextAccuracy(int accuracy) {<a name="line.353"></a>
+<FONT color="green">354</FONT>            if (accuracy == Criteria.ACCURACY_FINE) {<a name="line.354"></a>
+<FONT color="green">355</FONT>                return Criteria.ACCURACY_COARSE;<a name="line.355"></a>
+<FONT color="green">356</FONT>            } else {<a name="line.356"></a>
+<FONT color="green">357</FONT>                return Criteria.NO_REQUIREMENT;<a name="line.357"></a>
+<FONT color="green">358</FONT>            }<a name="line.358"></a>
+<FONT color="green">359</FONT>        }<a name="line.359"></a>
+<FONT color="green">360</FONT>    <a name="line.360"></a>
+<FONT color="green">361</FONT>        private abstract class LpComparator implements Comparator&lt;LocationProvider&gt; {<a name="line.361"></a>
+<FONT color="green">362</FONT>    <a name="line.362"></a>
+<FONT color="green">363</FONT>            public int compare(int a1, int a2) {<a name="line.363"></a>
+<FONT color="green">364</FONT>                if (a1 &lt; a2) {<a name="line.364"></a>
+<FONT color="green">365</FONT>                    return -1;<a name="line.365"></a>
+<FONT color="green">366</FONT>                } else if (a1 &gt; a2) {<a name="line.366"></a>
+<FONT color="green">367</FONT>                    return 1;<a name="line.367"></a>
+<FONT color="green">368</FONT>                } else {<a name="line.368"></a>
+<FONT color="green">369</FONT>                    return 0;<a name="line.369"></a>
+<FONT color="green">370</FONT>                }<a name="line.370"></a>
+<FONT color="green">371</FONT>            }<a name="line.371"></a>
+<FONT color="green">372</FONT>    <a name="line.372"></a>
+<FONT color="green">373</FONT>            public int compare(float a1, float a2) {<a name="line.373"></a>
+<FONT color="green">374</FONT>                if (a1 &lt; a2) {<a name="line.374"></a>
+<FONT color="green">375</FONT>                    return -1;<a name="line.375"></a>
+<FONT color="green">376</FONT>                } else if (a1 &gt; a2) {<a name="line.376"></a>
+<FONT color="green">377</FONT>                    return 1;<a name="line.377"></a>
+<FONT color="green">378</FONT>                } else {<a name="line.378"></a>
+<FONT color="green">379</FONT>                    return 0;<a name="line.379"></a>
+<FONT color="green">380</FONT>                }<a name="line.380"></a>
+<FONT color="green">381</FONT>            }<a name="line.381"></a>
+<FONT color="green">382</FONT>        }<a name="line.382"></a>
+<FONT color="green">383</FONT>    <a name="line.383"></a>
+<FONT color="green">384</FONT>        private class LpPowerComparator extends LpComparator {<a name="line.384"></a>
+<FONT color="green">385</FONT>            public int compare(LocationProvider l1, LocationProvider l2) {<a name="line.385"></a>
+<FONT color="green">386</FONT>                int a1 = l1.getPowerRequirement();<a name="line.386"></a>
+<FONT color="green">387</FONT>                int a2 = l2.getPowerRequirement();<a name="line.387"></a>
+<FONT color="green">388</FONT>                return compare(a1, a2); // Smaller is better<a name="line.388"></a>
+<FONT color="green">389</FONT>             }<a name="line.389"></a>
+<FONT color="green">390</FONT>    <a name="line.390"></a>
+<FONT color="green">391</FONT>             public boolean equals(LocationProvider l1, LocationProvider l2) {<a name="line.391"></a>
+<FONT color="green">392</FONT>                 int a1 = l1.getPowerRequirement();<a name="line.392"></a>
+<FONT color="green">393</FONT>                 int a2 = l2.getPowerRequirement();<a name="line.393"></a>
+<FONT color="green">394</FONT>                 return a1 == a2;<a name="line.394"></a>
+<FONT color="green">395</FONT>             }<a name="line.395"></a>
+<FONT color="green">396</FONT>        }<a name="line.396"></a>
+<FONT color="green">397</FONT>    <a name="line.397"></a>
+<FONT color="green">398</FONT>        private class LpAccuracyComparator extends LpComparator {<a name="line.398"></a>
+<FONT color="green">399</FONT>            public int compare(LocationProvider l1, LocationProvider l2) {<a name="line.399"></a>
+<FONT color="green">400</FONT>                int a1 = l1.getAccuracy();<a name="line.400"></a>
+<FONT color="green">401</FONT>                int a2 = l2.getAccuracy();<a name="line.401"></a>
+<FONT color="green">402</FONT>                return compare(a1, a2); // Smaller is better<a name="line.402"></a>
+<FONT color="green">403</FONT>             }<a name="line.403"></a>
+<FONT color="green">404</FONT>    <a name="line.404"></a>
+<FONT color="green">405</FONT>             public boolean equals(LocationProvider l1, LocationProvider l2) {<a name="line.405"></a>
+<FONT color="green">406</FONT>                 int a1 = l1.getAccuracy();<a name="line.406"></a>
+<FONT color="green">407</FONT>                 int a2 = l2.getAccuracy();<a name="line.407"></a>
+<FONT color="green">408</FONT>                 return a1 == a2;<a name="line.408"></a>
+<FONT color="green">409</FONT>             }<a name="line.409"></a>
+<FONT color="green">410</FONT>        }<a name="line.410"></a>
+<FONT color="green">411</FONT>    <a name="line.411"></a>
+<FONT color="green">412</FONT>        private class LpCapabilityComparator extends LpComparator {<a name="line.412"></a>
+<FONT color="green">413</FONT>    <a name="line.413"></a>
+<FONT color="green">414</FONT>            private static final int ALTITUDE_SCORE = 4;<a name="line.414"></a>
+<FONT color="green">415</FONT>            private static final int BEARING_SCORE = 4;<a name="line.415"></a>
+<FONT color="green">416</FONT>            private static final int SPEED_SCORE = 4;<a name="line.416"></a>
+<FONT color="green">417</FONT>    <a name="line.417"></a>
+<FONT color="green">418</FONT>            private int score(LocationProvider p) {<a name="line.418"></a>
+<FONT color="green">419</FONT>                return (p.supportsAltitude() ? ALTITUDE_SCORE : 0) +<a name="line.419"></a>
+<FONT color="green">420</FONT>                    (p.supportsBearing() ? BEARING_SCORE : 0) +<a name="line.420"></a>
+<FONT color="green">421</FONT>                    (p.supportsSpeed() ? SPEED_SCORE : 0);<a name="line.421"></a>
+<FONT color="green">422</FONT>            }<a name="line.422"></a>
+<FONT color="green">423</FONT>    <a name="line.423"></a>
+<FONT color="green">424</FONT>            public int compare(LocationProvider l1, LocationProvider l2) {<a name="line.424"></a>
+<FONT color="green">425</FONT>                int a1 = score(l1);<a name="line.425"></a>
+<FONT color="green">426</FONT>                int a2 = score(l2);<a name="line.426"></a>
+<FONT color="green">427</FONT>                return compare(-a1, -a2); // Bigger is better<a name="line.427"></a>
+<FONT color="green">428</FONT>             }<a name="line.428"></a>
+<FONT color="green">429</FONT>    <a name="line.429"></a>
+<FONT color="green">430</FONT>             public boolean equals(LocationProvider l1, LocationProvider l2) {<a name="line.430"></a>
+<FONT color="green">431</FONT>                 int a1 = score(l1);<a name="line.431"></a>
+<FONT color="green">432</FONT>                 int a2 = score(l2);<a name="line.432"></a>
+<FONT color="green">433</FONT>                 return a1 == a2;<a name="line.433"></a>
+<FONT color="green">434</FONT>             }<a name="line.434"></a>
+<FONT color="green">435</FONT>        }<a name="line.435"></a>
+<FONT color="green">436</FONT>    <a name="line.436"></a>
+<FONT color="green">437</FONT>        private LocationProvider best(List&lt;String&gt; providerNames) {<a name="line.437"></a>
+<FONT color="green">438</FONT>            List&lt;LocationProvider&gt; providers = new ArrayList&lt;LocationProvider&gt;(providerNames.size());<a name="line.438"></a>
+<FONT color="green">439</FONT>            for (String name : providerNames) {<a name="line.439"></a>
+<FONT color="green">440</FONT>                providers.add(getProvider(name));<a name="line.440"></a>
+<FONT color="green">441</FONT>            }<a name="line.441"></a>
+<FONT color="green">442</FONT>    <a name="line.442"></a>
+<FONT color="green">443</FONT>            if (providers.size() &lt; 2) {<a name="line.443"></a>
+<FONT color="green">444</FONT>                return providers.get(0);<a name="line.444"></a>
+<FONT color="green">445</FONT>            }<a name="line.445"></a>
+<FONT color="green">446</FONT>    <a name="line.446"></a>
+<FONT color="green">447</FONT>            // First, sort by power requirement<a name="line.447"></a>
+<FONT color="green">448</FONT>            Collections.sort(providers, new LpPowerComparator());<a name="line.448"></a>
+<FONT color="green">449</FONT>            int power = providers.get(0).getPowerRequirement();<a name="line.449"></a>
+<FONT color="green">450</FONT>            if (power &lt; providers.get(1).getPowerRequirement()) {<a name="line.450"></a>
+<FONT color="green">451</FONT>                return providers.get(0);<a name="line.451"></a>
+<FONT color="green">452</FONT>            }<a name="line.452"></a>
+<FONT color="green">453</FONT>    <a name="line.453"></a>
+<FONT color="green">454</FONT>            int idx, size;<a name="line.454"></a>
+<FONT color="green">455</FONT>    <a name="line.455"></a>
+<FONT color="green">456</FONT>            List&lt;LocationProvider&gt; tmp = new ArrayList&lt;LocationProvider&gt;();<a name="line.456"></a>
+<FONT color="green">457</FONT>            idx = 0;<a name="line.457"></a>
+<FONT color="green">458</FONT>            size = providers.size();<a name="line.458"></a>
+<FONT color="green">459</FONT>            while ((idx &lt; size) &amp;&amp; (providers.get(idx).getPowerRequirement() == power)) {<a name="line.459"></a>
+<FONT color="green">460</FONT>                tmp.add(providers.get(idx));<a name="line.460"></a>
+<FONT color="green">461</FONT>                idx++;<a name="line.461"></a>
+<FONT color="green">462</FONT>            }<a name="line.462"></a>
+<FONT color="green">463</FONT>    <a name="line.463"></a>
+<FONT color="green">464</FONT>            // Next, sort by accuracy<a name="line.464"></a>
+<FONT color="green">465</FONT>            Collections.sort(tmp, new LpAccuracyComparator());<a name="line.465"></a>
+<FONT color="green">466</FONT>            int acc = tmp.get(0).getAccuracy();<a name="line.466"></a>
+<FONT color="green">467</FONT>            if (acc &lt; tmp.get(1).getAccuracy()) {<a name="line.467"></a>
+<FONT color="green">468</FONT>                return tmp.get(0);<a name="line.468"></a>
+<FONT color="green">469</FONT>            }<a name="line.469"></a>
+<FONT color="green">470</FONT>    <a name="line.470"></a>
+<FONT color="green">471</FONT>            List&lt;LocationProvider&gt; tmp2 = new ArrayList&lt;LocationProvider&gt;();<a name="line.471"></a>
+<FONT color="green">472</FONT>            idx = 0;<a name="line.472"></a>
+<FONT color="green">473</FONT>            size = tmp.size();<a name="line.473"></a>
+<FONT color="green">474</FONT>            while ((idx &lt; size) &amp;&amp; (tmp.get(idx).getAccuracy() == acc)) {<a name="line.474"></a>
+<FONT color="green">475</FONT>                tmp2.add(tmp.get(idx));<a name="line.475"></a>
+<FONT color="green">476</FONT>                idx++;<a name="line.476"></a>
+<FONT color="green">477</FONT>            }<a name="line.477"></a>
+<FONT color="green">478</FONT>    <a name="line.478"></a>
+<FONT color="green">479</FONT>            // Finally, sort by capability "score"<a name="line.479"></a>
+<FONT color="green">480</FONT>            Collections.sort(tmp2, new LpCapabilityComparator());<a name="line.480"></a>
+<FONT color="green">481</FONT>            return tmp2.get(0);<a name="line.481"></a>
+<FONT color="green">482</FONT>        }<a name="line.482"></a>
+<FONT color="green">483</FONT>    <a name="line.483"></a>
+<FONT color="green">484</FONT>        /**<a name="line.484"></a>
+<FONT color="green">485</FONT>         * Returns the name of the provider that best meets the given criteria. Only providers<a name="line.485"></a>
+<FONT color="green">486</FONT>         * that are permitted to be accessed by the calling activity will be<a name="line.486"></a>
+<FONT color="green">487</FONT>         * returned.  If several providers meet the criteria, the one with the best<a name="line.487"></a>
+<FONT color="green">488</FONT>         * accuracy is returned.  If no provider meets the criteria,<a name="line.488"></a>
+<FONT color="green">489</FONT>         * the criteria are loosened in the following sequence:<a name="line.489"></a>
+<FONT color="green">490</FONT>         *<a name="line.490"></a>
+<FONT color="green">491</FONT>         * &lt;ul&gt;<a name="line.491"></a>
+<FONT color="green">492</FONT>         * &lt;li&gt; power requirement<a name="line.492"></a>
+<FONT color="green">493</FONT>         * &lt;li&gt; accuracy<a name="line.493"></a>
+<FONT color="green">494</FONT>         * &lt;li&gt; bearing<a name="line.494"></a>
+<FONT color="green">495</FONT>         * &lt;li&gt; speed<a name="line.495"></a>
+<FONT color="green">496</FONT>         * &lt;li&gt; altitude<a name="line.496"></a>
+<FONT color="green">497</FONT>         * &lt;/ul&gt;<a name="line.497"></a>
+<FONT color="green">498</FONT>         *<a name="line.498"></a>
+<FONT color="green">499</FONT>         * &lt;p&gt; Note that the requirement on monetary cost is not removed<a name="line.499"></a>
+<FONT color="green">500</FONT>         * in this process.<a name="line.500"></a>
+<FONT color="green">501</FONT>         *<a name="line.501"></a>
+<FONT color="green">502</FONT>         * @param criteria the criteria that need to be matched<a name="line.502"></a>
+<FONT color="green">503</FONT>         * @param enabledOnly if true then only a provider that is currently enabled is returned<a name="line.503"></a>
+<FONT color="green">504</FONT>         * @return name of the provider that best matches the requirements<a name="line.504"></a>
+<FONT color="green">505</FONT>         */<a name="line.505"></a>
+<FONT color="green">506</FONT>        public String getBestProvider(Criteria criteria, boolean enabledOnly) {<a name="line.506"></a>
+<FONT color="green">507</FONT>            List&lt;String&gt; goodProviders = getProviders(criteria, enabledOnly);<a name="line.507"></a>
+<FONT color="green">508</FONT>            if (!goodProviders.isEmpty()) {<a name="line.508"></a>
+<FONT color="green">509</FONT>                return best(goodProviders).getName();<a name="line.509"></a>
+<FONT color="green">510</FONT>            }<a name="line.510"></a>
+<FONT color="green">511</FONT>    <a name="line.511"></a>
+<FONT color="green">512</FONT>            // Make a copy of the criteria that we can modify<a name="line.512"></a>
+<FONT color="green">513</FONT>            criteria = new Criteria(criteria);<a name="line.513"></a>
+<FONT color="green">514</FONT>    <a name="line.514"></a>
+<FONT color="green">515</FONT>            // Loosen power requirement<a name="line.515"></a>
+<FONT color="green">516</FONT>            int power = criteria.getPowerRequirement();<a name="line.516"></a>
+<FONT color="green">517</FONT>            while (goodProviders.isEmpty() &amp;&amp; (power != Criteria.NO_REQUIREMENT)) {<a name="line.517"></a>
+<FONT color="green">518</FONT>                power = nextPower(power);<a name="line.518"></a>
+<FONT color="green">519</FONT>                criteria.setPowerRequirement(power);<a name="line.519"></a>
+<FONT color="green">520</FONT>                goodProviders = getProviders(criteria, enabledOnly);<a name="line.520"></a>
+<FONT color="green">521</FONT>            }<a name="line.521"></a>
+<FONT color="green">522</FONT>            if (!goodProviders.isEmpty()) {<a name="line.522"></a>
+<FONT color="green">523</FONT>                return best(goodProviders).getName();<a name="line.523"></a>
+<FONT color="green">524</FONT>            }<a name="line.524"></a>
+<FONT color="green">525</FONT>    <a name="line.525"></a>
+<FONT color="green">526</FONT>    //        // Loosen response time requirement<a name="line.526"></a>
+<FONT color="green">527</FONT>    //        int responseTime = criteria.getPreferredResponseTime();<a name="line.527"></a>
+<FONT color="green">528</FONT>    //        while (goodProviders.isEmpty() &amp;&amp;<a name="line.528"></a>
+<FONT color="green">529</FONT>    //            (responseTime != Criteria.NO_REQUIREMENT)) {<a name="line.529"></a>
+<FONT color="green">530</FONT>    //            responseTime += 1000;<a name="line.530"></a>
+<FONT color="green">531</FONT>    //            if (responseTime &gt; 60000) {<a name="line.531"></a>
+<FONT color="green">532</FONT>    //                responseTime = Criteria.NO_REQUIREMENT;<a name="line.532"></a>
+<FONT color="green">533</FONT>    //            }<a name="line.533"></a>
+<FONT color="green">534</FONT>    //            criteria.setPreferredResponseTime(responseTime);<a name="line.534"></a>
+<FONT color="green">535</FONT>    //            goodProviders = getProviders(criteria);<a name="line.535"></a>
+<FONT color="green">536</FONT>    //        }<a name="line.536"></a>
+<FONT color="green">537</FONT>    //        if (!goodProviders.isEmpty()) {<a name="line.537"></a>
+<FONT color="green">538</FONT>    //            return best(goodProviders);<a name="line.538"></a>
+<FONT color="green">539</FONT>    //        }<a name="line.539"></a>
+<FONT color="green">540</FONT>    <a name="line.540"></a>
+<FONT color="green">541</FONT>            // Loosen accuracy requirement<a name="line.541"></a>
+<FONT color="green">542</FONT>            int accuracy = criteria.getAccuracy();<a name="line.542"></a>
+<FONT color="green">543</FONT>            while (goodProviders.isEmpty() &amp;&amp; (accuracy != Criteria.NO_REQUIREMENT)) {<a name="line.543"></a>
+<FONT color="green">544</FONT>                accuracy = nextAccuracy(accuracy);<a name="line.544"></a>
+<FONT color="green">545</FONT>                criteria.setAccuracy(accuracy);<a name="line.545"></a>
+<FONT color="green">546</FONT>                goodProviders = getProviders(criteria, enabledOnly);<a name="line.546"></a>
+<FONT color="green">547</FONT>            }<a name="line.547"></a>
+<FONT color="green">548</FONT>            if (!goodProviders.isEmpty()) {<a name="line.548"></a>
+<FONT color="green">549</FONT>                return best(goodProviders).getName();<a name="line.549"></a>
+<FONT color="green">550</FONT>            }<a name="line.550"></a>
+<FONT color="green">551</FONT>    <a name="line.551"></a>
+<FONT color="green">552</FONT>            // Remove bearing requirement<a name="line.552"></a>
+<FONT color="green">553</FONT>            criteria.setBearingRequired(false);<a name="line.553"></a>
+<FONT color="green">554</FONT>            goodProviders = getProviders(criteria, enabledOnly);<a name="line.554"></a>
+<FONT color="green">555</FONT>            if (!goodProviders.isEmpty()) {<a name="line.555"></a>
+<FONT color="green">556</FONT>                return best(goodProviders).getName();<a name="line.556"></a>
+<FONT color="green">557</FONT>            }<a name="line.557"></a>
+<FONT color="green">558</FONT>    <a name="line.558"></a>
+<FONT color="green">559</FONT>            // Remove speed requirement<a name="line.559"></a>
+<FONT color="green">560</FONT>            criteria.setSpeedRequired(false);<a name="line.560"></a>
+<FONT color="green">561</FONT>            goodProviders = getProviders(criteria, enabledOnly);<a name="line.561"></a>
+<FONT color="green">562</FONT>            if (!goodProviders.isEmpty()) {<a name="line.562"></a>
+<FONT color="green">563</FONT>                return best(goodProviders).getName();<a name="line.563"></a>
+<FONT color="green">564</FONT>            }<a name="line.564"></a>
+<FONT color="green">565</FONT>    <a name="line.565"></a>
+<FONT color="green">566</FONT>            // Remove altitude requirement<a name="line.566"></a>
+<FONT color="green">567</FONT>            criteria.setAltitudeRequired(false);<a name="line.567"></a>
+<FONT color="green">568</FONT>            goodProviders = getProviders(criteria, enabledOnly);<a name="line.568"></a>
+<FONT color="green">569</FONT>            if (!goodProviders.isEmpty()) {<a name="line.569"></a>
+<FONT color="green">570</FONT>                return best(goodProviders).getName();<a name="line.570"></a>
+<FONT color="green">571</FONT>            }<a name="line.571"></a>
+<FONT color="green">572</FONT>    <a name="line.572"></a>
+<FONT color="green">573</FONT>            return null;<a name="line.573"></a>
+<FONT color="green">574</FONT>        }<a name="line.574"></a>
+<FONT color="green">575</FONT>    <a name="line.575"></a>
+<FONT color="green">576</FONT>        /**<a name="line.576"></a>
+<FONT color="green">577</FONT>         * Registers the current activity to be notified periodically by<a name="line.577"></a>
+<FONT color="green">578</FONT>         * the named provider.  Periodically, the supplied LocationListener will<a name="line.578"></a>
+<FONT color="green">579</FONT>         * be called with the current Location or with status updates.<a name="line.579"></a>
+<FONT color="green">580</FONT>         *<a name="line.580"></a>
+<FONT color="green">581</FONT>         * &lt;p&gt; It may take a while to receive the most recent location. If<a name="line.581"></a>
+<FONT color="green">582</FONT>         * an immediate location is required, applications may use the<a name="line.582"></a>
+<FONT color="green">583</FONT>         * {@link #getLastKnownLocation(String)} method.<a name="line.583"></a>
+<FONT color="green">584</FONT>         *<a name="line.584"></a>
+<FONT color="green">585</FONT>         * &lt;p&gt; In case the provider is disabled by the user, updates will stop,<a name="line.585"></a>
+<FONT color="green">586</FONT>         * and the {@link LocationListener#onProviderDisabled(String)}<a name="line.586"></a>
+<FONT color="green">587</FONT>         * method will be called. As soon as the provider is enabled again,<a name="line.587"></a>
+<FONT color="green">588</FONT>         * the {@link LocationListener#onProviderEnabled(String)} method will<a name="line.588"></a>
+<FONT color="green">589</FONT>         * be called and location updates will start again.<a name="line.589"></a>
+<FONT color="green">590</FONT>         *<a name="line.590"></a>
+<FONT color="green">591</FONT>         * &lt;p&gt; The frequency of notification may be controlled using the<a name="line.591"></a>
+<FONT color="green">592</FONT>         * minTime and minDistance parameters. If minTime is greater than 0,<a name="line.592"></a>
+<FONT color="green">593</FONT>         * the LocationManager could potentially rest for minTime milliseconds<a name="line.593"></a>
+<FONT color="green">594</FONT>         * between location updates to conserve power. If minDistance is greater than 0,<a name="line.594"></a>
+<FONT color="green">595</FONT>         * a location will only be broadcasted if the device moves by minDistance meters.<a name="line.595"></a>
+<FONT color="green">596</FONT>         * To obtain notifications as frequently as possible, set both parameters to 0.<a name="line.596"></a>
+<FONT color="green">597</FONT>         *<a name="line.597"></a>
+<FONT color="green">598</FONT>         * &lt;p&gt; Background services should be careful about setting a sufficiently high<a name="line.598"></a>
+<FONT color="green">599</FONT>         * minTime so that the device doesn't consume too much power by keeping the<a name="line.599"></a>
+<FONT color="green">600</FONT>         * GPS or wireless radios on all the time. In particular, values under 60000ms<a name="line.600"></a>
+<FONT color="green">601</FONT>         * are not recommended.<a name="line.601"></a>
+<FONT color="green">602</FONT>         *<a name="line.602"></a>
+<FONT color="green">603</FONT>         * &lt;p&gt; The calling thread must be a {@link android.os.Looper} thread such as<a name="line.603"></a>
+<FONT color="green">604</FONT>         * the main thread of the calling Activity.<a name="line.604"></a>
+<FONT color="green">605</FONT>         *<a name="line.605"></a>
+<FONT color="green">606</FONT>         * @param provider the name of the provider with which to register<a name="line.606"></a>
+<FONT color="green">607</FONT>         * @param minTime the minimum time interval for notifications, in<a name="line.607"></a>
+<FONT color="green">608</FONT>         * milliseconds. This field is only used as a hint to conserve power, and actual<a name="line.608"></a>
+<FONT color="green">609</FONT>         * time between location updates may be greater or lesser than this value.<a name="line.609"></a>
+<FONT color="green">610</FONT>         * @param minDistance the minimum distance interval for notifications,<a name="line.610"></a>
+<FONT color="green">611</FONT>         * in meters<a name="line.611"></a>
+<FONT color="green">612</FONT>         * @param listener a {#link LocationListener} whose<a name="line.612"></a>
+<FONT color="green">613</FONT>         * {@link LocationListener#onLocationChanged} method will be called for<a name="line.613"></a>
+<FONT color="green">614</FONT>         * each location update<a name="line.614"></a>
+<FONT color="green">615</FONT>         *<a name="line.615"></a>
+<FONT color="green">616</FONT>         * @throws IllegalArgumentException if provider is null or doesn't exist<a name="line.616"></a>
+<FONT color="green">617</FONT>         * @throws IllegalArgumentException if listener is null<a name="line.617"></a>
+<FONT color="green">618</FONT>         * @throws RuntimeException if the calling thread has no Looper<a name="line.618"></a>
+<FONT color="green">619</FONT>         * @throws SecurityException if no suitable permission is present for the provider.<a name="line.619"></a>
+<FONT color="green">620</FONT>         */<a name="line.620"></a>
+<FONT color="green">621</FONT>        public void requestLocationUpdates(String provider,<a name="line.621"></a>
+<FONT color="green">622</FONT>            long minTime, float minDistance, LocationListener listener) {<a name="line.622"></a>
+<FONT color="green">623</FONT>            if (provider == null) {<a name="line.623"></a>
+<FONT color="green">624</FONT>                throw new IllegalArgumentException("provider==null");<a name="line.624"></a>
+<FONT color="green">625</FONT>            }<a name="line.625"></a>
+<FONT color="green">626</FONT>            if (listener == null) {<a name="line.626"></a>
+<FONT color="green">627</FONT>                throw new IllegalArgumentException("listener==null");<a name="line.627"></a>
+<FONT color="green">628</FONT>            }<a name="line.628"></a>
+<FONT color="green">629</FONT>            _requestLocationUpdates(provider, minTime, minDistance, listener, null);<a name="line.629"></a>
+<FONT color="green">630</FONT>        }<a name="line.630"></a>
+<FONT color="green">631</FONT>    <a name="line.631"></a>
+<FONT color="green">632</FONT>        /**<a name="line.632"></a>
+<FONT color="green">633</FONT>         * Registers the current activity to be notified periodically by<a name="line.633"></a>
+<FONT color="green">634</FONT>         * the named provider.  Periodically, the supplied LocationListener will<a name="line.634"></a>
+<FONT color="green">635</FONT>         * be called with the current Location or with status updates.<a name="line.635"></a>
+<FONT color="green">636</FONT>         *<a name="line.636"></a>
+<FONT color="green">637</FONT>         * &lt;p&gt; It may take a while to receive the most recent location. If<a name="line.637"></a>
+<FONT color="green">638</FONT>         * an immediate location is required, applications may use the<a name="line.638"></a>
+<FONT color="green">639</FONT>         * {@link #getLastKnownLocation(String)} method.<a name="line.639"></a>
+<FONT color="green">640</FONT>         *<a name="line.640"></a>
+<FONT color="green">641</FONT>         * &lt;p&gt; In case the provider is disabled by the user, updates will stop,<a name="line.641"></a>
+<FONT color="green">642</FONT>         * and the {@link LocationListener#onProviderDisabled(String)}<a name="line.642"></a>
+<FONT color="green">643</FONT>         * method will be called. As soon as the provider is enabled again,<a name="line.643"></a>
+<FONT color="green">644</FONT>         * the {@link LocationListener#onProviderEnabled(String)} method will<a name="line.644"></a>
+<FONT color="green">645</FONT>         * be called and location updates will start again.<a name="line.645"></a>
+<FONT color="green">646</FONT>         *<a name="line.646"></a>
+<FONT color="green">647</FONT>         * &lt;p&gt; The frequency of notification may be controlled using the<a name="line.647"></a>
+<FONT color="green">648</FONT>         * minTime and minDistance parameters. If minTime is greater than 0,<a name="line.648"></a>
+<FONT color="green">649</FONT>         * the LocationManager could potentially rest for minTime milliseconds<a name="line.649"></a>
+<FONT color="green">650</FONT>         * between location updates to conserve power. If minDistance is greater than 0,<a name="line.650"></a>
+<FONT color="green">651</FONT>         * a location will only be broadcasted if the device moves by minDistance meters.<a name="line.651"></a>
+<FONT color="green">652</FONT>         * To obtain notifications as frequently as possible, set both parameters to 0.<a name="line.652"></a>
+<FONT color="green">653</FONT>         *<a name="line.653"></a>
+<FONT color="green">654</FONT>         * &lt;p&gt; Background services should be careful about setting a sufficiently high<a name="line.654"></a>
+<FONT color="green">655</FONT>         * minTime so that the device doesn't consume too much power by keeping the<a name="line.655"></a>
+<FONT color="green">656</FONT>         * GPS or wireless radios on all the time. In particular, values under 60000ms<a name="line.656"></a>
+<FONT color="green">657</FONT>         * are not recommended.<a name="line.657"></a>
+<FONT color="green">658</FONT>         *<a name="line.658"></a>
+<FONT color="green">659</FONT>         * &lt;p&gt; The supplied Looper is used to implement the callback mechanism.<a name="line.659"></a>
+<FONT color="green">660</FONT>         *<a name="line.660"></a>
+<FONT color="green">661</FONT>         * @param provider the name of the provider with which to register<a name="line.661"></a>
+<FONT color="green">662</FONT>         * @param minTime the minimum time interval for notifications, in<a name="line.662"></a>
+<FONT color="green">663</FONT>         * milliseconds. This field is only used as a hint to conserve power, and actual<a name="line.663"></a>
+<FONT color="green">664</FONT>         * time between location updates may be greater or lesser than this value.<a name="line.664"></a>
+<FONT color="green">665</FONT>         * @param minDistance the minimum distance interval for notifications,<a name="line.665"></a>
+<FONT color="green">666</FONT>         * in meters<a name="line.666"></a>
+<FONT color="green">667</FONT>         * @param listener a {#link LocationListener} whose<a name="line.667"></a>
+<FONT color="green">668</FONT>         * {@link LocationListener#onLocationChanged} method will be called for<a name="line.668"></a>
+<FONT color="green">669</FONT>         * each location update<a name="line.669"></a>
+<FONT color="green">670</FONT>         * @param looper a Looper object whose message queue will be used to<a name="line.670"></a>
+<FONT color="green">671</FONT>         * implement the callback mechanism.<a name="line.671"></a>
+<FONT color="green">672</FONT>         *<a name="line.672"></a>
+<FONT color="green">673</FONT>         * @throws IllegalArgumentException if provider is null or doesn't exist<a name="line.673"></a>
+<FONT color="green">674</FONT>         * @throws IllegalArgumentException if listener is null<a name="line.674"></a>
+<FONT color="green">675</FONT>         * @throws IllegalArgumentException if looper is null<a name="line.675"></a>
+<FONT color="green">676</FONT>         * @throws SecurityException if no suitable permission is present for the provider.<a name="line.676"></a>
+<FONT color="green">677</FONT>         */<a name="line.677"></a>
+<FONT color="green">678</FONT>        public void requestLocationUpdates(String provider,<a name="line.678"></a>
+<FONT color="green">679</FONT>            long minTime, float minDistance, LocationListener listener,<a name="line.679"></a>
+<FONT color="green">680</FONT>            Looper looper) {<a name="line.680"></a>
+<FONT color="green">681</FONT>            if (provider == null) {<a name="line.681"></a>
+<FONT color="green">682</FONT>                throw new IllegalArgumentException("provider==null");<a name="line.682"></a>
+<FONT color="green">683</FONT>            }<a name="line.683"></a>
+<FONT color="green">684</FONT>            if (listener == null) {<a name="line.684"></a>
+<FONT color="green">685</FONT>                throw new IllegalArgumentException("listener==null");<a name="line.685"></a>
+<FONT color="green">686</FONT>            }<a name="line.686"></a>
+<FONT color="green">687</FONT>            if (looper == null) {<a name="line.687"></a>
+<FONT color="green">688</FONT>                throw new IllegalArgumentException("looper==null");<a name="line.688"></a>
+<FONT color="green">689</FONT>            }<a name="line.689"></a>
+<FONT color="green">690</FONT>            _requestLocationUpdates(provider, minTime, minDistance, listener, looper);<a name="line.690"></a>
+<FONT color="green">691</FONT>        }<a name="line.691"></a>
+<FONT color="green">692</FONT>    <a name="line.692"></a>
+<FONT color="green">693</FONT>        private void _requestLocationUpdates(String provider,<a name="line.693"></a>
+<FONT color="green">694</FONT>            long minTime, float minDistance, LocationListener listener,<a name="line.694"></a>
+<FONT color="green">695</FONT>            Looper looper) {<a name="line.695"></a>
+<FONT color="green">696</FONT>            if (minTime &lt; 0L) {<a name="line.696"></a>
+<FONT color="green">697</FONT>                minTime = 0L;<a name="line.697"></a>
+<FONT color="green">698</FONT>            }<a name="line.698"></a>
+<FONT color="green">699</FONT>            if (minDistance &lt; 0.0f) {<a name="line.699"></a>
+<FONT color="green">700</FONT>                minDistance = 0.0f;<a name="line.700"></a>
+<FONT color="green">701</FONT>            }<a name="line.701"></a>
+<FONT color="green">702</FONT>    <a name="line.702"></a>
+<FONT color="green">703</FONT>            try {<a name="line.703"></a>
+<FONT color="green">704</FONT>                synchronized (mListeners) {<a name="line.704"></a>
+<FONT color="green">705</FONT>                    ListenerTransport transport = mListeners.get(listener);<a name="line.705"></a>
+<FONT color="green">706</FONT>                    if (transport == null) {<a name="line.706"></a>
+<FONT color="green">707</FONT>                        transport = new ListenerTransport(listener, looper);<a name="line.707"></a>
+<FONT color="green">708</FONT>                    }<a name="line.708"></a>
+<FONT color="green">709</FONT>                    mListeners.put(listener, transport);<a name="line.709"></a>
+<FONT color="green">710</FONT>                    mService.requestLocationUpdates(provider, minTime, minDistance, transport);<a name="line.710"></a>
+<FONT color="green">711</FONT>                }<a name="line.711"></a>
+<FONT color="green">712</FONT>            } catch (RemoteException ex) {<a name="line.712"></a>
+<FONT color="green">713</FONT>                Log.e(TAG, "requestLocationUpdates: DeadObjectException", ex);<a name="line.713"></a>
+<FONT color="green">714</FONT>            }<a name="line.714"></a>
+<FONT color="green">715</FONT>        }<a name="line.715"></a>
+<FONT color="green">716</FONT>    <a name="line.716"></a>
+<FONT color="green">717</FONT>        /**<a name="line.717"></a>
+<FONT color="green">718</FONT>         * Registers the current activity to be notified periodically by<a name="line.718"></a>
+<FONT color="green">719</FONT>         * the named provider.  Periodically, the supplied PendingIntent will<a name="line.719"></a>
+<FONT color="green">720</FONT>         * be broadcast with the current Location or with status updates.<a name="line.720"></a>
+<FONT color="green">721</FONT>         *<a name="line.721"></a>
+<FONT color="green">722</FONT>         * &lt;p&gt; Location updates are sent with a key of KEY_LOCATION_CHANGED and a Location value.<a name="line.722"></a>
+<FONT color="green">723</FONT>         *<a name="line.723"></a>
+<FONT color="green">724</FONT>         * &lt;p&gt; It may take a while to receive the most recent location. If<a name="line.724"></a>
+<FONT color="green">725</FONT>         * an immediate location is required, applications may use the<a name="line.725"></a>
+<FONT color="green">726</FONT>         * {@link #getLastKnownLocation(String)} method.<a name="line.726"></a>
+<FONT color="green">727</FONT>         *<a name="line.727"></a>
+<FONT color="green">728</FONT>         * &lt;p&gt; The frequency of notification or new locations may be controlled using the<a name="line.728"></a>
+<FONT color="green">729</FONT>         * minTime and minDistance parameters. If minTime is greater than 0,<a name="line.729"></a>
+<FONT color="green">730</FONT>         * the LocationManager could potentially rest for minTime milliseconds<a name="line.730"></a>
+<FONT color="green">731</FONT>         * between location updates to conserve power. If minDistance is greater than 0,<a name="line.731"></a>
+<FONT color="green">732</FONT>         * a location will only be broadcast if the device moves by minDistance meters.<a name="line.732"></a>
+<FONT color="green">733</FONT>         * To obtain notifications as frequently as possible, set both parameters to 0.<a name="line.733"></a>
+<FONT color="green">734</FONT>         *<a name="line.734"></a>
+<FONT color="green">735</FONT>         * &lt;p&gt; Background services should be careful about setting a sufficiently high<a name="line.735"></a>
+<FONT color="green">736</FONT>         * minTime so that the device doesn't consume too much power by keeping the<a name="line.736"></a>
+<FONT color="green">737</FONT>         * GPS or wireless radios on all the time. In particular, values under 60000ms<a name="line.737"></a>
+<FONT color="green">738</FONT>         * are not recommended.<a name="line.738"></a>
+<FONT color="green">739</FONT>         *<a name="line.739"></a>
+<FONT color="green">740</FONT>         * &lt;p&gt; In case the provider is disabled by the user, updates will stop,<a name="line.740"></a>
+<FONT color="green">741</FONT>         * and an intent will be sent with an extra with key KEY_PROVIDER_ENABLED and a boolean value<a name="line.741"></a>
+<FONT color="green">742</FONT>         * of false.  If the provider is re-enabled, an intent will be sent with an<a name="line.742"></a>
+<FONT color="green">743</FONT>         * extra with key KEY_PROVIDER_ENABLED and a boolean value of true and location updates will<a name="line.743"></a>
+<FONT color="green">744</FONT>         * start again.<a name="line.744"></a>
+<FONT color="green">745</FONT>         *<a name="line.745"></a>
+<FONT color="green">746</FONT>         * &lt;p&gt; If the provider's status changes, an intent will be sent with an extra with key<a name="line.746"></a>
+<FONT color="green">747</FONT>         * KEY_STATUS_CHANGED and an integer value indicating the new status.  Any extras associated<a name="line.747"></a>
+<FONT color="green">748</FONT>         * with the status update will be sent as well.<a name="line.748"></a>
+<FONT color="green">749</FONT>         *<a name="line.749"></a>
+<FONT color="green">750</FONT>         * @param provider the name of the provider with which to register<a name="line.750"></a>
+<FONT color="green">751</FONT>         * @param minTime the minimum time interval for notifications, in<a name="line.751"></a>
+<FONT color="green">752</FONT>         * milliseconds. This field is only used as a hint to conserve power, and actual<a name="line.752"></a>
+<FONT color="green">753</FONT>         * time between location updates may be greater or lesser than this value.<a name="line.753"></a>
+<FONT color="green">754</FONT>         * @param minDistance the minimum distance interval for notifications,<a name="line.754"></a>
+<FONT color="green">755</FONT>         * in meters<a name="line.755"></a>
+<FONT color="green">756</FONT>         * @param intent a {#link PendingIntet} to be sent for each location update<a name="line.756"></a>
+<FONT color="green">757</FONT>         *<a name="line.757"></a>
+<FONT color="green">758</FONT>         * @throws IllegalArgumentException if provider is null or doesn't exist<a name="line.758"></a>
+<FONT color="green">759</FONT>         * @throws IllegalArgumentException if intent is null<a name="line.759"></a>
+<FONT color="green">760</FONT>         * @throws SecurityException if no suitable permission is present for the provider.<a name="line.760"></a>
+<FONT color="green">761</FONT>         */<a name="line.761"></a>
+<FONT color="green">762</FONT>        public void requestLocationUpdates(String provider,<a name="line.762"></a>
+<FONT color="green">763</FONT>                long minTime, float minDistance, PendingIntent intent) {<a name="line.763"></a>
+<FONT color="green">764</FONT>            if (provider == null) {<a name="line.764"></a>
+<FONT color="green">765</FONT>                throw new IllegalArgumentException("provider==null");<a name="line.765"></a>
+<FONT color="green">766</FONT>            }<a name="line.766"></a>
+<FONT color="green">767</FONT>            if (intent == null) {<a name="line.767"></a>
+<FONT color="green">768</FONT>                throw new IllegalArgumentException("intent==null");<a name="line.768"></a>
+<FONT color="green">769</FONT>            }<a name="line.769"></a>
+<FONT color="green">770</FONT>            _requestLocationUpdates(provider, minTime, minDistance, intent);<a name="line.770"></a>
+<FONT color="green">771</FONT>        }<a name="line.771"></a>
+<FONT color="green">772</FONT>    <a name="line.772"></a>
+<FONT color="green">773</FONT>        private void _requestLocationUpdates(String provider,<a name="line.773"></a>
+<FONT color="green">774</FONT>                long minTime, float minDistance, PendingIntent intent) {<a name="line.774"></a>
+<FONT color="green">775</FONT>            if (minTime &lt; 0L) {<a name="line.775"></a>
+<FONT color="green">776</FONT>                minTime = 0L;<a name="line.776"></a>
+<FONT color="green">777</FONT>            }<a name="line.777"></a>
+<FONT color="green">778</FONT>            if (minDistance &lt; 0.0f) {<a name="line.778"></a>
+<FONT color="green">779</FONT>                minDistance = 0.0f;<a name="line.779"></a>
+<FONT color="green">780</FONT>            }<a name="line.780"></a>
+<FONT color="green">781</FONT>    <a name="line.781"></a>
+<FONT color="green">782</FONT>            try {<a name="line.782"></a>
+<FONT color="green">783</FONT>                mService.requestLocationUpdatesPI(provider, minTime, minDistance, intent);<a name="line.783"></a>
+<FONT color="green">784</FONT>            } catch (RemoteException ex) {<a name="line.784"></a>
+<FONT color="green">785</FONT>                Log.e(TAG, "requestLocationUpdates: RemoteException", ex);<a name="line.785"></a>
+<FONT color="green">786</FONT>            }<a name="line.786"></a>
+<FONT color="green">787</FONT>        }<a name="line.787"></a>
+<FONT color="green">788</FONT>    <a name="line.788"></a>
+<FONT color="green">789</FONT>        /**<a name="line.789"></a>
+<FONT color="green">790</FONT>         * Removes any current registration for location updates of the current activity<a name="line.790"></a>
+<FONT color="green">791</FONT>         * with the given LocationListener.  Following this call, updates will no longer<a name="line.791"></a>
+<FONT color="green">792</FONT>         * occur for this listener.<a name="line.792"></a>
+<FONT color="green">793</FONT>         *<a name="line.793"></a>
+<FONT color="green">794</FONT>         * @param listener {#link LocationListener} object that no longer needs location updates<a name="line.794"></a>
+<FONT color="green">795</FONT>         * @throws IllegalArgumentException if listener is null<a name="line.795"></a>
+<FONT color="green">796</FONT>         */<a name="line.796"></a>
+<FONT color="green">797</FONT>        public void removeUpdates(LocationListener listener) {<a name="line.797"></a>
+<FONT color="green">798</FONT>            if (listener == null) {<a name="line.798"></a>
+<FONT color="green">799</FONT>                throw new IllegalArgumentException("listener==null");<a name="line.799"></a>
+<FONT color="green">800</FONT>            }<a name="line.800"></a>
+<FONT color="green">801</FONT>            if (Config.LOGD) {<a name="line.801"></a>
+<FONT color="green">802</FONT>                Log.d(TAG, "removeUpdates: listener = " + listener);<a name="line.802"></a>
+<FONT color="green">803</FONT>            }<a name="line.803"></a>
+<FONT color="green">804</FONT>            try {<a name="line.804"></a>
+<FONT color="green">805</FONT>                ListenerTransport transport = mListeners.remove(listener);<a name="line.805"></a>
+<FONT color="green">806</FONT>                if (transport != null) {<a name="line.806"></a>
+<FONT color="green">807</FONT>                    mService.removeUpdates(transport);<a name="line.807"></a>
+<FONT color="green">808</FONT>                }<a name="line.808"></a>
+<FONT color="green">809</FONT>            } catch (RemoteException ex) {<a name="line.809"></a>
+<FONT color="green">810</FONT>                Log.e(TAG, "removeUpdates: DeadObjectException", ex);<a name="line.810"></a>
+<FONT color="green">811</FONT>            }<a name="line.811"></a>
+<FONT color="green">812</FONT>        }<a name="line.812"></a>
+<FONT color="green">813</FONT>    <a name="line.813"></a>
+<FONT color="green">814</FONT>        /**<a name="line.814"></a>
+<FONT color="green">815</FONT>         * Removes any current registration for location updates of the current activity<a name="line.815"></a>
+<FONT color="green">816</FONT>         * with the given PendingIntent.  Following this call, updates will no longer<a name="line.816"></a>
+<FONT color="green">817</FONT>         * occur for this intent.<a name="line.817"></a>
+<FONT color="green">818</FONT>         *<a name="line.818"></a>
+<FONT color="green">819</FONT>         * @param intent {#link PendingIntent} object that no longer needs location updates<a name="line.819"></a>
+<FONT color="green">820</FONT>         * @throws IllegalArgumentException if intent is null<a name="line.820"></a>
+<FONT color="green">821</FONT>         */<a name="line.821"></a>
+<FONT color="green">822</FONT>        public void removeUpdates(PendingIntent intent) {<a name="line.822"></a>
+<FONT color="green">823</FONT>            if (intent == null) {<a name="line.823"></a>
+<FONT color="green">824</FONT>                throw new IllegalArgumentException("intent==null");<a name="line.824"></a>
+<FONT color="green">825</FONT>            }<a name="line.825"></a>
+<FONT color="green">826</FONT>            if (Config.LOGD) {<a name="line.826"></a>
+<FONT color="green">827</FONT>                Log.d(TAG, "removeUpdates: intent = " + intent);<a name="line.827"></a>
+<FONT color="green">828</FONT>            }<a name="line.828"></a>
+<FONT color="green">829</FONT>            try {<a name="line.829"></a>
+<FONT color="green">830</FONT>                mService.removeUpdatesPI(intent);<a name="line.830"></a>
+<FONT color="green">831</FONT>            } catch (RemoteException ex) {<a name="line.831"></a>
+<FONT color="green">832</FONT>                Log.e(TAG, "removeUpdates: RemoteException", ex);<a name="line.832"></a>
+<FONT color="green">833</FONT>            }<a name="line.833"></a>
+<FONT color="green">834</FONT>        }<a name="line.834"></a>
+<FONT color="green">835</FONT>    <a name="line.835"></a>
+<FONT color="green">836</FONT>        /**<a name="line.836"></a>
+<FONT color="green">837</FONT>         * Sets a proximity alert for the location given by the position<a name="line.837"></a>
+<FONT color="green">838</FONT>         * (latitude, longitude) and the given radius.  When the device<a name="line.838"></a>
+<FONT color="green">839</FONT>         * detects that it has entered or exited the area surrounding the<a name="line.839"></a>
+<FONT color="green">840</FONT>         * location, the given PendingIntent will be used to create an Intent<a name="line.840"></a>
+<FONT color="green">841</FONT>         * to be fired.<a name="line.841"></a>
+<FONT color="green">842</FONT>         *<a name="line.842"></a>
+<FONT color="green">843</FONT>         * &lt;p&gt; The fired Intent will have a boolean extra added with key<a name="line.843"></a>
+<FONT color="green">844</FONT>         * {@link #KEY_PROXIMITY_ENTERING}. If the value is true, the device is<a name="line.844"></a>
+<FONT color="green">845</FONT>         * entering the proximity region; if false, it is exiting.<a name="line.845"></a>
+<FONT color="green">846</FONT>         *<a name="line.846"></a>
+<FONT color="green">847</FONT>         * &lt;p&gt; Due to the approximate nature of position estimation, if the<a name="line.847"></a>
+<FONT color="green">848</FONT>         * device passes through the given area briefly, it is possible<a name="line.848"></a>
+<FONT color="green">849</FONT>         * that no Intent will be fired.  Similarly, an Intent could be<a name="line.849"></a>
+<FONT color="green">850</FONT>         * fired if the device passes very close to the given area but<a name="line.850"></a>
+<FONT color="green">851</FONT>         * does not actually enter it.<a name="line.851"></a>
+<FONT color="green">852</FONT>         *<a name="line.852"></a>
+<FONT color="green">853</FONT>         * &lt;p&gt; After the number of milliseconds given by the expiration<a name="line.853"></a>
+<FONT color="green">854</FONT>         * parameter, the location manager will delete this proximity<a name="line.854"></a>
+<FONT color="green">855</FONT>         * alert and no longer monitor it.  A value of -1 indicates that<a name="line.855"></a>
+<FONT color="green">856</FONT>         * there should be no expiration time.<a name="line.856"></a>
+<FONT color="green">857</FONT>         *<a name="line.857"></a>
+<FONT color="green">858</FONT>         * &lt;p&gt; In case the screen goes to sleep, checks for proximity alerts<a name="line.858"></a>
+<FONT color="green">859</FONT>         * happen only once every 4 minutes. This conserves battery life by<a name="line.859"></a>
+<FONT color="green">860</FONT>         * ensuring that the device isn't perpetually awake.<a name="line.860"></a>
+<FONT color="green">861</FONT>         *<a name="line.861"></a>
+<FONT color="green">862</FONT>         * &lt;p&gt; Internally, this method uses both {@link #NETWORK_PROVIDER}<a name="line.862"></a>
+<FONT color="green">863</FONT>         * and {@link #GPS_PROVIDER}.<a name="line.863"></a>
+<FONT color="green">864</FONT>         *<a name="line.864"></a>
+<FONT color="green">865</FONT>         * @param latitude the latitude of the central point of the<a name="line.865"></a>
+<FONT color="green">866</FONT>         * alert region<a name="line.866"></a>
+<FONT color="green">867</FONT>         * @param longitude the longitude of the central point of the<a name="line.867"></a>
+<FONT color="green">868</FONT>         * alert region<a name="line.868"></a>
+<FONT color="green">869</FONT>         * @param radius the radius of the central point of the<a name="line.869"></a>
+<FONT color="green">870</FONT>         * alert region, in meters<a name="line.870"></a>
+<FONT color="green">871</FONT>         * @param expiration time for this proximity alert, in milliseconds,<a name="line.871"></a>
+<FONT color="green">872</FONT>         * or -1 to indicate no expiration<a name="line.872"></a>
+<FONT color="green">873</FONT>         * @param intent a PendingIntent that will be used to generate an Intent to<a name="line.873"></a>
+<FONT color="green">874</FONT>         * fire when entry to or exit from the alert region is detected<a name="line.874"></a>
+<FONT color="green">875</FONT>         *<a name="line.875"></a>
+<FONT color="green">876</FONT>         * @throws SecurityException if no permission exists for the required<a name="line.876"></a>
+<FONT color="green">877</FONT>         * providers.<a name="line.877"></a>
+<FONT color="green">878</FONT>         */<a name="line.878"></a>
+<FONT color="green">879</FONT>        public void addProximityAlert(double latitude, double longitude,<a name="line.879"></a>
+<FONT color="green">880</FONT>            float radius, long expiration, PendingIntent intent) {<a name="line.880"></a>
+<FONT color="green">881</FONT>            if (Config.LOGD) {<a name="line.881"></a>
+<FONT color="green">882</FONT>                Log.d(TAG, "addProximityAlert: latitude = " + latitude +<a name="line.882"></a>
+<FONT color="green">883</FONT>                    ", longitude = " + longitude + ", radius = " + radius +<a name="line.883"></a>
+<FONT color="green">884</FONT>                    ", expiration = " + expiration +<a name="line.884"></a>
+<FONT color="green">885</FONT>                    ", intent = " + intent);<a name="line.885"></a>
+<FONT color="green">886</FONT>            }<a name="line.886"></a>
+<FONT color="green">887</FONT>            try {<a name="line.887"></a>
+<FONT color="green">888</FONT>                mService.addProximityAlert(latitude, longitude, radius,<a name="line.888"></a>
+<FONT color="green">889</FONT>                                           expiration, intent);<a name="line.889"></a>
+<FONT color="green">890</FONT>            } catch (RemoteException ex) {<a name="line.890"></a>
+<FONT color="green">891</FONT>                Log.e(TAG, "addProximityAlert: RemoteException", ex);<a name="line.891"></a>
+<FONT color="green">892</FONT>            }<a name="line.892"></a>
+<FONT color="green">893</FONT>        }<a name="line.893"></a>
+<FONT color="green">894</FONT>    <a name="line.894"></a>
+<FONT color="green">895</FONT>        /**<a name="line.895"></a>
+<FONT color="green">896</FONT>         * Removes the proximity alert with the given PendingIntent.<a name="line.896"></a>
+<FONT color="green">897</FONT>         *<a name="line.897"></a>
+<FONT color="green">898</FONT>         * @param intent the PendingIntent that no longer needs to be notified of<a name="line.898"></a>
+<FONT color="green">899</FONT>         * proximity alerts<a name="line.899"></a>
+<FONT color="green">900</FONT>         */<a name="line.900"></a>
+<FONT color="green">901</FONT>        public void removeProximityAlert(PendingIntent intent) {<a name="line.901"></a>
+<FONT color="green">902</FONT>            if (Config.LOGD) {<a name="line.902"></a>
+<FONT color="green">903</FONT>                Log.d(TAG, "removeProximityAlert: intent = " + intent);<a name="line.903"></a>
+<FONT color="green">904</FONT>            }<a name="line.904"></a>
+<FONT color="green">905</FONT>            try {<a name="line.905"></a>
+<FONT color="green">906</FONT>                mService.removeProximityAlert(intent);<a name="line.906"></a>
+<FONT color="green">907</FONT>            } catch (RemoteException ex) {<a name="line.907"></a>
+<FONT color="green">908</FONT>                Log.e(TAG, "removeProximityAlert: RemoteException", ex);<a name="line.908"></a>
+<FONT color="green">909</FONT>            }<a name="line.909"></a>
+<FONT color="green">910</FONT>        }<a name="line.910"></a>
+<FONT color="green">911</FONT>    <a name="line.911"></a>
+<FONT color="green">912</FONT>        /**<a name="line.912"></a>
+<FONT color="green">913</FONT>         * Returns the current enabled/disabled status of the given provider. If the<a name="line.913"></a>
+<FONT color="green">914</FONT>         * user has enabled this provider in the Settings menu, true is returned<a name="line.914"></a>
+<FONT color="green">915</FONT>         * otherwise false is returned<a name="line.915"></a>
+<FONT color="green">916</FONT>         *<a name="line.916"></a>
+<FONT color="green">917</FONT>         * @param provider the name of the provider<a name="line.917"></a>
+<FONT color="green">918</FONT>         * @return true if the provider is enabled<a name="line.918"></a>
+<FONT color="green">919</FONT>         *<a name="line.919"></a>
+<FONT color="green">920</FONT>         * @throws SecurityException if no suitable permission is present for the provider.<a name="line.920"></a>
+<FONT color="green">921</FONT>         * @throws IllegalArgumentException if provider is null or doesn't exist<a name="line.921"></a>
+<FONT color="green">922</FONT>         */<a name="line.922"></a>
+<FONT color="green">923</FONT>        public boolean isProviderEnabled(String provider) {<a name="line.923"></a>
+<FONT color="green">924</FONT>            if (provider == null) {<a name="line.924"></a>
+<FONT color="green">925</FONT>                throw new IllegalArgumentException("provider==null");<a name="line.925"></a>
+<FONT color="green">926</FONT>            }<a name="line.926"></a>
+<FONT color="green">927</FONT>            try {<a name="line.927"></a>
+<FONT color="green">928</FONT>                return mService.isProviderEnabled(provider);<a name="line.928"></a>
+<FONT color="green">929</FONT>            } catch (RemoteException ex) {<a name="line.929"></a>
+<FONT color="green">930</FONT>                Log.e(TAG, "isProviderEnabled: RemoteException", ex);<a name="line.930"></a>
+<FONT color="green">931</FONT>                return false;<a name="line.931"></a>
+<FONT color="green">932</FONT>            }<a name="line.932"></a>
+<FONT color="green">933</FONT>        }<a name="line.933"></a>
+<FONT color="green">934</FONT>    <a name="line.934"></a>
+<FONT color="green">935</FONT>        /**<a name="line.935"></a>
+<FONT color="green">936</FONT>         * Returns a Location indicating the data from the last known<a name="line.936"></a>
+<FONT color="green">937</FONT>         * location fix obtained from the given provider.  This can be done<a name="line.937"></a>
+<FONT color="green">938</FONT>         * without starting the provider.  Note that this location could<a name="line.938"></a>
+<FONT color="green">939</FONT>         * be out-of-date, for example if the device was turned off and<a name="line.939"></a>
+<FONT color="green">940</FONT>         * moved to another location.<a name="line.940"></a>
+<FONT color="green">941</FONT>         *<a name="line.941"></a>
+<FONT color="green">942</FONT>         * &lt;p&gt; If the provider is currently disabled, null is returned.<a name="line.942"></a>
+<FONT color="green">943</FONT>         *<a name="line.943"></a>
+<FONT color="green">944</FONT>         * @param provider the name of the provider<a name="line.944"></a>
+<FONT color="green">945</FONT>         * @return the last known location for the provider, or null<a name="line.945"></a>
+<FONT color="green">946</FONT>         *<a name="line.946"></a>
+<FONT color="green">947</FONT>         * @throws SecurityException if no suitable permission is present for the provider.<a name="line.947"></a>
+<FONT color="green">948</FONT>         * @throws IllegalArgumentException if provider is null or doesn't exist<a name="line.948"></a>
+<FONT color="green">949</FONT>         */<a name="line.949"></a>
+<FONT color="green">950</FONT>        public Location getLastKnownLocation(String provider) {<a name="line.950"></a>
+<FONT color="green">951</FONT>            if (provider == null) {<a name="line.951"></a>
+<FONT color="green">952</FONT>                throw new IllegalArgumentException("provider==null");<a name="line.952"></a>
+<FONT color="green">953</FONT>            }<a name="line.953"></a>
+<FONT color="green">954</FONT>            try {<a name="line.954"></a>
+<FONT color="green">955</FONT>                return mService.getLastKnownLocation(provider);<a name="line.955"></a>
+<FONT color="green">956</FONT>            } catch (RemoteException ex) {<a name="line.956"></a>
+<FONT color="green">957</FONT>                Log.e(TAG, "getLastKnowLocation: RemoteException", ex);<a name="line.957"></a>
+<FONT color="green">958</FONT>                return null;<a name="line.958"></a>
+<FONT color="green">959</FONT>            }<a name="line.959"></a>
+<FONT color="green">960</FONT>        }<a name="line.960"></a>
+<FONT color="green">961</FONT>    <a name="line.961"></a>
+<FONT color="green">962</FONT>        // Mock provider support<a name="line.962"></a>
+<FONT color="green">963</FONT>    <a name="line.963"></a>
+<FONT color="green">964</FONT>        /**<a name="line.964"></a>
+<FONT color="green">965</FONT>         * Creates a mock location provider and adds it to the set of active providers.<a name="line.965"></a>
+<FONT color="green">966</FONT>         *<a name="line.966"></a>
+<FONT color="green">967</FONT>         * @param name the provider name<a name="line.967"></a>
+<FONT color="green">968</FONT>         * @param requiresNetwork<a name="line.968"></a>
+<FONT color="green">969</FONT>         * @param requiresSatellite<a name="line.969"></a>
+<FONT color="green">970</FONT>         * @param requiresCell<a name="line.970"></a>
+<FONT color="green">971</FONT>         * @param hasMonetaryCost<a name="line.971"></a>
+<FONT color="green">972</FONT>         * @param supportsAltitude<a name="line.972"></a>
+<FONT color="green">973</FONT>         * @param supportsSpeed<a name="line.973"></a>
+<FONT color="green">974</FONT>         * @param supportsBearing<a name="line.974"></a>
+<FONT color="green">975</FONT>         * @param powerRequirement<a name="line.975"></a>
+<FONT color="green">976</FONT>         * @param accuracy<a name="line.976"></a>
+<FONT color="green">977</FONT>         *<a name="line.977"></a>
+<FONT color="green">978</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.978"></a>
+<FONT color="green">979</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.979"></a>
+<FONT color="green">980</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION} system setting is not enabled<a name="line.980"></a>
+<FONT color="green">981</FONT>         * @throws IllegalArgumentException if a provider with the given name already exists<a name="line.981"></a>
+<FONT color="green">982</FONT>         */<a name="line.982"></a>
+<FONT color="green">983</FONT>        public void addTestProvider(String name, boolean requiresNetwork, boolean requiresSatellite,<a name="line.983"></a>
+<FONT color="green">984</FONT>            boolean requiresCell, boolean hasMonetaryCost, boolean supportsAltitude,<a name="line.984"></a>
+<FONT color="green">985</FONT>            boolean supportsSpeed, boolean supportsBearing, int powerRequirement, int accuracy) {<a name="line.985"></a>
+<FONT color="green">986</FONT>            try {<a name="line.986"></a>
+<FONT color="green">987</FONT>                mService.addTestProvider(name, requiresNetwork, requiresSatellite, requiresCell,<a name="line.987"></a>
+<FONT color="green">988</FONT>                    hasMonetaryCost, supportsAltitude, supportsSpeed, supportsBearing, powerRequirement,<a name="line.988"></a>
+<FONT color="green">989</FONT>                    accuracy);<a name="line.989"></a>
+<FONT color="green">990</FONT>            } catch (RemoteException ex) {<a name="line.990"></a>
+<FONT color="green">991</FONT>                Log.e(TAG, "addTestProvider: RemoteException", ex);<a name="line.991"></a>
+<FONT color="green">992</FONT>            }<a name="line.992"></a>
+<FONT color="green">993</FONT>        }<a name="line.993"></a>
+<FONT color="green">994</FONT>    <a name="line.994"></a>
+<FONT color="green">995</FONT>        /**<a name="line.995"></a>
+<FONT color="green">996</FONT>         * Removes the mock location provider with the given name.<a name="line.996"></a>
+<FONT color="green">997</FONT>         *<a name="line.997"></a>
+<FONT color="green">998</FONT>         * @param provider the provider name<a name="line.998"></a>
+<FONT color="green">999</FONT>         *<a name="line.999"></a>
+<FONT color="green">1000</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1000"></a>
+<FONT color="green">1001</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1001"></a>
+<FONT color="green">1002</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1002"></a>
+<FONT color="green">1003</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1003"></a>
+<FONT color="green">1004</FONT>         */<a name="line.1004"></a>
+<FONT color="green">1005</FONT>        public void removeTestProvider(String provider) {<a name="line.1005"></a>
+<FONT color="green">1006</FONT>            try {<a name="line.1006"></a>
+<FONT color="green">1007</FONT>                mService.removeTestProvider(provider);<a name="line.1007"></a>
+<FONT color="green">1008</FONT>            } catch (RemoteException ex) {<a name="line.1008"></a>
+<FONT color="green">1009</FONT>                Log.e(TAG, "removeTestProvider: RemoteException", ex);<a name="line.1009"></a>
+<FONT color="green">1010</FONT>            }<a name="line.1010"></a>
+<FONT color="green">1011</FONT>        }<a name="line.1011"></a>
+<FONT color="green">1012</FONT>    <a name="line.1012"></a>
+<FONT color="green">1013</FONT>        /**<a name="line.1013"></a>
+<FONT color="green">1014</FONT>         * Sets a mock location for the given provider.  This location will be used in place<a name="line.1014"></a>
+<FONT color="green">1015</FONT>         * of any actual location from the provider.<a name="line.1015"></a>
+<FONT color="green">1016</FONT>         *<a name="line.1016"></a>
+<FONT color="green">1017</FONT>         * @param provider the provider name<a name="line.1017"></a>
+<FONT color="green">1018</FONT>         * @param loc the mock location<a name="line.1018"></a>
+<FONT color="green">1019</FONT>         *<a name="line.1019"></a>
+<FONT color="green">1020</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1020"></a>
+<FONT color="green">1021</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1021"></a>
+<FONT color="green">1022</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1022"></a>
+<FONT color="green">1023</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1023"></a>
+<FONT color="green">1024</FONT>         */<a name="line.1024"></a>
+<FONT color="green">1025</FONT>        public void setTestProviderLocation(String provider, Location loc) {<a name="line.1025"></a>
+<FONT color="green">1026</FONT>            try {<a name="line.1026"></a>
+<FONT color="green">1027</FONT>                mService.setTestProviderLocation(provider, loc);<a name="line.1027"></a>
+<FONT color="green">1028</FONT>            } catch (RemoteException ex) {<a name="line.1028"></a>
+<FONT color="green">1029</FONT>                Log.e(TAG, "setTestProviderLocation: RemoteException", ex);<a name="line.1029"></a>
+<FONT color="green">1030</FONT>            }<a name="line.1030"></a>
+<FONT color="green">1031</FONT>        }<a name="line.1031"></a>
+<FONT color="green">1032</FONT>    <a name="line.1032"></a>
+<FONT color="green">1033</FONT>        /**<a name="line.1033"></a>
+<FONT color="green">1034</FONT>         * Removes any mock location associated with the given provider.<a name="line.1034"></a>
+<FONT color="green">1035</FONT>         *<a name="line.1035"></a>
+<FONT color="green">1036</FONT>         * @param provider the provider name<a name="line.1036"></a>
+<FONT color="green">1037</FONT>         *<a name="line.1037"></a>
+<FONT color="green">1038</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1038"></a>
+<FONT color="green">1039</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1039"></a>
+<FONT color="green">1040</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1040"></a>
+<FONT color="green">1041</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1041"></a>
+<FONT color="green">1042</FONT>         */<a name="line.1042"></a>
+<FONT color="green">1043</FONT>        public void clearTestProviderLocation(String provider) {<a name="line.1043"></a>
+<FONT color="green">1044</FONT>            try {<a name="line.1044"></a>
+<FONT color="green">1045</FONT>                mService.clearTestProviderLocation(provider);<a name="line.1045"></a>
+<FONT color="green">1046</FONT>            } catch (RemoteException ex) {<a name="line.1046"></a>
+<FONT color="green">1047</FONT>                Log.e(TAG, "clearTestProviderLocation: RemoteException", ex);<a name="line.1047"></a>
+<FONT color="green">1048</FONT>            }<a name="line.1048"></a>
+<FONT color="green">1049</FONT>        }<a name="line.1049"></a>
+<FONT color="green">1050</FONT>    <a name="line.1050"></a>
+<FONT color="green">1051</FONT>        /**<a name="line.1051"></a>
+<FONT color="green">1052</FONT>         * Sets a mock enabled value for the given provider.  This value will be used in place<a name="line.1052"></a>
+<FONT color="green">1053</FONT>         * of any actual value from the provider.<a name="line.1053"></a>
+<FONT color="green">1054</FONT>         *<a name="line.1054"></a>
+<FONT color="green">1055</FONT>         * @param provider the provider name<a name="line.1055"></a>
+<FONT color="green">1056</FONT>         * @param enabled the mock enabled value<a name="line.1056"></a>
+<FONT color="green">1057</FONT>         *<a name="line.1057"></a>
+<FONT color="green">1058</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1058"></a>
+<FONT color="green">1059</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1059"></a>
+<FONT color="green">1060</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1060"></a>
+<FONT color="green">1061</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1061"></a>
+<FONT color="green">1062</FONT>         */<a name="line.1062"></a>
+<FONT color="green">1063</FONT>        public void setTestProviderEnabled(String provider, boolean enabled) {<a name="line.1063"></a>
+<FONT color="green">1064</FONT>            try {<a name="line.1064"></a>
+<FONT color="green">1065</FONT>                mService.setTestProviderEnabled(provider, enabled);<a name="line.1065"></a>
+<FONT color="green">1066</FONT>            } catch (RemoteException ex) {<a name="line.1066"></a>
+<FONT color="green">1067</FONT>                Log.e(TAG, "setTestProviderEnabled: RemoteException", ex);<a name="line.1067"></a>
+<FONT color="green">1068</FONT>            }<a name="line.1068"></a>
+<FONT color="green">1069</FONT>        }<a name="line.1069"></a>
+<FONT color="green">1070</FONT>    <a name="line.1070"></a>
+<FONT color="green">1071</FONT>        /**<a name="line.1071"></a>
+<FONT color="green">1072</FONT>         * Removes any mock enabled value associated with the given provider.<a name="line.1072"></a>
+<FONT color="green">1073</FONT>         *<a name="line.1073"></a>
+<FONT color="green">1074</FONT>         * @param provider the provider name<a name="line.1074"></a>
+<FONT color="green">1075</FONT>         *<a name="line.1075"></a>
+<FONT color="green">1076</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1076"></a>
+<FONT color="green">1077</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1077"></a>
+<FONT color="green">1078</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1078"></a>
+<FONT color="green">1079</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1079"></a>
+<FONT color="green">1080</FONT>         */<a name="line.1080"></a>
+<FONT color="green">1081</FONT>        public void clearTestProviderEnabled(String provider) {<a name="line.1081"></a>
+<FONT color="green">1082</FONT>            try {<a name="line.1082"></a>
+<FONT color="green">1083</FONT>                mService.clearTestProviderEnabled(provider);<a name="line.1083"></a>
+<FONT color="green">1084</FONT>            } catch (RemoteException ex) {<a name="line.1084"></a>
+<FONT color="green">1085</FONT>                Log.e(TAG, "clearTestProviderEnabled: RemoteException", ex);<a name="line.1085"></a>
+<FONT color="green">1086</FONT>            }<a name="line.1086"></a>
+<FONT color="green">1087</FONT>    <a name="line.1087"></a>
+<FONT color="green">1088</FONT>        }<a name="line.1088"></a>
+<FONT color="green">1089</FONT>    <a name="line.1089"></a>
+<FONT color="green">1090</FONT>        /**<a name="line.1090"></a>
+<FONT color="green">1091</FONT>         * Sets mock status values for the given provider.  These values will be used in place<a name="line.1091"></a>
+<FONT color="green">1092</FONT>         * of any actual values from the provider.<a name="line.1092"></a>
+<FONT color="green">1093</FONT>         *<a name="line.1093"></a>
+<FONT color="green">1094</FONT>         * @param provider the provider name<a name="line.1094"></a>
+<FONT color="green">1095</FONT>         * @param status the mock status<a name="line.1095"></a>
+<FONT color="green">1096</FONT>         * @param extras a Bundle containing mock extras<a name="line.1096"></a>
+<FONT color="green">1097</FONT>         * @param updateTime the mock update time<a name="line.1097"></a>
+<FONT color="green">1098</FONT>         *<a name="line.1098"></a>
+<FONT color="green">1099</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1099"></a>
+<FONT color="green">1100</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1100"></a>
+<FONT color="green">1101</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1101"></a>
+<FONT color="green">1102</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1102"></a>
+<FONT color="green">1103</FONT>         */<a name="line.1103"></a>
+<FONT color="green">1104</FONT>        public void setTestProviderStatus(String provider, int status, Bundle extras, long updateTime) {<a name="line.1104"></a>
+<FONT color="green">1105</FONT>            try {<a name="line.1105"></a>
+<FONT color="green">1106</FONT>                mService.setTestProviderStatus(provider, status, extras, updateTime);<a name="line.1106"></a>
+<FONT color="green">1107</FONT>            } catch (RemoteException ex) {<a name="line.1107"></a>
+<FONT color="green">1108</FONT>                Log.e(TAG, "setTestProviderStatus: RemoteException", ex);<a name="line.1108"></a>
+<FONT color="green">1109</FONT>            }<a name="line.1109"></a>
+<FONT color="green">1110</FONT>        }<a name="line.1110"></a>
+<FONT color="green">1111</FONT>    <a name="line.1111"></a>
+<FONT color="green">1112</FONT>        /**<a name="line.1112"></a>
+<FONT color="green">1113</FONT>         * Removes any mock status values associated with the given provider.<a name="line.1113"></a>
+<FONT color="green">1114</FONT>         *<a name="line.1114"></a>
+<FONT color="green">1115</FONT>         * @param provider the provider name<a name="line.1115"></a>
+<FONT color="green">1116</FONT>         *<a name="line.1116"></a>
+<FONT color="green">1117</FONT>         * @throws SecurityException if the ACCESS_MOCK_LOCATION permission is not present<a name="line.1117"></a>
+<FONT color="green">1118</FONT>         * or the {@link android.provider.Settings.Secure#ALLOW_MOCK_LOCATION<a name="line.1118"></a>
+<FONT color="green">1119</FONT>         * Settings.Secure.ALLOW_MOCK_LOCATION}} system setting is not enabled<a name="line.1119"></a>
+<FONT color="green">1120</FONT>         * @throws IllegalArgumentException if no provider with the given name exists<a name="line.1120"></a>
+<FONT color="green">1121</FONT>         */<a name="line.1121"></a>
+<FONT color="green">1122</FONT>        public void clearTestProviderStatus(String provider) {<a name="line.1122"></a>
+<FONT color="green">1123</FONT>            try {<a name="line.1123"></a>
+<FONT color="green">1124</FONT>                mService.clearTestProviderStatus(provider);<a name="line.1124"></a>
+<FONT color="green">1125</FONT>            } catch (RemoteException ex) {<a name="line.1125"></a>
+<FONT color="green">1126</FONT>                Log.e(TAG, "clearTestProviderStatus: RemoteException", ex);<a name="line.1126"></a>
+<FONT color="green">1127</FONT>            }<a name="line.1127"></a>
+<FONT color="green">1128</FONT>        }<a name="line.1128"></a>
+<FONT color="green">1129</FONT>    <a name="line.1129"></a>
+<FONT color="green">1130</FONT>        // GPS-specific support<a name="line.1130"></a>
+<FONT color="green">1131</FONT>    <a name="line.1131"></a>
+<FONT color="green">1132</FONT>        // This class is used to send GPS status events to the client's main thread.<a name="line.1132"></a>
+<FONT color="green">1133</FONT>        private class GpsStatusListenerTransport extends IGpsStatusListener.Stub {<a name="line.1133"></a>
+<FONT color="green">1134</FONT>    <a name="line.1134"></a>
+<FONT color="green">1135</FONT>            private final GpsStatus.Listener mListener;<a name="line.1135"></a>
+<FONT color="green">1136</FONT>    <a name="line.1136"></a>
+<FONT color="green">1137</FONT>            GpsStatusListenerTransport(GpsStatus.Listener listener) {<a name="line.1137"></a>
+<FONT color="green">1138</FONT>                mListener = listener;<a name="line.1138"></a>
+<FONT color="green">1139</FONT>            }<a name="line.1139"></a>
+<FONT color="green">1140</FONT>    <a name="line.1140"></a>
+<FONT color="green">1141</FONT>            public void onGpsStarted() {<a name="line.1141"></a>
+<FONT color="green">1142</FONT>                Message msg = Message.obtain();<a name="line.1142"></a>
+<FONT color="green">1143</FONT>                msg.what = GpsStatus.GPS_EVENT_STARTED;<a name="line.1143"></a>
+<FONT color="green">1144</FONT>                mGpsHandler.sendMessage(msg);<a name="line.1144"></a>
+<FONT color="green">1145</FONT>            }<a name="line.1145"></a>
+<FONT color="green">1146</FONT>    <a name="line.1146"></a>
+<FONT color="green">1147</FONT>            public void onGpsStopped() {<a name="line.1147"></a>
+<FONT color="green">1148</FONT>                Message msg = Message.obtain();<a name="line.1148"></a>
+<FONT color="green">1149</FONT>                msg.what = GpsStatus.GPS_EVENT_STOPPED;<a name="line.1149"></a>
+<FONT color="green">1150</FONT>                mGpsHandler.sendMessage(msg);<a name="line.1150"></a>
+<FONT color="green">1151</FONT>            }<a name="line.1151"></a>
+<FONT color="green">1152</FONT>    <a name="line.1152"></a>
+<FONT color="green">1153</FONT>            public void onFirstFix(int ttff) {<a name="line.1153"></a>
+<FONT color="green">1154</FONT>                mGpsStatus.setTimeToFirstFix(ttff);<a name="line.1154"></a>
+<FONT color="green">1155</FONT>                Message msg = Message.obtain();<a name="line.1155"></a>
+<FONT color="green">1156</FONT>                msg.what = GpsStatus.GPS_EVENT_FIRST_FIX;<a name="line.1156"></a>
+<FONT color="green">1157</FONT>                mGpsHandler.sendMessage(msg);<a name="line.1157"></a>
+<FONT color="green">1158</FONT>            }<a name="line.1158"></a>
+<FONT color="green">1159</FONT>    <a name="line.1159"></a>
+<FONT color="green">1160</FONT>            public void onSvStatusChanged(int svCount, int[] prns, float[] snrs,<a name="line.1160"></a>
+<FONT color="green">1161</FONT>                    float[] elevations, float[] azimuths, int ephemerisMask,<a name="line.1161"></a>
+<FONT color="green">1162</FONT>                    int almanacMask, int usedInFixMask) {<a name="line.1162"></a>
+<FONT color="green">1163</FONT>                mGpsStatus.setStatus(svCount, prns, snrs, elevations, azimuths,<a name="line.1163"></a>
+<FONT color="green">1164</FONT>                        ephemerisMask, almanacMask, usedInFixMask);<a name="line.1164"></a>
+<FONT color="green">1165</FONT>    <a name="line.1165"></a>
+<FONT color="green">1166</FONT>                Message msg = Message.obtain();<a name="line.1166"></a>
+<FONT color="green">1167</FONT>                msg.what = GpsStatus.GPS_EVENT_SATELLITE_STATUS;<a name="line.1167"></a>
+<FONT color="green">1168</FONT>                // remove any SV status messages already in the queue<a name="line.1168"></a>
+<FONT color="green">1169</FONT>                mGpsHandler.removeMessages(GpsStatus.GPS_EVENT_SATELLITE_STATUS);<a name="line.1169"></a>
+<FONT color="green">1170</FONT>                mGpsHandler.sendMessage(msg);<a name="line.1170"></a>
+<FONT color="green">1171</FONT>            }<a name="line.1171"></a>
+<FONT color="green">1172</FONT>    <a name="line.1172"></a>
+<FONT color="green">1173</FONT>            private final Handler mGpsHandler = new Handler() {<a name="line.1173"></a>
+<FONT color="green">1174</FONT>                @Override<a name="line.1174"></a>
+<FONT color="green">1175</FONT>                public void handleMessage(Message msg) {<a name="line.1175"></a>
+<FONT color="green">1176</FONT>                    // synchronize on mGpsStatus to ensure the data is copied atomically.<a name="line.1176"></a>
+<FONT color="green">1177</FONT>                    synchronized(mGpsStatus) {<a name="line.1177"></a>
+<FONT color="green">1178</FONT>                        mListener.onGpsStatusChanged(msg.what);<a name="line.1178"></a>
+<FONT color="green">1179</FONT>                    }<a name="line.1179"></a>
+<FONT color="green">1180</FONT>                }<a name="line.1180"></a>
+<FONT color="green">1181</FONT>            };<a name="line.1181"></a>
+<FONT color="green">1182</FONT>        }<a name="line.1182"></a>
+<FONT color="green">1183</FONT>    <a name="line.1183"></a>
+<FONT color="green">1184</FONT>        /**<a name="line.1184"></a>
+<FONT color="green">1185</FONT>         * Adds a GPS status listener.<a name="line.1185"></a>
+<FONT color="green">1186</FONT>         *<a name="line.1186"></a>
+<FONT color="green">1187</FONT>         * @param listener GPS status listener object to register<a name="line.1187"></a>
+<FONT color="green">1188</FONT>         *<a name="line.1188"></a>
+<FONT color="green">1189</FONT>         * @return true if the listener was successfully added<a name="line.1189"></a>
+<FONT color="green">1190</FONT>         * <a name="line.1190"></a>
+<FONT color="green">1191</FONT>         * @throws SecurityException if the ACCESS_FINE_LOCATION permission is not present<a name="line.1191"></a>
+<FONT color="green">1192</FONT>         */<a name="line.1192"></a>
+<FONT color="green">1193</FONT>        public boolean addGpsStatusListener(GpsStatus.Listener listener) {<a name="line.1193"></a>
+<FONT color="green">1194</FONT>            boolean result;<a name="line.1194"></a>
+<FONT color="green">1195</FONT>    <a name="line.1195"></a>
+<FONT color="green">1196</FONT>            if (mGpsStatusListeners.get(listener) != null) {<a name="line.1196"></a>
+<FONT color="green">1197</FONT>                // listener is already registered<a name="line.1197"></a>
+<FONT color="green">1198</FONT>                return true;<a name="line.1198"></a>
+<FONT color="green">1199</FONT>            }<a name="line.1199"></a>
+<FONT color="green">1200</FONT>            try {<a name="line.1200"></a>
+<FONT color="green">1201</FONT>                GpsStatusListenerTransport transport = new GpsStatusListenerTransport(listener);<a name="line.1201"></a>
+<FONT color="green">1202</FONT>                result = mService.addGpsStatusListener(transport);<a name="line.1202"></a>
+<FONT color="green">1203</FONT>                if (result) {<a name="line.1203"></a>
+<FONT color="green">1204</FONT>                    mGpsStatusListeners.put(listener, transport);<a name="line.1204"></a>
+<FONT color="green">1205</FONT>                }<a name="line.1205"></a>
+<FONT color="green">1206</FONT>            } catch (RemoteException e) {<a name="line.1206"></a>
+<FONT color="green">1207</FONT>                Log.e(TAG, "RemoteException in registerGpsStatusListener: ", e);<a name="line.1207"></a>
+<FONT color="green">1208</FONT>                result = false;<a name="line.1208"></a>
+<FONT color="green">1209</FONT>            }<a name="line.1209"></a>
+<FONT color="green">1210</FONT>    <a name="line.1210"></a>
+<FONT color="green">1211</FONT>            return result;<a name="line.1211"></a>
+<FONT color="green">1212</FONT>        }<a name="line.1212"></a>
+<FONT color="green">1213</FONT>    <a name="line.1213"></a>
+<FONT color="green">1214</FONT>        /**<a name="line.1214"></a>
+<FONT color="green">1215</FONT>         * Removes a GPS status listener.<a name="line.1215"></a>
+<FONT color="green">1216</FONT>         *<a name="line.1216"></a>
+<FONT color="green">1217</FONT>         * @param listener GPS status listener object to remove<a name="line.1217"></a>
+<FONT color="green">1218</FONT>         */<a name="line.1218"></a>
+<FONT color="green">1219</FONT>        public void removeGpsStatusListener(GpsStatus.Listener listener) {<a name="line.1219"></a>
+<FONT color="green">1220</FONT>            try {<a name="line.1220"></a>
+<FONT color="green">1221</FONT>                GpsStatusListenerTransport transport = mGpsStatusListeners.remove(listener);<a name="line.1221"></a>
+<FONT color="green">1222</FONT>                if (transport != null) {<a name="line.1222"></a>
+<FONT color="green">1223</FONT>                    mService.removeGpsStatusListener(transport);<a name="line.1223"></a>
+<FONT color="green">1224</FONT>                }<a name="line.1224"></a>
+<FONT color="green">1225</FONT>            } catch (RemoteException e) {<a name="line.1225"></a>
+<FONT color="green">1226</FONT>                Log.e(TAG, "RemoteException in unregisterGpsStatusListener: ", e);<a name="line.1226"></a>
+<FONT color="green">1227</FONT>            }<a name="line.1227"></a>
+<FONT color="green">1228</FONT>        }<a name="line.1228"></a>
+<FONT color="green">1229</FONT>    <a name="line.1229"></a>
+<FONT color="green">1230</FONT>         /**<a name="line.1230"></a>
+<FONT color="green">1231</FONT>         * Retrieves information about the current status of the GPS engine.<a name="line.1231"></a>
+<FONT color="green">1232</FONT>         * This should only be called from the {@link GpsStatus.Listener#onGpsStatusChanged}<a name="line.1232"></a>
+<FONT color="green">1233</FONT>         * callback to ensure that the data is copied atomically.<a name="line.1233"></a>
+<FONT color="green">1234</FONT>         *<a name="line.1234"></a>
+<FONT color="green">1235</FONT>         * The caller may either pass in a {@link GpsStatus} object to set with the latest<a name="line.1235"></a>
+<FONT color="green">1236</FONT>         * status information, or pass null to create a new {@link GpsStatus} object.<a name="line.1236"></a>
+<FONT color="green">1237</FONT>         *<a name="line.1237"></a>
+<FONT color="green">1238</FONT>         * @param status object containing GPS status details, or null.<a name="line.1238"></a>
+<FONT color="green">1239</FONT>         * @return status object containing updated GPS status.<a name="line.1239"></a>
+<FONT color="green">1240</FONT>         */<a name="line.1240"></a>
+<FONT color="green">1241</FONT>        public GpsStatus getGpsStatus(GpsStatus status) {<a name="line.1241"></a>
+<FONT color="green">1242</FONT>            if (status == null) {<a name="line.1242"></a>
+<FONT color="green">1243</FONT>                status = new GpsStatus();<a name="line.1243"></a>
+<FONT color="green">1244</FONT>           }<a name="line.1244"></a>
+<FONT color="green">1245</FONT>           status.setStatus(mGpsStatus);<a name="line.1245"></a>
+<FONT color="green">1246</FONT>           return status;<a name="line.1246"></a>
+<FONT color="green">1247</FONT>        }<a name="line.1247"></a>
+<FONT color="green">1248</FONT>    <a name="line.1248"></a>
+<FONT color="green">1249</FONT>        /**<a name="line.1249"></a>
+<FONT color="green">1250</FONT>         * Sends additional commands to a location provider.<a name="line.1250"></a>
+<FONT color="green">1251</FONT>         * Can be used to support provider specific extensions to the Location Manager API<a name="line.1251"></a>
+<FONT color="green">1252</FONT>         *<a name="line.1252"></a>
+<FONT color="green">1253</FONT>         * @param provider name of the location provider.<a name="line.1253"></a>
+<FONT color="green">1254</FONT>         * @param command name of the command to send to the provider.<a name="line.1254"></a>
+<FONT color="green">1255</FONT>         * @param extras optional arguments for the command (or null).<a name="line.1255"></a>
+<FONT color="green">1256</FONT>         * The provider may optionally fill the extras Bundle with results from the command.<a name="line.1256"></a>
+<FONT color="green">1257</FONT>         *<a name="line.1257"></a>
+<FONT color="green">1258</FONT>         * @return true if the command succeeds.<a name="line.1258"></a>
+<FONT color="green">1259</FONT>         */<a name="line.1259"></a>
+<FONT color="green">1260</FONT>        public boolean sendExtraCommand(String provider, String command, Bundle extras) {<a name="line.1260"></a>
+<FONT color="green">1261</FONT>            try {<a name="line.1261"></a>
+<FONT color="green">1262</FONT>                return mService.sendExtraCommand(provider, command, extras);<a name="line.1262"></a>
+<FONT color="green">1263</FONT>            } catch (RemoteException e) {<a name="line.1263"></a>
+<FONT color="green">1264</FONT>                Log.e(TAG, "RemoteException in sendExtraCommand: ", e);<a name="line.1264"></a>
+<FONT color="green">1265</FONT>                return false;<a name="line.1265"></a>
+<FONT color="green">1266</FONT>            }<a name="line.1266"></a>
+<FONT color="green">1267</FONT>        }<a name="line.1267"></a>
+<FONT color="green">1268</FONT>    }<a name="line.1268"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

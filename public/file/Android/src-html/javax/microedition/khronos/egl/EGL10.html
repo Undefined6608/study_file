@@ -1,0 +1,187 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package javax.microedition.khronos.egl;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import java.lang.String;<a name="line.19"></a>
+<FONT color="green">020</FONT>    <a name="line.20"></a>
+<FONT color="green">021</FONT>    public interface EGL10 extends EGL {<a name="line.21"></a>
+<FONT color="green">022</FONT>        int EGL_SUCCESS                     = 0x3000;<a name="line.22"></a>
+<FONT color="green">023</FONT>        int EGL_NOT_INITIALIZED             = 0x3001;<a name="line.23"></a>
+<FONT color="green">024</FONT>        int EGL_BAD_ACCESS                  = 0x3002;<a name="line.24"></a>
+<FONT color="green">025</FONT>        int EGL_BAD_ALLOC                   = 0x3003;<a name="line.25"></a>
+<FONT color="green">026</FONT>        int EGL_BAD_ATTRIBUTE               = 0x3004;<a name="line.26"></a>
+<FONT color="green">027</FONT>        int EGL_BAD_CONFIG                  = 0x3005;<a name="line.27"></a>
+<FONT color="green">028</FONT>        int EGL_BAD_CONTEXT                 = 0x3006;<a name="line.28"></a>
+<FONT color="green">029</FONT>        int EGL_BAD_CURRENT_SURFACE         = 0x3007;<a name="line.29"></a>
+<FONT color="green">030</FONT>        int EGL_BAD_DISPLAY                 = 0x3008;<a name="line.30"></a>
+<FONT color="green">031</FONT>        int EGL_BAD_MATCH                   = 0x3009;<a name="line.31"></a>
+<FONT color="green">032</FONT>        int EGL_BAD_NATIVE_PIXMAP           = 0x300A;<a name="line.32"></a>
+<FONT color="green">033</FONT>        int EGL_BAD_NATIVE_WINDOW           = 0x300B;<a name="line.33"></a>
+<FONT color="green">034</FONT>        int EGL_BAD_PARAMETER               = 0x300C;<a name="line.34"></a>
+<FONT color="green">035</FONT>        int EGL_BAD_SURFACE                 = 0x300D;<a name="line.35"></a>
+<FONT color="green">036</FONT>        int EGL_BUFFER_SIZE                 = 0x3020;<a name="line.36"></a>
+<FONT color="green">037</FONT>        int EGL_ALPHA_SIZE                  = 0x3021;<a name="line.37"></a>
+<FONT color="green">038</FONT>        int EGL_BLUE_SIZE                   = 0x3022;<a name="line.38"></a>
+<FONT color="green">039</FONT>        int EGL_GREEN_SIZE                  = 0x3023;<a name="line.39"></a>
+<FONT color="green">040</FONT>        int EGL_RED_SIZE                    = 0x3024;<a name="line.40"></a>
+<FONT color="green">041</FONT>        int EGL_DEPTH_SIZE                  = 0x3025;<a name="line.41"></a>
+<FONT color="green">042</FONT>        int EGL_STENCIL_SIZE                = 0x3026;<a name="line.42"></a>
+<FONT color="green">043</FONT>        int EGL_CONFIG_CAVEAT               = 0x3027;<a name="line.43"></a>
+<FONT color="green">044</FONT>        int EGL_CONFIG_ID                   = 0x3028;<a name="line.44"></a>
+<FONT color="green">045</FONT>        int EGL_LEVEL                       = 0x3029;<a name="line.45"></a>
+<FONT color="green">046</FONT>        int EGL_MAX_PBUFFER_HEIGHT          = 0x302A;<a name="line.46"></a>
+<FONT color="green">047</FONT>        int EGL_MAX_PBUFFER_PIXELS          = 0x302B;<a name="line.47"></a>
+<FONT color="green">048</FONT>        int EGL_MAX_PBUFFER_WIDTH           = 0x302C;<a name="line.48"></a>
+<FONT color="green">049</FONT>        int EGL_NATIVE_RENDERABLE           = 0x302D;<a name="line.49"></a>
+<FONT color="green">050</FONT>        int EGL_NATIVE_VISUAL_ID            = 0x302E;<a name="line.50"></a>
+<FONT color="green">051</FONT>        int EGL_NATIVE_VISUAL_TYPE          = 0x302F;<a name="line.51"></a>
+<FONT color="green">052</FONT>        int EGL_SAMPLES                     = 0x3031;<a name="line.52"></a>
+<FONT color="green">053</FONT>        int EGL_SAMPLE_BUFFERS              = 0x3032;<a name="line.53"></a>
+<FONT color="green">054</FONT>        int EGL_SURFACE_TYPE                = 0x3033;<a name="line.54"></a>
+<FONT color="green">055</FONT>        int EGL_TRANSPARENT_TYPE            = 0x3034;<a name="line.55"></a>
+<FONT color="green">056</FONT>        int EGL_TRANSPARENT_BLUE_VALUE      = 0x3035;<a name="line.56"></a>
+<FONT color="green">057</FONT>        int EGL_TRANSPARENT_GREEN_VALUE     = 0x3036;<a name="line.57"></a>
+<FONT color="green">058</FONT>        int EGL_TRANSPARENT_RED_VALUE       = 0x3037;<a name="line.58"></a>
+<FONT color="green">059</FONT>        int EGL_NONE                        = 0x3038;<a name="line.59"></a>
+<FONT color="green">060</FONT>        int EGL_LUMINANCE_SIZE              = 0x303D;<a name="line.60"></a>
+<FONT color="green">061</FONT>        int EGL_ALPHA_MASK_SIZE             = 0x303E;<a name="line.61"></a>
+<FONT color="green">062</FONT>        int EGL_COLOR_BUFFER_TYPE           = 0x303F;<a name="line.62"></a>
+<FONT color="green">063</FONT>        int EGL_RENDERABLE_TYPE             = 0x3040;<a name="line.63"></a>
+<FONT color="green">064</FONT>        int EGL_SLOW_CONFIG                 = 0x3050;<a name="line.64"></a>
+<FONT color="green">065</FONT>        int EGL_NON_CONFORMANT_CONFIG       = 0x3051;<a name="line.65"></a>
+<FONT color="green">066</FONT>        int EGL_TRANSPARENT_RGB             = 0x3052;<a name="line.66"></a>
+<FONT color="green">067</FONT>        int EGL_RGB_BUFFER                  = 0x308E;<a name="line.67"></a>
+<FONT color="green">068</FONT>        int EGL_LUMINANCE_BUFFER            = 0x308F;<a name="line.68"></a>
+<FONT color="green">069</FONT>        int EGL_VENDOR                      = 0x3053;<a name="line.69"></a>
+<FONT color="green">070</FONT>        int EGL_VERSION                     = 0x3054;<a name="line.70"></a>
+<FONT color="green">071</FONT>        int EGL_EXTENSIONS                  = 0x3055;<a name="line.71"></a>
+<FONT color="green">072</FONT>        int EGL_HEIGHT                      = 0x3056;<a name="line.72"></a>
+<FONT color="green">073</FONT>        int EGL_WIDTH                       = 0x3057;<a name="line.73"></a>
+<FONT color="green">074</FONT>        int EGL_LARGEST_PBUFFER             = 0x3058;<a name="line.74"></a>
+<FONT color="green">075</FONT>        int EGL_RENDER_BUFFER               = 0x3086;<a name="line.75"></a>
+<FONT color="green">076</FONT>        int EGL_COLORSPACE                  = 0x3087;<a name="line.76"></a>
+<FONT color="green">077</FONT>        int EGL_ALPHA_FORMAT                = 0x3088;<a name="line.77"></a>
+<FONT color="green">078</FONT>        int EGL_HORIZONTAL_RESOLUTION       = 0x3090;<a name="line.78"></a>
+<FONT color="green">079</FONT>        int EGL_VERTICAL_RESOLUTION         = 0x3091;<a name="line.79"></a>
+<FONT color="green">080</FONT>        int EGL_PIXEL_ASPECT_RATIO          = 0x3092;<a name="line.80"></a>
+<FONT color="green">081</FONT>        int EGL_SINGLE_BUFFER               = 0x3085;<a name="line.81"></a>
+<FONT color="green">082</FONT>        int EGL_CORE_NATIVE_ENGINE          = 0x305B;<a name="line.82"></a>
+<FONT color="green">083</FONT>        int EGL_DRAW                        = 0x3059;<a name="line.83"></a>
+<FONT color="green">084</FONT>        int EGL_READ                        = 0x305A;<a name="line.84"></a>
+<FONT color="green">085</FONT>    <a name="line.85"></a>
+<FONT color="green">086</FONT>        int EGL_DONT_CARE                   = -1;<a name="line.86"></a>
+<FONT color="green">087</FONT>    <a name="line.87"></a>
+<FONT color="green">088</FONT>        int EGL_PBUFFER_BIT                 = 0x01;<a name="line.88"></a>
+<FONT color="green">089</FONT>        int EGL_PIXMAP_BIT                  = 0x02;<a name="line.89"></a>
+<FONT color="green">090</FONT>        int EGL_WINDOW_BIT                  = 0x04;<a name="line.90"></a>
+<FONT color="green">091</FONT>    <a name="line.91"></a>
+<FONT color="green">092</FONT>        Object     EGL_DEFAULT_DISPLAY = null;<a name="line.92"></a>
+<FONT color="green">093</FONT>        EGLDisplay EGL_NO_DISPLAY = new com.google.android.gles_jni.EGLDisplayImpl(0);<a name="line.93"></a>
+<FONT color="green">094</FONT>        EGLContext EGL_NO_CONTEXT = new com.google.android.gles_jni.EGLContextImpl(0);<a name="line.94"></a>
+<FONT color="green">095</FONT>        EGLSurface EGL_NO_SURFACE = new com.google.android.gles_jni.EGLSurfaceImpl(0);<a name="line.95"></a>
+<FONT color="green">096</FONT>        <a name="line.96"></a>
+<FONT color="green">097</FONT>        boolean     eglChooseConfig(EGLDisplay display, int[] attrib_list, EGLConfig[] configs, int config_size, int[] num_config);<a name="line.97"></a>
+<FONT color="green">098</FONT>        boolean     eglCopyBuffers(EGLDisplay display, EGLSurface surface, Object native_pixmap);<a name="line.98"></a>
+<FONT color="green">099</FONT>        EGLContext  eglCreateContext(EGLDisplay display, EGLConfig config, EGLContext share_context, int[] attrib_list);<a name="line.99"></a>
+<FONT color="green">100</FONT>        EGLSurface  eglCreatePbufferSurface(EGLDisplay display, EGLConfig config, int[] attrib_list);<a name="line.100"></a>
+<FONT color="green">101</FONT>        EGLSurface  eglCreatePixmapSurface(EGLDisplay display, EGLConfig config, Object native_pixmap, int[] attrib_list);<a name="line.101"></a>
+<FONT color="green">102</FONT>        EGLSurface  eglCreateWindowSurface(EGLDisplay display, EGLConfig config, Object native_window, int[] attrib_list);<a name="line.102"></a>
+<FONT color="green">103</FONT>        boolean     eglDestroyContext(EGLDisplay display, EGLContext context);<a name="line.103"></a>
+<FONT color="green">104</FONT>        boolean     eglDestroySurface(EGLDisplay display, EGLSurface surface);<a name="line.104"></a>
+<FONT color="green">105</FONT>        boolean     eglGetConfigAttrib(EGLDisplay display, EGLConfig config, int attribute, int[] value);<a name="line.105"></a>
+<FONT color="green">106</FONT>        boolean     eglGetConfigs(EGLDisplay display, EGLConfig[] configs, int config_size, int[] num_config);<a name="line.106"></a>
+<FONT color="green">107</FONT>        EGLContext  eglGetCurrentContext();<a name="line.107"></a>
+<FONT color="green">108</FONT>        EGLDisplay  eglGetCurrentDisplay();<a name="line.108"></a>
+<FONT color="green">109</FONT>        EGLSurface  eglGetCurrentSurface(int readdraw);<a name="line.109"></a>
+<FONT color="green">110</FONT>        EGLDisplay  eglGetDisplay(Object native_display);<a name="line.110"></a>
+<FONT color="green">111</FONT>        int         eglGetError();<a name="line.111"></a>
+<FONT color="green">112</FONT>        boolean     eglInitialize(EGLDisplay display, int[] major_minor);<a name="line.112"></a>
+<FONT color="green">113</FONT>        boolean     eglMakeCurrent(EGLDisplay display, EGLSurface draw, EGLSurface read, EGLContext context);<a name="line.113"></a>
+<FONT color="green">114</FONT>        boolean     eglQueryContext(EGLDisplay display, EGLContext context, int attribute, int[] value);<a name="line.114"></a>
+<FONT color="green">115</FONT>        String      eglQueryString(EGLDisplay display, int name);<a name="line.115"></a>
+<FONT color="green">116</FONT>        boolean     eglQuerySurface(EGLDisplay display, EGLSurface surface, int attribute, int[] value);<a name="line.116"></a>
+<FONT color="green">117</FONT>        boolean     eglSwapBuffers(EGLDisplay display, EGLSurface surface);<a name="line.117"></a>
+<FONT color="green">118</FONT>        boolean     eglTerminate(EGLDisplay display);<a name="line.118"></a>
+<FONT color="green">119</FONT>        boolean     eglWaitGL();<a name="line.119"></a>
+<FONT color="green">120</FONT>        boolean     eglWaitNative(int engine, Object bindTarget);<a name="line.120"></a>
+<FONT color="green">121</FONT>    }<a name="line.121"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

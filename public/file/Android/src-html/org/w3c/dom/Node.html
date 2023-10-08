@@ -1,0 +1,520 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (c) 2000 World Wide Web Consortium,<a name="line.2"></a>
+<FONT color="green">003</FONT>     * (Massachusetts Institute of Technology, Institut National de<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Recherche en Informatique et en Automatique, Keio University). All<a name="line.4"></a>
+<FONT color="green">005</FONT>     * Rights Reserved. This program is distributed under the W3C's Software<a name="line.5"></a>
+<FONT color="green">006</FONT>     * Intellectual Property License. This program is distributed in the<a name="line.6"></a>
+<FONT color="green">007</FONT>     * hope that it will be useful, but WITHOUT ANY WARRANTY; without even<a name="line.7"></a>
+<FONT color="green">008</FONT>     * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR<a name="line.8"></a>
+<FONT color="green">009</FONT>     * PURPOSE.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See W3C License http://www.w3.org/Consortium/Legal/ for more details.<a name="line.10"></a>
+<FONT color="green">011</FONT>     */<a name="line.11"></a>
+<FONT color="green">012</FONT>    <a name="line.12"></a>
+<FONT color="green">013</FONT>    package org.w3c.dom;<a name="line.13"></a>
+<FONT color="green">014</FONT>    <a name="line.14"></a>
+<FONT color="green">015</FONT>    // BEGIN android-note<a name="line.15"></a>
+<FONT color="green">016</FONT>    // Cleaned up @param tags that seemed to be missing spaces between<a name="line.16"></a>
+<FONT color="green">017</FONT>    // the parameter name and the start of the description.<a name="line.17"></a>
+<FONT color="green">018</FONT>    // END android-note<a name="line.18"></a>
+<FONT color="green">019</FONT>    <a name="line.19"></a>
+<FONT color="green">020</FONT>    //BEGIN android-note<a name="line.20"></a>
+<FONT color="green">021</FONT>    //Filled some gaps in the documentation and refactored parts of the existing<a name="line.21"></a>
+<FONT color="green">022</FONT>    //documentation to make the Doclet happy.<a name="line.22"></a>
+<FONT color="green">023</FONT>    //END android-note<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    /**<a name="line.25"></a>
+<FONT color="green">026</FONT>     * The &lt;code&gt;Node&lt;/code&gt; interface is the primary datatype for the entire <a name="line.26"></a>
+<FONT color="green">027</FONT>     * Document Object Model. It represents a single node in the document tree. <a name="line.27"></a>
+<FONT color="green">028</FONT>     * While all objects implementing the &lt;code&gt;Node&lt;/code&gt; interface expose <a name="line.28"></a>
+<FONT color="green">029</FONT>     * methods for dealing with children, not all objects implementing the <a name="line.29"></a>
+<FONT color="green">030</FONT>     * &lt;code&gt;Node&lt;/code&gt; interface may have children. For example, <a name="line.30"></a>
+<FONT color="green">031</FONT>     * &lt;code&gt;Text&lt;/code&gt; nodes may not have children, and adding children to <a name="line.31"></a>
+<FONT color="green">032</FONT>     * such nodes results in a &lt;code&gt;DOMException&lt;/code&gt; being raised.<a name="line.32"></a>
+<FONT color="green">033</FONT>     * &lt;p&gt;The attributes &lt;code&gt;nodeName&lt;/code&gt;, &lt;code&gt;nodeValue&lt;/code&gt; and <a name="line.33"></a>
+<FONT color="green">034</FONT>     * &lt;code&gt;attributes&lt;/code&gt; are included as a mechanism to get at node <a name="line.34"></a>
+<FONT color="green">035</FONT>     * information without casting down to the specific derived interface. In <a name="line.35"></a>
+<FONT color="green">036</FONT>     * cases where there is no obvious mapping of these attributes for a <a name="line.36"></a>
+<FONT color="green">037</FONT>     * specific &lt;code&gt;nodeType&lt;/code&gt; (e.g., &lt;code&gt;nodeValue&lt;/code&gt; for an <a name="line.37"></a>
+<FONT color="green">038</FONT>     * &lt;code&gt;Element&lt;/code&gt; or &lt;code&gt;attributes&lt;/code&gt; for a &lt;code&gt;Comment&lt;/code&gt;<a name="line.38"></a>
+<FONT color="green">039</FONT>     * ), this returns &lt;code&gt;null&lt;/code&gt;. Note that the specialized interfaces <a name="line.39"></a>
+<FONT color="green">040</FONT>     * may contain additional and more convenient mechanisms to get and set the <a name="line.40"></a>
+<FONT color="green">041</FONT>     * relevant information.<a name="line.41"></a>
+<FONT color="green">042</FONT>     * &lt;p&gt;See also the &lt;a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Core-20001113'&gt;Document Object Model (DOM) Level 2 Core Specification&lt;/a&gt;.<a name="line.42"></a>
+<FONT color="green">043</FONT>     */<a name="line.43"></a>
+<FONT color="green">044</FONT>    public interface Node {<a name="line.44"></a>
+<FONT color="green">045</FONT>        // NodeType<a name="line.45"></a>
+<FONT color="green">046</FONT>        /**<a name="line.46"></a>
+<FONT color="green">047</FONT>         * The node is an &lt;code&gt;Element&lt;/code&gt;.<a name="line.47"></a>
+<FONT color="green">048</FONT>         */<a name="line.48"></a>
+<FONT color="green">049</FONT>        public static final short ELEMENT_NODE              = 1;<a name="line.49"></a>
+<FONT color="green">050</FONT>        /**<a name="line.50"></a>
+<FONT color="green">051</FONT>         * The node is an &lt;code&gt;Attr&lt;/code&gt;.<a name="line.51"></a>
+<FONT color="green">052</FONT>         */<a name="line.52"></a>
+<FONT color="green">053</FONT>        public static final short ATTRIBUTE_NODE            = 2;<a name="line.53"></a>
+<FONT color="green">054</FONT>        /**<a name="line.54"></a>
+<FONT color="green">055</FONT>         * The node is a &lt;code&gt;Text&lt;/code&gt; node.<a name="line.55"></a>
+<FONT color="green">056</FONT>         */<a name="line.56"></a>
+<FONT color="green">057</FONT>        public static final short TEXT_NODE                 = 3;<a name="line.57"></a>
+<FONT color="green">058</FONT>        /**<a name="line.58"></a>
+<FONT color="green">059</FONT>         * The node is a &lt;code&gt;CDATASection&lt;/code&gt;.<a name="line.59"></a>
+<FONT color="green">060</FONT>         */<a name="line.60"></a>
+<FONT color="green">061</FONT>        public static final short CDATA_SECTION_NODE        = 4;<a name="line.61"></a>
+<FONT color="green">062</FONT>        /**<a name="line.62"></a>
+<FONT color="green">063</FONT>         * The node is an &lt;code&gt;EntityReference&lt;/code&gt;.<a name="line.63"></a>
+<FONT color="green">064</FONT>         */<a name="line.64"></a>
+<FONT color="green">065</FONT>        public static final short ENTITY_REFERENCE_NODE     = 5;<a name="line.65"></a>
+<FONT color="green">066</FONT>        /**<a name="line.66"></a>
+<FONT color="green">067</FONT>         * The node is an &lt;code&gt;Entity&lt;/code&gt;.<a name="line.67"></a>
+<FONT color="green">068</FONT>         */<a name="line.68"></a>
+<FONT color="green">069</FONT>        public static final short ENTITY_NODE               = 6;<a name="line.69"></a>
+<FONT color="green">070</FONT>        /**<a name="line.70"></a>
+<FONT color="green">071</FONT>         * The node is a &lt;code&gt;ProcessingInstruction&lt;/code&gt;.<a name="line.71"></a>
+<FONT color="green">072</FONT>         */<a name="line.72"></a>
+<FONT color="green">073</FONT>        public static final short PROCESSING_INSTRUCTION_NODE = 7;<a name="line.73"></a>
+<FONT color="green">074</FONT>        /**<a name="line.74"></a>
+<FONT color="green">075</FONT>         * The node is a &lt;code&gt;Comment&lt;/code&gt;.<a name="line.75"></a>
+<FONT color="green">076</FONT>         */<a name="line.76"></a>
+<FONT color="green">077</FONT>        public static final short COMMENT_NODE              = 8;<a name="line.77"></a>
+<FONT color="green">078</FONT>        /**<a name="line.78"></a>
+<FONT color="green">079</FONT>         * The node is a &lt;code&gt;Document&lt;/code&gt;.<a name="line.79"></a>
+<FONT color="green">080</FONT>         */<a name="line.80"></a>
+<FONT color="green">081</FONT>        public static final short DOCUMENT_NODE             = 9;<a name="line.81"></a>
+<FONT color="green">082</FONT>        /**<a name="line.82"></a>
+<FONT color="green">083</FONT>         * The node is a &lt;code&gt;DocumentType&lt;/code&gt;.<a name="line.83"></a>
+<FONT color="green">084</FONT>         */<a name="line.84"></a>
+<FONT color="green">085</FONT>        public static final short DOCUMENT_TYPE_NODE        = 10;<a name="line.85"></a>
+<FONT color="green">086</FONT>        /**<a name="line.86"></a>
+<FONT color="green">087</FONT>         * The node is a &lt;code&gt;DocumentFragment&lt;/code&gt;.<a name="line.87"></a>
+<FONT color="green">088</FONT>         */<a name="line.88"></a>
+<FONT color="green">089</FONT>        public static final short DOCUMENT_FRAGMENT_NODE    = 11;<a name="line.89"></a>
+<FONT color="green">090</FONT>        /**<a name="line.90"></a>
+<FONT color="green">091</FONT>         * The node is a &lt;code&gt;Notation&lt;/code&gt;.<a name="line.91"></a>
+<FONT color="green">092</FONT>         */<a name="line.92"></a>
+<FONT color="green">093</FONT>        public static final short NOTATION_NODE             = 12;<a name="line.93"></a>
+<FONT color="green">094</FONT>    <a name="line.94"></a>
+<FONT color="green">095</FONT>        /**<a name="line.95"></a>
+<FONT color="green">096</FONT>         * The name of this node, depending on its type; see the table above. <a name="line.96"></a>
+<FONT color="green">097</FONT>         * <a name="line.97"></a>
+<FONT color="green">098</FONT>         * @return the name of the node.<a name="line.98"></a>
+<FONT color="green">099</FONT>         */<a name="line.99"></a>
+<FONT color="green">100</FONT>        public String getNodeName();<a name="line.100"></a>
+<FONT color="green">101</FONT>    <a name="line.101"></a>
+<FONT color="green">102</FONT>        /**<a name="line.102"></a>
+<FONT color="green">103</FONT>         * Returns the value of this node, depending on its type; see the table<a name="line.103"></a>
+<FONT color="green">104</FONT>         * above.<a name="line.104"></a>
+<FONT color="green">105</FONT>         * <a name="line.105"></a>
+<FONT color="green">106</FONT>         * @return the value of the node.<a name="line.106"></a>
+<FONT color="green">107</FONT>         * <a name="line.107"></a>
+<FONT color="green">108</FONT>         * @exception DOMException<a name="line.108"></a>
+<FONT color="green">109</FONT>         *   DOMSTRING_SIZE_ERR: Raised when it would return more characters than <a name="line.109"></a>
+<FONT color="green">110</FONT>         *   fit in a &lt;code&gt;DOMString&lt;/code&gt; variable on the implementation <a name="line.110"></a>
+<FONT color="green">111</FONT>         *   platform.<a name="line.111"></a>
+<FONT color="green">112</FONT>         */<a name="line.112"></a>
+<FONT color="green">113</FONT>        public String getNodeValue()<a name="line.113"></a>
+<FONT color="green">114</FONT>                                     throws DOMException;<a name="line.114"></a>
+<FONT color="green">115</FONT>        /**<a name="line.115"></a>
+<FONT color="green">116</FONT>         * Sets the value of this node, depending on its type; see the table above. <a name="line.116"></a>
+<FONT color="green">117</FONT>         * When it is defined to be &lt;code&gt;null&lt;/code&gt;, setting it has no effect.<a name="line.117"></a>
+<FONT color="green">118</FONT>         * <a name="line.118"></a>
+<FONT color="green">119</FONT>         * @param nodeValue the new value of the node.<a name="line.119"></a>
+<FONT color="green">120</FONT>         * <a name="line.120"></a>
+<FONT color="green">121</FONT>         * @exception DOMException<a name="line.121"></a>
+<FONT color="green">122</FONT>         *   NO_MODIFICATION_ALLOWED_ERR: Raised when the node is readonly.<a name="line.122"></a>
+<FONT color="green">123</FONT>         */<a name="line.123"></a>
+<FONT color="green">124</FONT>        public void setNodeValue(String nodeValue)<a name="line.124"></a>
+<FONT color="green">125</FONT>                                     throws DOMException;<a name="line.125"></a>
+<FONT color="green">126</FONT>    <a name="line.126"></a>
+<FONT color="green">127</FONT>        /**<a name="line.127"></a>
+<FONT color="green">128</FONT>         * A code representing the type of the underlying object, as defined above.<a name="line.128"></a>
+<FONT color="green">129</FONT>         * <a name="line.129"></a>
+<FONT color="green">130</FONT>         * @return the type of the node.<a name="line.130"></a>
+<FONT color="green">131</FONT>         */<a name="line.131"></a>
+<FONT color="green">132</FONT>        public short getNodeType();<a name="line.132"></a>
+<FONT color="green">133</FONT>    <a name="line.133"></a>
+<FONT color="green">134</FONT>        /**<a name="line.134"></a>
+<FONT color="green">135</FONT>         * The parent of this node. All nodes, except &lt;code&gt;Attr&lt;/code&gt;, <a name="line.135"></a>
+<FONT color="green">136</FONT>         * &lt;code&gt;Document&lt;/code&gt;, &lt;code&gt;DocumentFragment&lt;/code&gt;, <a name="line.136"></a>
+<FONT color="green">137</FONT>         * &lt;code&gt;Entity&lt;/code&gt;, and &lt;code&gt;Notation&lt;/code&gt; may have a parent. <a name="line.137"></a>
+<FONT color="green">138</FONT>         * However, if a node has just been created and not yet added to the <a name="line.138"></a>
+<FONT color="green">139</FONT>         * tree, or if it has been removed from the tree, this is <a name="line.139"></a>
+<FONT color="green">140</FONT>         * &lt;code&gt;null&lt;/code&gt;.<a name="line.140"></a>
+<FONT color="green">141</FONT>         * <a name="line.141"></a>
+<FONT color="green">142</FONT>         * @return the parent node, if any.<a name="line.142"></a>
+<FONT color="green">143</FONT>         */<a name="line.143"></a>
+<FONT color="green">144</FONT>        public Node getParentNode();<a name="line.144"></a>
+<FONT color="green">145</FONT>    <a name="line.145"></a>
+<FONT color="green">146</FONT>        /**<a name="line.146"></a>
+<FONT color="green">147</FONT>         * A &lt;code&gt;NodeList&lt;/code&gt; that contains all children of this node. If <a name="line.147"></a>
+<FONT color="green">148</FONT>         * there are no children, this is a &lt;code&gt;NodeList&lt;/code&gt; containing no <a name="line.148"></a>
+<FONT color="green">149</FONT>         * nodes.<a name="line.149"></a>
+<FONT color="green">150</FONT>         * <a name="line.150"></a>
+<FONT color="green">151</FONT>         * @return the list of children, which may be empty.<a name="line.151"></a>
+<FONT color="green">152</FONT>         */<a name="line.152"></a>
+<FONT color="green">153</FONT>        public NodeList getChildNodes();<a name="line.153"></a>
+<FONT color="green">154</FONT>    <a name="line.154"></a>
+<FONT color="green">155</FONT>        /**<a name="line.155"></a>
+<FONT color="green">156</FONT>         * The first child of this node. If there is no such node, this returns <a name="line.156"></a>
+<FONT color="green">157</FONT>         * &lt;code&gt;null&lt;/code&gt;.<a name="line.157"></a>
+<FONT color="green">158</FONT>         * <a name="line.158"></a>
+<FONT color="green">159</FONT>         * @return the first child of the node, if any.<a name="line.159"></a>
+<FONT color="green">160</FONT>         */<a name="line.160"></a>
+<FONT color="green">161</FONT>        public Node getFirstChild();<a name="line.161"></a>
+<FONT color="green">162</FONT>    <a name="line.162"></a>
+<FONT color="green">163</FONT>        /**<a name="line.163"></a>
+<FONT color="green">164</FONT>         * The last child of this node. If there is no such node, this returns <a name="line.164"></a>
+<FONT color="green">165</FONT>         * &lt;code&gt;null&lt;/code&gt;.<a name="line.165"></a>
+<FONT color="green">166</FONT>         * <a name="line.166"></a>
+<FONT color="green">167</FONT>         * @return the last child of the node, if any.<a name="line.167"></a>
+<FONT color="green">168</FONT>         */<a name="line.168"></a>
+<FONT color="green">169</FONT>        public Node getLastChild();<a name="line.169"></a>
+<FONT color="green">170</FONT>    <a name="line.170"></a>
+<FONT color="green">171</FONT>        /**<a name="line.171"></a>
+<FONT color="green">172</FONT>         * The node immediately preceding this node. If there is no such node, <a name="line.172"></a>
+<FONT color="green">173</FONT>         * this returns &lt;code&gt;null&lt;/code&gt;.<a name="line.173"></a>
+<FONT color="green">174</FONT>         * <a name="line.174"></a>
+<FONT color="green">175</FONT>         * @return the preceding node, if any.<a name="line.175"></a>
+<FONT color="green">176</FONT>         */<a name="line.176"></a>
+<FONT color="green">177</FONT>        public Node getPreviousSibling();<a name="line.177"></a>
+<FONT color="green">178</FONT>    <a name="line.178"></a>
+<FONT color="green">179</FONT>        /**<a name="line.179"></a>
+<FONT color="green">180</FONT>         * The node immediately following this node. If there is no such node, <a name="line.180"></a>
+<FONT color="green">181</FONT>         * this returns &lt;code&gt;null&lt;/code&gt;.<a name="line.181"></a>
+<FONT color="green">182</FONT>         * <a name="line.182"></a>
+<FONT color="green">183</FONT>         * @return the following node, if any.<a name="line.183"></a>
+<FONT color="green">184</FONT>         */<a name="line.184"></a>
+<FONT color="green">185</FONT>        public Node getNextSibling();<a name="line.185"></a>
+<FONT color="green">186</FONT>    <a name="line.186"></a>
+<FONT color="green">187</FONT>        /**<a name="line.187"></a>
+<FONT color="green">188</FONT>         * A &lt;code&gt;NamedNodeMap&lt;/code&gt; containing the attributes of this node (if <a name="line.188"></a>
+<FONT color="green">189</FONT>         * it is an &lt;code&gt;Element&lt;/code&gt;) or &lt;code&gt;null&lt;/code&gt; otherwise. <a name="line.189"></a>
+<FONT color="green">190</FONT>         * <a name="line.190"></a>
+<FONT color="green">191</FONT>         * @return the attributes of the node, which may be an empty map, or<a name="line.191"></a>
+<FONT color="green">192</FONT>         * &lt;code&gt;null&lt;/code&gt;, if this the node cannot have any attributes.<a name="line.192"></a>
+<FONT color="green">193</FONT>         */<a name="line.193"></a>
+<FONT color="green">194</FONT>        public NamedNodeMap getAttributes();<a name="line.194"></a>
+<FONT color="green">195</FONT>    <a name="line.195"></a>
+<FONT color="green">196</FONT>        /**<a name="line.196"></a>
+<FONT color="green">197</FONT>         * The &lt;code&gt;Document&lt;/code&gt; object associated with this node. This is <a name="line.197"></a>
+<FONT color="green">198</FONT>         * also the &lt;code&gt;Document&lt;/code&gt; object used to create new nodes. When <a name="line.198"></a>
+<FONT color="green">199</FONT>         * this node is a &lt;code&gt;Document&lt;/code&gt; or a &lt;code&gt;DocumentType&lt;/code&gt; <a name="line.199"></a>
+<FONT color="green">200</FONT>         * which is not used with any &lt;code&gt;Document&lt;/code&gt; yet, this is <a name="line.200"></a>
+<FONT color="green">201</FONT>         * &lt;code&gt;null&lt;/code&gt;.<a name="line.201"></a>
+<FONT color="green">202</FONT>         * <a name="line.202"></a>
+<FONT color="green">203</FONT>         * @return the document this node belongs to, if any.<a name="line.203"></a>
+<FONT color="green">204</FONT>         * <a name="line.204"></a>
+<FONT color="green">205</FONT>         * @version DOM Level 2<a name="line.205"></a>
+<FONT color="green">206</FONT>         */<a name="line.206"></a>
+<FONT color="green">207</FONT>        public Document getOwnerDocument();<a name="line.207"></a>
+<FONT color="green">208</FONT>    <a name="line.208"></a>
+<FONT color="green">209</FONT>        /**<a name="line.209"></a>
+<FONT color="green">210</FONT>         * Inserts the node &lt;code&gt;newChild&lt;/code&gt; before the existing child node <a name="line.210"></a>
+<FONT color="green">211</FONT>         * &lt;code&gt;refChild&lt;/code&gt;. If &lt;code&gt;refChild&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, <a name="line.211"></a>
+<FONT color="green">212</FONT>         * insert &lt;code&gt;newChild&lt;/code&gt; at the end of the list of children.<a name="line.212"></a>
+<FONT color="green">213</FONT>         * &lt;br&gt;If &lt;code&gt;newChild&lt;/code&gt; is a &lt;code&gt;DocumentFragment&lt;/code&gt; object, <a name="line.213"></a>
+<FONT color="green">214</FONT>         * all of its children are inserted, in the same order, before <a name="line.214"></a>
+<FONT color="green">215</FONT>         * &lt;code&gt;refChild&lt;/code&gt;. If the &lt;code&gt;newChild&lt;/code&gt; is already in the <a name="line.215"></a>
+<FONT color="green">216</FONT>         * tree, it is first removed.<a name="line.216"></a>
+<FONT color="green">217</FONT>         * @param newChild The node to insert.<a name="line.217"></a>
+<FONT color="green">218</FONT>         * @param refChild The reference node, i.e., the node before which the new <a name="line.218"></a>
+<FONT color="green">219</FONT>         *   node must be inserted.<a name="line.219"></a>
+<FONT color="green">220</FONT>         * @return The node being inserted.<a name="line.220"></a>
+<FONT color="green">221</FONT>         * @exception DOMException<a name="line.221"></a>
+<FONT color="green">222</FONT>         *   HIERARCHY_REQUEST_ERR: Raised if this node is of a type that does not <a name="line.222"></a>
+<FONT color="green">223</FONT>         *   allow children of the type of the &lt;code&gt;newChild&lt;/code&gt; node, or if <a name="line.223"></a>
+<FONT color="green">224</FONT>         *   the node to insert is one of this node's ancestors.<a name="line.224"></a>
+<FONT color="green">225</FONT>         *   &lt;br&gt;WRONG_DOCUMENT_ERR: Raised if &lt;code&gt;newChild&lt;/code&gt; was created <a name="line.225"></a>
+<FONT color="green">226</FONT>         *   from a different document than the one that created this node.<a name="line.226"></a>
+<FONT color="green">227</FONT>         *   &lt;br&gt;NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly or <a name="line.227"></a>
+<FONT color="green">228</FONT>         *   if the parent of the node being inserted is readonly.<a name="line.228"></a>
+<FONT color="green">229</FONT>         *   &lt;br&gt;NOT_FOUND_ERR: Raised if &lt;code&gt;refChild&lt;/code&gt; is not a child of <a name="line.229"></a>
+<FONT color="green">230</FONT>         *   this node.<a name="line.230"></a>
+<FONT color="green">231</FONT>         */<a name="line.231"></a>
+<FONT color="green">232</FONT>        public Node insertBefore(Node newChild, <a name="line.232"></a>
+<FONT color="green">233</FONT>                                 Node refChild)<a name="line.233"></a>
+<FONT color="green">234</FONT>                                 throws DOMException;<a name="line.234"></a>
+<FONT color="green">235</FONT>    <a name="line.235"></a>
+<FONT color="green">236</FONT>        /**<a name="line.236"></a>
+<FONT color="green">237</FONT>         * Replaces the child node &lt;code&gt;oldChild&lt;/code&gt; with &lt;code&gt;newChild&lt;/code&gt;<a name="line.237"></a>
+<FONT color="green">238</FONT>         *  in the list of children, and returns the &lt;code&gt;oldChild&lt;/code&gt; node.<a name="line.238"></a>
+<FONT color="green">239</FONT>         * &lt;br&gt;If &lt;code&gt;newChild&lt;/code&gt; is a &lt;code&gt;DocumentFragment&lt;/code&gt; object, <a name="line.239"></a>
+<FONT color="green">240</FONT>         * &lt;code&gt;oldChild&lt;/code&gt; is replaced by all of the <a name="line.240"></a>
+<FONT color="green">241</FONT>         * &lt;code&gt;DocumentFragment&lt;/code&gt; children, which are inserted in the <a name="line.241"></a>
+<FONT color="green">242</FONT>         * same order. If the &lt;code&gt;newChild&lt;/code&gt; is already in the tree, it <a name="line.242"></a>
+<FONT color="green">243</FONT>         * is first removed.<a name="line.243"></a>
+<FONT color="green">244</FONT>         * @param newChild The new node to put in the child list.<a name="line.244"></a>
+<FONT color="green">245</FONT>         * @param oldChild The node being replaced in the list.<a name="line.245"></a>
+<FONT color="green">246</FONT>         * @return The node replaced.<a name="line.246"></a>
+<FONT color="green">247</FONT>         * @exception DOMException<a name="line.247"></a>
+<FONT color="green">248</FONT>         *   HIERARCHY_REQUEST_ERR: Raised if this node is of a type that does not <a name="line.248"></a>
+<FONT color="green">249</FONT>         *   allow children of the type of the &lt;code&gt;newChild&lt;/code&gt; node, or if <a name="line.249"></a>
+<FONT color="green">250</FONT>         *   the node to put in is one of this node's ancestors.<a name="line.250"></a>
+<FONT color="green">251</FONT>         *   &lt;br&gt;WRONG_DOCUMENT_ERR: Raised if &lt;code&gt;newChild&lt;/code&gt; was created <a name="line.251"></a>
+<FONT color="green">252</FONT>         *   from a different document than the one that created this node.<a name="line.252"></a>
+<FONT color="green">253</FONT>         *   &lt;br&gt;NO_MODIFICATION_ALLOWED_ERR: Raised if this node or the parent of <a name="line.253"></a>
+<FONT color="green">254</FONT>         *   the new node is readonly.<a name="line.254"></a>
+<FONT color="green">255</FONT>         *   &lt;br&gt;NOT_FOUND_ERR: Raised if &lt;code&gt;oldChild&lt;/code&gt; is not a child of <a name="line.255"></a>
+<FONT color="green">256</FONT>         *   this node.<a name="line.256"></a>
+<FONT color="green">257</FONT>         */<a name="line.257"></a>
+<FONT color="green">258</FONT>        public Node replaceChild(Node newChild, <a name="line.258"></a>
+<FONT color="green">259</FONT>                                 Node oldChild)<a name="line.259"></a>
+<FONT color="green">260</FONT>                                 throws DOMException;<a name="line.260"></a>
+<FONT color="green">261</FONT>    <a name="line.261"></a>
+<FONT color="green">262</FONT>        /**<a name="line.262"></a>
+<FONT color="green">263</FONT>         * Removes the child node indicated by &lt;code&gt;oldChild&lt;/code&gt; from the list <a name="line.263"></a>
+<FONT color="green">264</FONT>         * of children, and returns it.<a name="line.264"></a>
+<FONT color="green">265</FONT>         * @param oldChild The node being removed.<a name="line.265"></a>
+<FONT color="green">266</FONT>         * @return The node removed.<a name="line.266"></a>
+<FONT color="green">267</FONT>         * @exception DOMException<a name="line.267"></a>
+<FONT color="green">268</FONT>         *   NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.<a name="line.268"></a>
+<FONT color="green">269</FONT>         *   &lt;br&gt;NOT_FOUND_ERR: Raised if &lt;code&gt;oldChild&lt;/code&gt; is not a child of <a name="line.269"></a>
+<FONT color="green">270</FONT>         *   this node.<a name="line.270"></a>
+<FONT color="green">271</FONT>         */<a name="line.271"></a>
+<FONT color="green">272</FONT>        public Node removeChild(Node oldChild)<a name="line.272"></a>
+<FONT color="green">273</FONT>                                throws DOMException;<a name="line.273"></a>
+<FONT color="green">274</FONT>    <a name="line.274"></a>
+<FONT color="green">275</FONT>        /**<a name="line.275"></a>
+<FONT color="green">276</FONT>         * Adds the node &lt;code&gt;newChild&lt;/code&gt; to the end of the list of children <a name="line.276"></a>
+<FONT color="green">277</FONT>         * of this node. If the &lt;code&gt;newChild&lt;/code&gt; is already in the tree, it <a name="line.277"></a>
+<FONT color="green">278</FONT>         * is first removed.<a name="line.278"></a>
+<FONT color="green">279</FONT>         * @param newChild The node to add.If it is a &lt;code&gt;DocumentFragment&lt;/code&gt;<a name="line.279"></a>
+<FONT color="green">280</FONT>         *    object, the entire contents of the document fragment are moved <a name="line.280"></a>
+<FONT color="green">281</FONT>         *   into the child list of this node<a name="line.281"></a>
+<FONT color="green">282</FONT>         * @return The node added.<a name="line.282"></a>
+<FONT color="green">283</FONT>         * @exception DOMException<a name="line.283"></a>
+<FONT color="green">284</FONT>         *   HIERARCHY_REQUEST_ERR: Raised if this node is of a type that does not <a name="line.284"></a>
+<FONT color="green">285</FONT>         *   allow children of the type of the &lt;code&gt;newChild&lt;/code&gt; node, or if <a name="line.285"></a>
+<FONT color="green">286</FONT>         *   the node to append is one of this node's ancestors.<a name="line.286"></a>
+<FONT color="green">287</FONT>         *   &lt;br&gt;WRONG_DOCUMENT_ERR: Raised if &lt;code&gt;newChild&lt;/code&gt; was created <a name="line.287"></a>
+<FONT color="green">288</FONT>         *   from a different document than the one that created this node.<a name="line.288"></a>
+<FONT color="green">289</FONT>         *   &lt;br&gt;NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.<a name="line.289"></a>
+<FONT color="green">290</FONT>         */<a name="line.290"></a>
+<FONT color="green">291</FONT>        public Node appendChild(Node newChild)<a name="line.291"></a>
+<FONT color="green">292</FONT>                                throws DOMException;<a name="line.292"></a>
+<FONT color="green">293</FONT>    <a name="line.293"></a>
+<FONT color="green">294</FONT>        /**<a name="line.294"></a>
+<FONT color="green">295</FONT>         * Returns whether this node has any children.<a name="line.295"></a>
+<FONT color="green">296</FONT>         * @return  &lt;code&gt;true&lt;/code&gt; if this node has any children, <a name="line.296"></a>
+<FONT color="green">297</FONT>         *   &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.297"></a>
+<FONT color="green">298</FONT>         */<a name="line.298"></a>
+<FONT color="green">299</FONT>        public boolean hasChildNodes();<a name="line.299"></a>
+<FONT color="green">300</FONT>    <a name="line.300"></a>
+<FONT color="green">301</FONT>        /**<a name="line.301"></a>
+<FONT color="green">302</FONT>         * Returns a duplicate of this node, i.e., serves as a generic copy <a name="line.302"></a>
+<FONT color="green">303</FONT>         * constructor for nodes. The duplicate node has no parent; (<a name="line.303"></a>
+<FONT color="green">304</FONT>         * &lt;code&gt;parentNode&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.).<a name="line.304"></a>
+<FONT color="green">305</FONT>         * &lt;br&gt;Cloning an &lt;code&gt;Element&lt;/code&gt; copies all attributes and their <a name="line.305"></a>
+<FONT color="green">306</FONT>         * values, including those generated by the XML processor to represent <a name="line.306"></a>
+<FONT color="green">307</FONT>         * defaulted attributes, but this method does not copy any text it <a name="line.307"></a>
+<FONT color="green">308</FONT>         * contains unless it is a deep clone, since the text is contained in a <a name="line.308"></a>
+<FONT color="green">309</FONT>         * child &lt;code&gt;Text&lt;/code&gt; node. Cloning an &lt;code&gt;Attribute&lt;/code&gt; <a name="line.309"></a>
+<FONT color="green">310</FONT>         * directly, as opposed to be cloned as part of an &lt;code&gt;Element&lt;/code&gt; <a name="line.310"></a>
+<FONT color="green">311</FONT>         * cloning operation, returns a specified attribute (<a name="line.311"></a>
+<FONT color="green">312</FONT>         * &lt;code&gt;specified&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;). Cloning any other type <a name="line.312"></a>
+<FONT color="green">313</FONT>         * of node simply returns a copy of this node.<a name="line.313"></a>
+<FONT color="green">314</FONT>         * &lt;br&gt;Note that cloning an immutable subtree results in a mutable copy, <a name="line.314"></a>
+<FONT color="green">315</FONT>         * but the children of an &lt;code&gt;EntityReference&lt;/code&gt; clone are readonly<a name="line.315"></a>
+<FONT color="green">316</FONT>         * . In addition, clones of unspecified &lt;code&gt;Attr&lt;/code&gt; nodes are <a name="line.316"></a>
+<FONT color="green">317</FONT>         * specified. And, cloning &lt;code&gt;Document&lt;/code&gt;, <a name="line.317"></a>
+<FONT color="green">318</FONT>         * &lt;code&gt;DocumentType&lt;/code&gt;, &lt;code&gt;Entity&lt;/code&gt;, and <a name="line.318"></a>
+<FONT color="green">319</FONT>         * &lt;code&gt;Notation&lt;/code&gt; nodes is implementation dependent.<a name="line.319"></a>
+<FONT color="green">320</FONT>         * @param deep If &lt;code&gt;true&lt;/code&gt;, recursively clone the subtree under <a name="line.320"></a>
+<FONT color="green">321</FONT>         *   the specified node; if &lt;code&gt;false&lt;/code&gt;, clone only the node <a name="line.321"></a>
+<FONT color="green">322</FONT>         *   itself (and its attributes, if it is an &lt;code&gt;Element&lt;/code&gt;). <a name="line.322"></a>
+<FONT color="green">323</FONT>         * @return The duplicate node.<a name="line.323"></a>
+<FONT color="green">324</FONT>         */<a name="line.324"></a>
+<FONT color="green">325</FONT>        public Node cloneNode(boolean deep);<a name="line.325"></a>
+<FONT color="green">326</FONT>    <a name="line.326"></a>
+<FONT color="green">327</FONT>        /**<a name="line.327"></a>
+<FONT color="green">328</FONT>         * Puts all &lt;code&gt;Text&lt;/code&gt; nodes in the full depth of the sub-tree <a name="line.328"></a>
+<FONT color="green">329</FONT>         * underneath this &lt;code&gt;Node&lt;/code&gt;, including attribute nodes, into a <a name="line.329"></a>
+<FONT color="green">330</FONT>         * "normal" form where only structure (e.g., elements, comments, <a name="line.330"></a>
+<FONT color="green">331</FONT>         * processing instructions, CDATA sections, and entity references) <a name="line.331"></a>
+<FONT color="green">332</FONT>         * separates &lt;code&gt;Text&lt;/code&gt; nodes, i.e., there are neither adjacent <a name="line.332"></a>
+<FONT color="green">333</FONT>         * &lt;code&gt;Text&lt;/code&gt; nodes nor empty &lt;code&gt;Text&lt;/code&gt; nodes. This can <a name="line.333"></a>
+<FONT color="green">334</FONT>         * be used to ensure that the DOM view of a document is the same as if <a name="line.334"></a>
+<FONT color="green">335</FONT>         * it were saved and re-loaded, and is useful when operations (such as <a name="line.335"></a>
+<FONT color="green">336</FONT>         * XPointer  lookups) that depend on a particular document tree <a name="line.336"></a>
+<FONT color="green">337</FONT>         * structure are to be used.In cases where the document contains <a name="line.337"></a>
+<FONT color="green">338</FONT>         * &lt;code&gt;CDATASections&lt;/code&gt;, the normalize operation alone may not be <a name="line.338"></a>
+<FONT color="green">339</FONT>         * sufficient, since XPointers do not differentiate between <a name="line.339"></a>
+<FONT color="green">340</FONT>         * &lt;code&gt;Text&lt;/code&gt; nodes and &lt;code&gt;CDATASection&lt;/code&gt; nodes.<a name="line.340"></a>
+<FONT color="green">341</FONT>         * @version DOM Level 2<a name="line.341"></a>
+<FONT color="green">342</FONT>         */<a name="line.342"></a>
+<FONT color="green">343</FONT>        public void normalize();<a name="line.343"></a>
+<FONT color="green">344</FONT>    <a name="line.344"></a>
+<FONT color="green">345</FONT>        /**<a name="line.345"></a>
+<FONT color="green">346</FONT>         * Tests whether the DOM implementation implements a specific feature and <a name="line.346"></a>
+<FONT color="green">347</FONT>         * that feature is supported by this node.<a name="line.347"></a>
+<FONT color="green">348</FONT>         * @param feature The name of the feature to test. This is the same name <a name="line.348"></a>
+<FONT color="green">349</FONT>         *   which can be passed to the method &lt;code&gt;hasFeature&lt;/code&gt; on <a name="line.349"></a>
+<FONT color="green">350</FONT>         *   &lt;code&gt;DOMImplementation&lt;/code&gt;.<a name="line.350"></a>
+<FONT color="green">351</FONT>         * @param version This is the version number of the feature to test. In <a name="line.351"></a>
+<FONT color="green">352</FONT>         *   Level 2, version 1, this is the string "2.0". If the version is not <a name="line.352"></a>
+<FONT color="green">353</FONT>         *   specified, supporting any version of the feature will cause the <a name="line.353"></a>
+<FONT color="green">354</FONT>         *   method to return &lt;code&gt;true&lt;/code&gt;.<a name="line.354"></a>
+<FONT color="green">355</FONT>         * @return Returns &lt;code&gt;true&lt;/code&gt; if the specified feature is <a name="line.355"></a>
+<FONT color="green">356</FONT>         *   supported on this node, &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.356"></a>
+<FONT color="green">357</FONT>         * @since DOM Level 2<a name="line.357"></a>
+<FONT color="green">358</FONT>         */<a name="line.358"></a>
+<FONT color="green">359</FONT>        public boolean isSupported(String feature, <a name="line.359"></a>
+<FONT color="green">360</FONT>                                   String version);<a name="line.360"></a>
+<FONT color="green">361</FONT>    <a name="line.361"></a>
+<FONT color="green">362</FONT>        /**<a name="line.362"></a>
+<FONT color="green">363</FONT>         * The namespace URI of this node, or &lt;code&gt;null&lt;/code&gt; if it is <a name="line.363"></a>
+<FONT color="green">364</FONT>         * unspecified.<a name="line.364"></a>
+<FONT color="green">365</FONT>         * &lt;br&gt;This is not a computed value that is the result of a namespace <a name="line.365"></a>
+<FONT color="green">366</FONT>         * lookup based on an examination of the namespace declarations in <a name="line.366"></a>
+<FONT color="green">367</FONT>         * scope. It is merely the namespace URI given at creation time.<a name="line.367"></a>
+<FONT color="green">368</FONT>         * &lt;br&gt;For nodes of any type other than &lt;code&gt;ELEMENT_NODE&lt;/code&gt; and <a name="line.368"></a>
+<FONT color="green">369</FONT>         * &lt;code&gt;ATTRIBUTE_NODE&lt;/code&gt; and nodes created with a DOM Level 1 <a name="line.369"></a>
+<FONT color="green">370</FONT>         * method, such as &lt;code&gt;createElement&lt;/code&gt; from the <a name="line.370"></a>
+<FONT color="green">371</FONT>         * &lt;code&gt;Document&lt;/code&gt; interface, this is always &lt;code&gt;null&lt;/code&gt;.Per <a name="line.371"></a>
+<FONT color="green">372</FONT>         * the Namespaces in XML Specification  an attribute does not inherit <a name="line.372"></a>
+<FONT color="green">373</FONT>         * its namespace from the element it is attached to. If an attribute is <a name="line.373"></a>
+<FONT color="green">374</FONT>         * not explicitly given a namespace, it simply has no namespace.<a name="line.374"></a>
+<FONT color="green">375</FONT>         * <a name="line.375"></a>
+<FONT color="green">376</FONT>         * @return the namespace URI, if any.<a name="line.376"></a>
+<FONT color="green">377</FONT>         * <a name="line.377"></a>
+<FONT color="green">378</FONT>         * @since DOM Level 2<a name="line.378"></a>
+<FONT color="green">379</FONT>         */<a name="line.379"></a>
+<FONT color="green">380</FONT>        public String getNamespaceURI();<a name="line.380"></a>
+<FONT color="green">381</FONT>    <a name="line.381"></a>
+<FONT color="green">382</FONT>        /**<a name="line.382"></a>
+<FONT color="green">383</FONT>         * Returns the namespace prefix of this node, or &lt;code&gt;null&lt;/code&gt; if it is <a name="line.383"></a>
+<FONT color="green">384</FONT>         * unspecified.<a name="line.384"></a>
+<FONT color="green">385</FONT>         * &lt;br&gt;For nodes of any type other than &lt;code&gt;ELEMENT_NODE&lt;/code&gt; and <a name="line.385"></a>
+<FONT color="green">386</FONT>         * &lt;code&gt;ATTRIBUTE_NODE&lt;/code&gt; and nodes created with a DOM Level 1 <a name="line.386"></a>
+<FONT color="green">387</FONT>         * method, such as &lt;code&gt;createElement&lt;/code&gt; from the <a name="line.387"></a>
+<FONT color="green">388</FONT>         * &lt;code&gt;Document&lt;/code&gt; interface, this is always &lt;code&gt;null&lt;/code&gt;.<a name="line.388"></a>
+<FONT color="green">389</FONT>         * <a name="line.389"></a>
+<FONT color="green">390</FONT>         * @return the namespace prefix, if any.<a name="line.390"></a>
+<FONT color="green">391</FONT>         * <a name="line.391"></a>
+<FONT color="green">392</FONT>         * @exception DOMException<a name="line.392"></a>
+<FONT color="green">393</FONT>         * @since DOM Level 2<a name="line.393"></a>
+<FONT color="green">394</FONT>         */<a name="line.394"></a>
+<FONT color="green">395</FONT>        public String getPrefix();<a name="line.395"></a>
+<FONT color="green">396</FONT>        <a name="line.396"></a>
+<FONT color="green">397</FONT>        /**<a name="line.397"></a>
+<FONT color="green">398</FONT>         * Sets the namespace prefix of this node.<a name="line.398"></a>
+<FONT color="green">399</FONT>         * &lt;br&gt;Note that setting this attribute, when permitted, changes the <a name="line.399"></a>
+<FONT color="green">400</FONT>         * &lt;code&gt;nodeName&lt;/code&gt; attribute, which holds the qualified name, as <a name="line.400"></a>
+<FONT color="green">401</FONT>         * well as the &lt;code&gt;tagName&lt;/code&gt; and &lt;code&gt;name&lt;/code&gt; attributes of <a name="line.401"></a>
+<FONT color="green">402</FONT>         * the &lt;code&gt;Element&lt;/code&gt; and &lt;code&gt;Attr&lt;/code&gt; interfaces, when <a name="line.402"></a>
+<FONT color="green">403</FONT>         * applicable.<a name="line.403"></a>
+<FONT color="green">404</FONT>         * &lt;br&gt;Note also that changing the prefix of an attribute that is known to <a name="line.404"></a>
+<FONT color="green">405</FONT>         * have a default value, does not make a new attribute with the default <a name="line.405"></a>
+<FONT color="green">406</FONT>         * value and the original prefix appear, since the <a name="line.406"></a>
+<FONT color="green">407</FONT>         * &lt;code&gt;namespaceURI&lt;/code&gt; and &lt;code&gt;localName&lt;/code&gt; do not change.<a name="line.407"></a>
+<FONT color="green">408</FONT>         * &lt;br&gt;For nodes of any type other than &lt;code&gt;ELEMENT_NODE&lt;/code&gt; and <a name="line.408"></a>
+<FONT color="green">409</FONT>         * &lt;code&gt;ATTRIBUTE_NODE&lt;/code&gt; and nodes created with a DOM Level 1 <a name="line.409"></a>
+<FONT color="green">410</FONT>         * method, such as &lt;code&gt;createElement&lt;/code&gt; from the <a name="line.410"></a>
+<FONT color="green">411</FONT>         * &lt;code&gt;Document&lt;/code&gt; interface, this is always &lt;code&gt;null&lt;/code&gt;.<a name="line.411"></a>
+<FONT color="green">412</FONT>         * @exception DOMException<a name="line.412"></a>
+<FONT color="green">413</FONT>         *   INVALID_CHARACTER_ERR: Raised if the specified prefix contains an <a name="line.413"></a>
+<FONT color="green">414</FONT>         *   illegal character.<a name="line.414"></a>
+<FONT color="green">415</FONT>         *   &lt;br&gt;NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.<a name="line.415"></a>
+<FONT color="green">416</FONT>         *   &lt;br&gt;NAMESPACE_ERR: Raised if the specified &lt;code&gt;prefix&lt;/code&gt; is <a name="line.416"></a>
+<FONT color="green">417</FONT>         *   malformed, if the &lt;code&gt;namespaceURI&lt;/code&gt; of this node is <a name="line.417"></a>
+<FONT color="green">418</FONT>         *   &lt;code&gt;null&lt;/code&gt;, if the specified prefix is "xml" and the <a name="line.418"></a>
+<FONT color="green">419</FONT>         *   &lt;code&gt;namespaceURI&lt;/code&gt; of this node is different from "<a name="line.419"></a>
+<FONT color="green">420</FONT>         *   http://www.w3.org/XML/1998/namespace", if this node is an attribute <a name="line.420"></a>
+<FONT color="green">421</FONT>         *   and the specified prefix is "xmlns" and the <a name="line.421"></a>
+<FONT color="green">422</FONT>         *   &lt;code&gt;namespaceURI&lt;/code&gt; of this node is different from "<a name="line.422"></a>
+<FONT color="green">423</FONT>         *   http://www.w3.org/2000/xmlns/", or if this node is an attribute and <a name="line.423"></a>
+<FONT color="green">424</FONT>         *   the &lt;code&gt;qualifiedName&lt;/code&gt; of this node is "xmlns" .<a name="line.424"></a>
+<FONT color="green">425</FONT>         *   <a name="line.425"></a>
+<FONT color="green">426</FONT>         * @param prefix the new namespace prefix.<a name="line.426"></a>
+<FONT color="green">427</FONT>         * <a name="line.427"></a>
+<FONT color="green">428</FONT>         * @since DOM Level 2<a name="line.428"></a>
+<FONT color="green">429</FONT>         */<a name="line.429"></a>
+<FONT color="green">430</FONT>        public void setPrefix(String prefix)<a name="line.430"></a>
+<FONT color="green">431</FONT>                                   throws DOMException;<a name="line.431"></a>
+<FONT color="green">432</FONT>    <a name="line.432"></a>
+<FONT color="green">433</FONT>        /**<a name="line.433"></a>
+<FONT color="green">434</FONT>         * Returns the local part of the qualified name of this node.<a name="line.434"></a>
+<FONT color="green">435</FONT>         * &lt;br&gt;For nodes of any type other than &lt;code&gt;ELEMENT_NODE&lt;/code&gt; and <a name="line.435"></a>
+<FONT color="green">436</FONT>         * &lt;code&gt;ATTRIBUTE_NODE&lt;/code&gt; and nodes created with a DOM Level 1 <a name="line.436"></a>
+<FONT color="green">437</FONT>         * method, such as &lt;code&gt;createElement&lt;/code&gt; from the <a name="line.437"></a>
+<FONT color="green">438</FONT>         * &lt;code&gt;Document&lt;/code&gt; interface, this is always &lt;code&gt;null&lt;/code&gt;.<a name="line.438"></a>
+<FONT color="green">439</FONT>         * <a name="line.439"></a>
+<FONT color="green">440</FONT>         * @return the local name, if any.<a name="line.440"></a>
+<FONT color="green">441</FONT>         * <a name="line.441"></a>
+<FONT color="green">442</FONT>         * @since DOM Level 2<a name="line.442"></a>
+<FONT color="green">443</FONT>         */<a name="line.443"></a>
+<FONT color="green">444</FONT>        public String getLocalName();<a name="line.444"></a>
+<FONT color="green">445</FONT>    <a name="line.445"></a>
+<FONT color="green">446</FONT>        /**<a name="line.446"></a>
+<FONT color="green">447</FONT>         * Returns whether this node (if it is an element) has any attributes.<a name="line.447"></a>
+<FONT color="green">448</FONT>         * @return &lt;code&gt;true&lt;/code&gt; if this node has any attributes, <a name="line.448"></a>
+<FONT color="green">449</FONT>         *   &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.449"></a>
+<FONT color="green">450</FONT>         * @since DOM Level 2<a name="line.450"></a>
+<FONT color="green">451</FONT>         */<a name="line.451"></a>
+<FONT color="green">452</FONT>        public boolean hasAttributes();<a name="line.452"></a>
+<FONT color="green">453</FONT>    <a name="line.453"></a>
+<FONT color="green">454</FONT>    }<a name="line.454"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,201 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /* <a name="line.1"></a>
+<FONT color="green">002</FONT>     * Licensed to the Apache Software Foundation (ASF) under one or more<a name="line.2"></a>
+<FONT color="green">003</FONT>     * contributor license agreements.  See the NOTICE file distributed with<a name="line.3"></a>
+<FONT color="green">004</FONT>     * this work for additional information regarding copyright ownership.<a name="line.4"></a>
+<FONT color="green">005</FONT>     * The ASF licenses this file to You under the Apache License, Version 2.0<a name="line.5"></a>
+<FONT color="green">006</FONT>     * (the "License"); you may not use this file except in compliance with<a name="line.6"></a>
+<FONT color="green">007</FONT>     * the License.  You may obtain a copy of the License at<a name="line.7"></a>
+<FONT color="green">008</FONT>     * <a name="line.8"></a>
+<FONT color="green">009</FONT>     *     http://www.apache.org/licenses/LICENSE-2.0<a name="line.9"></a>
+<FONT color="green">010</FONT>     * <a name="line.10"></a>
+<FONT color="green">011</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.11"></a>
+<FONT color="green">012</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.12"></a>
+<FONT color="green">013</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.13"></a>
+<FONT color="green">014</FONT>     * See the License for the specific language governing permissions and<a name="line.14"></a>
+<FONT color="green">015</FONT>     * limitations under the License.<a name="line.15"></a>
+<FONT color="green">016</FONT>     */<a name="line.16"></a>
+<FONT color="green">017</FONT>    /*<a name="line.17"></a>
+<FONT color="green">018</FONT>     * Copyright (C) 2008 The Android Open Source Project<a name="line.18"></a>
+<FONT color="green">019</FONT>     *<a name="line.19"></a>
+<FONT color="green">020</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.20"></a>
+<FONT color="green">021</FONT>     * you may not use this file except in compliance with the License.<a name="line.21"></a>
+<FONT color="green">022</FONT>     * You may obtain a copy of the License at<a name="line.22"></a>
+<FONT color="green">023</FONT>     *<a name="line.23"></a>
+<FONT color="green">024</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.24"></a>
+<FONT color="green">025</FONT>     *<a name="line.25"></a>
+<FONT color="green">026</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.26"></a>
+<FONT color="green">027</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.27"></a>
+<FONT color="green">028</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.28"></a>
+<FONT color="green">029</FONT>     * See the License for the specific language governing permissions and<a name="line.29"></a>
+<FONT color="green">030</FONT>     * limitations under the License.<a name="line.30"></a>
+<FONT color="green">031</FONT>     */<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    package java.lang.ref;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    /**<a name="line.35"></a>
+<FONT color="green">036</FONT>     * Implements a soft reference, which is the least-weak of the three types of<a name="line.36"></a>
+<FONT color="green">037</FONT>     * references. Once the garbage collector has decided that an object {@code obj}<a name="line.37"></a>
+<FONT color="green">038</FONT>     * is softly-reachable, the following<a name="line.38"></a>
+<FONT color="green">039</FONT>     * may happen, either immediately or at a later point:<a name="line.39"></a>
+<FONT color="green">040</FONT>     * <a name="line.40"></a>
+<FONT color="green">041</FONT>     * &lt;ul&gt;<a name="line.41"></a>
+<FONT color="green">042</FONT>     *   &lt;li&gt;<a name="line.42"></a>
+<FONT color="green">043</FONT>     *     A set {@code ref} of references is determined. {@code ref} contains the<a name="line.43"></a>
+<FONT color="green">044</FONT>     *     following elements:<a name="line.44"></a>
+<FONT color="green">045</FONT>     *     &lt;ul&gt;<a name="line.45"></a>
+<FONT color="green">046</FONT>     *       &lt;li&gt;<a name="line.46"></a>
+<FONT color="green">047</FONT>     *         All soft references pointing to {@code obj}.<a name="line.47"></a>
+<FONT color="green">048</FONT>     *       &lt;/li&gt;<a name="line.48"></a>
+<FONT color="green">049</FONT>     *       &lt;li&gt;<a name="line.49"></a>
+<FONT color="green">050</FONT>     *         All soft references pointing to objects from which {@code obj} is<a name="line.50"></a>
+<FONT color="green">051</FONT>     *         strongly reachable.<a name="line.51"></a>
+<FONT color="green">052</FONT>     *       &lt;/li&gt;<a name="line.52"></a>
+<FONT color="green">053</FONT>     *     &lt;/ul&gt;<a name="line.53"></a>
+<FONT color="green">054</FONT>     *   &lt;/li&gt;<a name="line.54"></a>
+<FONT color="green">055</FONT>     *   &lt;li&gt;<a name="line.55"></a>
+<FONT color="green">056</FONT>     *     All references in {@code ref} are atomically cleared.<a name="line.56"></a>
+<FONT color="green">057</FONT>     *   &lt;/li&gt;<a name="line.57"></a>
+<FONT color="green">058</FONT>     *   &lt;li&gt;<a name="line.58"></a>
+<FONT color="green">059</FONT>     *     At the same time or some time in the future, all references in {@code<a name="line.59"></a>
+<FONT color="green">060</FONT>     *     ref} will be enqueued with their corresponding reference queues, if any.<a name="line.60"></a>
+<FONT color="green">061</FONT>     *   &lt;/li&gt;  <a name="line.61"></a>
+<FONT color="green">062</FONT>     * &lt;/ul&gt;<a name="line.62"></a>
+<FONT color="green">063</FONT>     * <a name="line.63"></a>
+<FONT color="green">064</FONT>     * The system may decide not to clear and enqueue soft references until a later<a name="line.64"></a>
+<FONT color="green">065</FONT>     * time, yet all {@code SoftReference}s pointing to softly reachable objects are<a name="line.65"></a>
+<FONT color="green">066</FONT>     * guaranteed to be cleared before the VM will throw an {@link<a name="line.66"></a>
+<FONT color="green">067</FONT>     * java.lang.OutOfMemoryError}.<a name="line.67"></a>
+<FONT color="green">068</FONT>     *  <a name="line.68"></a>
+<FONT color="green">069</FONT>     * Soft references are useful for caches that should automatically have<a name="line.69"></a>
+<FONT color="green">070</FONT>     * their entries removed once they are not referenced any more (from outside),<a name="line.70"></a>
+<FONT color="green">071</FONT>     * and there is a need for memory. The difference between a {@code<a name="line.71"></a>
+<FONT color="green">072</FONT>     * SoftReference} and a {@code WeakReference} is the point of time at which the<a name="line.72"></a>
+<FONT color="green">073</FONT>     * decision is made to clear and enqueue the reference:<a name="line.73"></a>
+<FONT color="green">074</FONT>     * <a name="line.74"></a>
+<FONT color="green">075</FONT>     * &lt;ul&gt;<a name="line.75"></a>
+<FONT color="green">076</FONT>     *   &lt;li&gt;<a name="line.76"></a>
+<FONT color="green">077</FONT>     *     A {@code SoftReference} should be cleared and enqueued &lt;em&gt;as late as<a name="line.77"></a>
+<FONT color="green">078</FONT>     *     possible&lt;/em&gt;, that is, in case the VM is in danger of running out of<a name="line.78"></a>
+<FONT color="green">079</FONT>     *     memory.<a name="line.79"></a>
+<FONT color="green">080</FONT>     *   &lt;/li&gt;<a name="line.80"></a>
+<FONT color="green">081</FONT>     *   &lt;li&gt;<a name="line.81"></a>
+<FONT color="green">082</FONT>     *     A {@code WeakReference} may be cleared and enqueued as soon as is<a name="line.82"></a>
+<FONT color="green">083</FONT>     *     known to be weakly-referenced.  <a name="line.83"></a>
+<FONT color="green">084</FONT>     *   &lt;/li&gt;<a name="line.84"></a>
+<FONT color="green">085</FONT>     * &lt;/ul&gt;<a name="line.85"></a>
+<FONT color="green">086</FONT>     * <a name="line.86"></a>
+<FONT color="green">087</FONT>     * @since Android 1.0<a name="line.87"></a>
+<FONT color="green">088</FONT>     */<a name="line.88"></a>
+<FONT color="green">089</FONT>    public class SoftReference&lt;T&gt; extends Reference&lt;T&gt; {<a name="line.89"></a>
+<FONT color="green">090</FONT>    <a name="line.90"></a>
+<FONT color="green">091</FONT>        /**<a name="line.91"></a>
+<FONT color="green">092</FONT>         * Constructs a new soft reference to the given referent. The newly created<a name="line.92"></a>
+<FONT color="green">093</FONT>         * reference is not registered with any reference queue.<a name="line.93"></a>
+<FONT color="green">094</FONT>         * <a name="line.94"></a>
+<FONT color="green">095</FONT>         * @param r the referent to track<a name="line.95"></a>
+<FONT color="green">096</FONT>         * <a name="line.96"></a>
+<FONT color="green">097</FONT>         * @since Android 1.0<a name="line.97"></a>
+<FONT color="green">098</FONT>         */<a name="line.98"></a>
+<FONT color="green">099</FONT>        public SoftReference(T r) {<a name="line.99"></a>
+<FONT color="green">100</FONT>            super();<a name="line.100"></a>
+<FONT color="green">101</FONT>            referent = r;<a name="line.101"></a>
+<FONT color="green">102</FONT>        }<a name="line.102"></a>
+<FONT color="green">103</FONT>        <a name="line.103"></a>
+<FONT color="green">104</FONT>        /**<a name="line.104"></a>
+<FONT color="green">105</FONT>         * Constructs a new soft reference to the given referent. The newly created<a name="line.105"></a>
+<FONT color="green">106</FONT>         * reference is registered with the given reference queue.<a name="line.106"></a>
+<FONT color="green">107</FONT>         * <a name="line.107"></a>
+<FONT color="green">108</FONT>         * @param r the referent to track<a name="line.108"></a>
+<FONT color="green">109</FONT>         * @param q the queue to register to the reference object with. A null value<a name="line.109"></a>
+<FONT color="green">110</FONT>         *          results in a weak reference that is not associated with any<a name="line.110"></a>
+<FONT color="green">111</FONT>         *          queue.<a name="line.111"></a>
+<FONT color="green">112</FONT>         * <a name="line.112"></a>
+<FONT color="green">113</FONT>         * @since Android 1.0<a name="line.113"></a>
+<FONT color="green">114</FONT>         */<a name="line.114"></a>
+<FONT color="green">115</FONT>        public SoftReference(T r, ReferenceQueue&lt;? super T&gt; q) {<a name="line.115"></a>
+<FONT color="green">116</FONT>            super();<a name="line.116"></a>
+<FONT color="green">117</FONT>            referent = r;<a name="line.117"></a>
+<FONT color="green">118</FONT>            queue = q;<a name="line.118"></a>
+<FONT color="green">119</FONT>        }<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>    // BEGIN android-removed<a name="line.121"></a>
+<FONT color="green">122</FONT>    //    /**<a name="line.122"></a>
+<FONT color="green">123</FONT>    //     * Return the referent of the reference object.<a name="line.123"></a>
+<FONT color="green">124</FONT>    //     * <a name="line.124"></a>
+<FONT color="green">125</FONT>    //     * @return the referent to which reference refers, or {@code null} if the<a name="line.125"></a>
+<FONT color="green">126</FONT>    //     *         referent has been cleared.<a name="line.126"></a>
+<FONT color="green">127</FONT>    //     * <a name="line.127"></a>
+<FONT color="green">128</FONT>    //     * @since Android 1.0<a name="line.128"></a>
+<FONT color="green">129</FONT>    //     */<a name="line.129"></a>
+<FONT color="green">130</FONT>    //    @Override<a name="line.130"></a>
+<FONT color="green">131</FONT>    //    public T get() {<a name="line.131"></a>
+<FONT color="green">132</FONT>    //        return super.get();<a name="line.132"></a>
+<FONT color="green">133</FONT>    //    }<a name="line.133"></a>
+<FONT color="green">134</FONT>    // END android-removed<a name="line.134"></a>
+<FONT color="green">135</FONT>    }<a name="line.135"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

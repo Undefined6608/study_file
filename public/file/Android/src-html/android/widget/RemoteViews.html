@@ -1,0 +1,987 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2007 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.widget;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.app.PendingIntent;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.app.PendingIntent.CanceledException;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.content.Context;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.content.pm.PackageManager.NameNotFoundException;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.content.res.Resources;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.graphics.Bitmap;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.graphics.PorterDuff;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import android.graphics.drawable.BitmapDrawable;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import android.graphics.drawable.Drawable;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import android.net.Uri;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import android.os.Parcel;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import android.os.Parcelable;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import android.text.TextUtils;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import android.util.Log;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import android.view.LayoutInflater;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import android.view.RemotableViewMethod;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import android.view.View;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import android.view.ViewGroup;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import android.view.LayoutInflater.Filter;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import android.view.View.OnClickListener;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import android.view.animation.Animation;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import android.view.animation.AnimationUtils;<a name="line.40"></a>
+<FONT color="green">041</FONT>    <a name="line.41"></a>
+<FONT color="green">042</FONT>    import java.lang.Class;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import java.lang.annotation.ElementType;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import java.lang.annotation.Retention;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import java.lang.annotation.RetentionPolicy;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import java.lang.annotation.Target;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import java.lang.reflect.InvocationTargetException;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import java.lang.reflect.Method;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import java.util.ArrayList;<a name="line.49"></a>
+<FONT color="green">050</FONT>    <a name="line.50"></a>
+<FONT color="green">051</FONT>    <a name="line.51"></a>
+<FONT color="green">052</FONT>    /**<a name="line.52"></a>
+<FONT color="green">053</FONT>     * A class that describes a view hierarchy that can be displayed in<a name="line.53"></a>
+<FONT color="green">054</FONT>     * another process. The hierarchy is inflated from a layout resource<a name="line.54"></a>
+<FONT color="green">055</FONT>     * file, and this class provides some basic operations for modifying<a name="line.55"></a>
+<FONT color="green">056</FONT>     * the content of the inflated hierarchy.<a name="line.56"></a>
+<FONT color="green">057</FONT>     */<a name="line.57"></a>
+<FONT color="green">058</FONT>    public class RemoteViews implements Parcelable, Filter {<a name="line.58"></a>
+<FONT color="green">059</FONT>        <a name="line.59"></a>
+<FONT color="green">060</FONT>        private static final String LOG_TAG = "RemoteViews";<a name="line.60"></a>
+<FONT color="green">061</FONT>        <a name="line.61"></a>
+<FONT color="green">062</FONT>        /**<a name="line.62"></a>
+<FONT color="green">063</FONT>         * The package name of the package containing the layout <a name="line.63"></a>
+<FONT color="green">064</FONT>         * resource. (Added to the parcel)<a name="line.64"></a>
+<FONT color="green">065</FONT>         */<a name="line.65"></a>
+<FONT color="green">066</FONT>        private String mPackage;<a name="line.66"></a>
+<FONT color="green">067</FONT>        <a name="line.67"></a>
+<FONT color="green">068</FONT>        /**<a name="line.68"></a>
+<FONT color="green">069</FONT>         * The resource ID of the layout file. (Added to the parcel)<a name="line.69"></a>
+<FONT color="green">070</FONT>         */<a name="line.70"></a>
+<FONT color="green">071</FONT>        private int mLayoutId;<a name="line.71"></a>
+<FONT color="green">072</FONT>        <a name="line.72"></a>
+<FONT color="green">073</FONT>        /**<a name="line.73"></a>
+<FONT color="green">074</FONT>         * The Context object used to inflate the layout file. Also may<a name="line.74"></a>
+<FONT color="green">075</FONT>         * be used by actions if they need access to the senders resources.<a name="line.75"></a>
+<FONT color="green">076</FONT>         */<a name="line.76"></a>
+<FONT color="green">077</FONT>        private Context mContext;<a name="line.77"></a>
+<FONT color="green">078</FONT>        <a name="line.78"></a>
+<FONT color="green">079</FONT>        /**<a name="line.79"></a>
+<FONT color="green">080</FONT>         * An array of actions to perform on the view tree once it has been<a name="line.80"></a>
+<FONT color="green">081</FONT>         * inflated<a name="line.81"></a>
+<FONT color="green">082</FONT>         */<a name="line.82"></a>
+<FONT color="green">083</FONT>        private ArrayList&lt;Action&gt; mActions;<a name="line.83"></a>
+<FONT color="green">084</FONT>        <a name="line.84"></a>
+<FONT color="green">085</FONT>        <a name="line.85"></a>
+<FONT color="green">086</FONT>        /**<a name="line.86"></a>
+<FONT color="green">087</FONT>         * This annotation indicates that a subclass of View is alllowed to be used<a name="line.87"></a>
+<FONT color="green">088</FONT>         * with the {@link android.widget.RemoteViews} mechanism.<a name="line.88"></a>
+<FONT color="green">089</FONT>         */<a name="line.89"></a>
+<FONT color="green">090</FONT>        @Target({ ElementType.TYPE })<a name="line.90"></a>
+<FONT color="green">091</FONT>        @Retention(RetentionPolicy.RUNTIME)<a name="line.91"></a>
+<FONT color="green">092</FONT>        public @interface RemoteView {<a name="line.92"></a>
+<FONT color="green">093</FONT>        }<a name="line.93"></a>
+<FONT color="green">094</FONT>    <a name="line.94"></a>
+<FONT color="green">095</FONT>        /**<a name="line.95"></a>
+<FONT color="green">096</FONT>         * Exception to send when something goes wrong executing an action<a name="line.96"></a>
+<FONT color="green">097</FONT>         *<a name="line.97"></a>
+<FONT color="green">098</FONT>         */<a name="line.98"></a>
+<FONT color="green">099</FONT>        public static class ActionException extends RuntimeException {<a name="line.99"></a>
+<FONT color="green">100</FONT>            public ActionException(Exception ex) {<a name="line.100"></a>
+<FONT color="green">101</FONT>                super(ex);<a name="line.101"></a>
+<FONT color="green">102</FONT>            }<a name="line.102"></a>
+<FONT color="green">103</FONT>            public ActionException(String message) {<a name="line.103"></a>
+<FONT color="green">104</FONT>                super(message);<a name="line.104"></a>
+<FONT color="green">105</FONT>            }<a name="line.105"></a>
+<FONT color="green">106</FONT>        }<a name="line.106"></a>
+<FONT color="green">107</FONT>        <a name="line.107"></a>
+<FONT color="green">108</FONT>        /**<a name="line.108"></a>
+<FONT color="green">109</FONT>         * Base class for all actions that can be performed on an <a name="line.109"></a>
+<FONT color="green">110</FONT>         * inflated view.<a name="line.110"></a>
+<FONT color="green">111</FONT>         *<a name="line.111"></a>
+<FONT color="green">112</FONT>         */<a name="line.112"></a>
+<FONT color="green">113</FONT>        private abstract static class Action implements Parcelable {<a name="line.113"></a>
+<FONT color="green">114</FONT>            public abstract void apply(View root) throws ActionException;<a name="line.114"></a>
+<FONT color="green">115</FONT>    <a name="line.115"></a>
+<FONT color="green">116</FONT>            public int describeContents() {<a name="line.116"></a>
+<FONT color="green">117</FONT>                return 0;<a name="line.117"></a>
+<FONT color="green">118</FONT>            }<a name="line.118"></a>
+<FONT color="green">119</FONT>        };<a name="line.119"></a>
+<FONT color="green">120</FONT>    <a name="line.120"></a>
+<FONT color="green">121</FONT>        /**<a name="line.121"></a>
+<FONT color="green">122</FONT>         * Equivalent to calling<a name="line.122"></a>
+<FONT color="green">123</FONT>         * {@link android.view.View#setOnClickListener(android.view.View.OnClickListener)}<a name="line.123"></a>
+<FONT color="green">124</FONT>         * to launch the provided {@link PendingIntent}.<a name="line.124"></a>
+<FONT color="green">125</FONT>         */<a name="line.125"></a>
+<FONT color="green">126</FONT>        private class SetOnClickPendingIntent extends Action {<a name="line.126"></a>
+<FONT color="green">127</FONT>            public SetOnClickPendingIntent(int id, PendingIntent pendingIntent) {<a name="line.127"></a>
+<FONT color="green">128</FONT>                this.viewId = id;<a name="line.128"></a>
+<FONT color="green">129</FONT>                this.pendingIntent = pendingIntent;<a name="line.129"></a>
+<FONT color="green">130</FONT>            }<a name="line.130"></a>
+<FONT color="green">131</FONT>            <a name="line.131"></a>
+<FONT color="green">132</FONT>            public SetOnClickPendingIntent(Parcel parcel) {<a name="line.132"></a>
+<FONT color="green">133</FONT>                viewId = parcel.readInt();<a name="line.133"></a>
+<FONT color="green">134</FONT>                pendingIntent = PendingIntent.readPendingIntentOrNullFromParcel(parcel);<a name="line.134"></a>
+<FONT color="green">135</FONT>            }<a name="line.135"></a>
+<FONT color="green">136</FONT>            <a name="line.136"></a>
+<FONT color="green">137</FONT>            public void writeToParcel(Parcel dest, int flags) {<a name="line.137"></a>
+<FONT color="green">138</FONT>                dest.writeInt(TAG);<a name="line.138"></a>
+<FONT color="green">139</FONT>                dest.writeInt(viewId);<a name="line.139"></a>
+<FONT color="green">140</FONT>                pendingIntent.writeToParcel(dest, 0 /* no flags */);<a name="line.140"></a>
+<FONT color="green">141</FONT>            }<a name="line.141"></a>
+<FONT color="green">142</FONT>            <a name="line.142"></a>
+<FONT color="green">143</FONT>            @Override<a name="line.143"></a>
+<FONT color="green">144</FONT>            public void apply(View root) {<a name="line.144"></a>
+<FONT color="green">145</FONT>                final View target = root.findViewById(viewId);<a name="line.145"></a>
+<FONT color="green">146</FONT>                if (target != null &amp;&amp; pendingIntent != null) {<a name="line.146"></a>
+<FONT color="green">147</FONT>                    OnClickListener listener = new OnClickListener() {<a name="line.147"></a>
+<FONT color="green">148</FONT>                        public void onClick(View v) {<a name="line.148"></a>
+<FONT color="green">149</FONT>                            try {<a name="line.149"></a>
+<FONT color="green">150</FONT>                                // TODO: Unregister this handler if PendingIntent.FLAG_ONE_SHOT?<a name="line.150"></a>
+<FONT color="green">151</FONT>                                pendingIntent.send();<a name="line.151"></a>
+<FONT color="green">152</FONT>                            } catch (CanceledException e) {<a name="line.152"></a>
+<FONT color="green">153</FONT>                                throw new ActionException(e.toString());<a name="line.153"></a>
+<FONT color="green">154</FONT>                            }<a name="line.154"></a>
+<FONT color="green">155</FONT>                        }<a name="line.155"></a>
+<FONT color="green">156</FONT>                    };<a name="line.156"></a>
+<FONT color="green">157</FONT>                    target.setOnClickListener(listener);<a name="line.157"></a>
+<FONT color="green">158</FONT>                }<a name="line.158"></a>
+<FONT color="green">159</FONT>            }<a name="line.159"></a>
+<FONT color="green">160</FONT>            <a name="line.160"></a>
+<FONT color="green">161</FONT>            int viewId;<a name="line.161"></a>
+<FONT color="green">162</FONT>            PendingIntent pendingIntent;<a name="line.162"></a>
+<FONT color="green">163</FONT>    <a name="line.163"></a>
+<FONT color="green">164</FONT>            public final static int TAG = 1;<a name="line.164"></a>
+<FONT color="green">165</FONT>        }<a name="line.165"></a>
+<FONT color="green">166</FONT>    <a name="line.166"></a>
+<FONT color="green">167</FONT>        /**<a name="line.167"></a>
+<FONT color="green">168</FONT>         * Equivalent to calling a combination of {@link Drawable#setAlpha(int)},<a name="line.168"></a>
+<FONT color="green">169</FONT>         * {@link Drawable#setColorFilter(int, android.graphics.PorterDuff.Mode)},<a name="line.169"></a>
+<FONT color="green">170</FONT>         * and/or {@link Drawable#setLevel(int)} on the {@link Drawable} of a given view.<a name="line.170"></a>
+<FONT color="green">171</FONT>         * &lt;p&gt;<a name="line.171"></a>
+<FONT color="green">172</FONT>         * These operations will be performed on the {@link Drawable} returned by the<a name="line.172"></a>
+<FONT color="green">173</FONT>         * target {@link View#getBackground()} by default.  If targetBackground is false,<a name="line.173"></a>
+<FONT color="green">174</FONT>         * we assume the target is an {@link ImageView} and try applying the operations<a name="line.174"></a>
+<FONT color="green">175</FONT>         * to {@link ImageView#getDrawable()}.<a name="line.175"></a>
+<FONT color="green">176</FONT>         * &lt;p&gt;<a name="line.176"></a>
+<FONT color="green">177</FONT>         * You can omit specific calls by marking their values with null or -1.<a name="line.177"></a>
+<FONT color="green">178</FONT>         */<a name="line.178"></a>
+<FONT color="green">179</FONT>        private class SetDrawableParameters extends Action {<a name="line.179"></a>
+<FONT color="green">180</FONT>            public SetDrawableParameters(int id, boolean targetBackground, int alpha,<a name="line.180"></a>
+<FONT color="green">181</FONT>                    int colorFilter, PorterDuff.Mode mode, int level) {<a name="line.181"></a>
+<FONT color="green">182</FONT>                this.viewId = id;<a name="line.182"></a>
+<FONT color="green">183</FONT>                this.targetBackground = targetBackground;<a name="line.183"></a>
+<FONT color="green">184</FONT>                this.alpha = alpha;<a name="line.184"></a>
+<FONT color="green">185</FONT>                this.colorFilter = colorFilter;<a name="line.185"></a>
+<FONT color="green">186</FONT>                this.filterMode = mode;<a name="line.186"></a>
+<FONT color="green">187</FONT>                this.level = level;<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>            <a name="line.189"></a>
+<FONT color="green">190</FONT>            public SetDrawableParameters(Parcel parcel) {<a name="line.190"></a>
+<FONT color="green">191</FONT>                viewId = parcel.readInt();<a name="line.191"></a>
+<FONT color="green">192</FONT>                targetBackground = parcel.readInt() != 0;<a name="line.192"></a>
+<FONT color="green">193</FONT>                alpha = parcel.readInt();<a name="line.193"></a>
+<FONT color="green">194</FONT>                colorFilter = parcel.readInt();<a name="line.194"></a>
+<FONT color="green">195</FONT>                boolean hasMode = parcel.readInt() != 0;<a name="line.195"></a>
+<FONT color="green">196</FONT>                if (hasMode) {<a name="line.196"></a>
+<FONT color="green">197</FONT>                    filterMode = PorterDuff.Mode.valueOf(parcel.readString());<a name="line.197"></a>
+<FONT color="green">198</FONT>                } else {<a name="line.198"></a>
+<FONT color="green">199</FONT>                    filterMode = null;<a name="line.199"></a>
+<FONT color="green">200</FONT>                }<a name="line.200"></a>
+<FONT color="green">201</FONT>                level = parcel.readInt();<a name="line.201"></a>
+<FONT color="green">202</FONT>            }<a name="line.202"></a>
+<FONT color="green">203</FONT>            <a name="line.203"></a>
+<FONT color="green">204</FONT>            public void writeToParcel(Parcel dest, int flags) {<a name="line.204"></a>
+<FONT color="green">205</FONT>                dest.writeInt(TAG);<a name="line.205"></a>
+<FONT color="green">206</FONT>                dest.writeInt(viewId);<a name="line.206"></a>
+<FONT color="green">207</FONT>                dest.writeInt(targetBackground ? 1 : 0);<a name="line.207"></a>
+<FONT color="green">208</FONT>                dest.writeInt(alpha);<a name="line.208"></a>
+<FONT color="green">209</FONT>                dest.writeInt(colorFilter);<a name="line.209"></a>
+<FONT color="green">210</FONT>                if (filterMode != null) {<a name="line.210"></a>
+<FONT color="green">211</FONT>                    dest.writeInt(1);<a name="line.211"></a>
+<FONT color="green">212</FONT>                    dest.writeString(filterMode.toString());<a name="line.212"></a>
+<FONT color="green">213</FONT>                } else {<a name="line.213"></a>
+<FONT color="green">214</FONT>                    dest.writeInt(0);<a name="line.214"></a>
+<FONT color="green">215</FONT>                }<a name="line.215"></a>
+<FONT color="green">216</FONT>                dest.writeInt(level);<a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>            <a name="line.218"></a>
+<FONT color="green">219</FONT>            @Override<a name="line.219"></a>
+<FONT color="green">220</FONT>            public void apply(View root) {<a name="line.220"></a>
+<FONT color="green">221</FONT>                final View target = root.findViewById(viewId);<a name="line.221"></a>
+<FONT color="green">222</FONT>                if (target == null) {<a name="line.222"></a>
+<FONT color="green">223</FONT>                    return;<a name="line.223"></a>
+<FONT color="green">224</FONT>                }<a name="line.224"></a>
+<FONT color="green">225</FONT>                <a name="line.225"></a>
+<FONT color="green">226</FONT>                // Pick the correct drawable to modify for this view<a name="line.226"></a>
+<FONT color="green">227</FONT>                Drawable targetDrawable = null;<a name="line.227"></a>
+<FONT color="green">228</FONT>                if (targetBackground) {<a name="line.228"></a>
+<FONT color="green">229</FONT>                    targetDrawable = target.getBackground();<a name="line.229"></a>
+<FONT color="green">230</FONT>                } else if (target instanceof ImageView) {<a name="line.230"></a>
+<FONT color="green">231</FONT>                    ImageView imageView = (ImageView) target;<a name="line.231"></a>
+<FONT color="green">232</FONT>                    targetDrawable = imageView.getDrawable();<a name="line.232"></a>
+<FONT color="green">233</FONT>                }<a name="line.233"></a>
+<FONT color="green">234</FONT>                <a name="line.234"></a>
+<FONT color="green">235</FONT>                // Perform modifications only if values are set correctly<a name="line.235"></a>
+<FONT color="green">236</FONT>                if (alpha != -1) {<a name="line.236"></a>
+<FONT color="green">237</FONT>                    targetDrawable.setAlpha(alpha);<a name="line.237"></a>
+<FONT color="green">238</FONT>                }<a name="line.238"></a>
+<FONT color="green">239</FONT>                if (colorFilter != -1 &amp;&amp; filterMode != null) {<a name="line.239"></a>
+<FONT color="green">240</FONT>                    targetDrawable.setColorFilter(colorFilter, filterMode);<a name="line.240"></a>
+<FONT color="green">241</FONT>                }<a name="line.241"></a>
+<FONT color="green">242</FONT>                if (level != -1) {<a name="line.242"></a>
+<FONT color="green">243</FONT>                    targetDrawable.setLevel(level);<a name="line.243"></a>
+<FONT color="green">244</FONT>                }<a name="line.244"></a>
+<FONT color="green">245</FONT>            }<a name="line.245"></a>
+<FONT color="green">246</FONT>            <a name="line.246"></a>
+<FONT color="green">247</FONT>            int viewId;<a name="line.247"></a>
+<FONT color="green">248</FONT>            boolean targetBackground;<a name="line.248"></a>
+<FONT color="green">249</FONT>            int alpha;<a name="line.249"></a>
+<FONT color="green">250</FONT>            int colorFilter;<a name="line.250"></a>
+<FONT color="green">251</FONT>            PorterDuff.Mode filterMode;<a name="line.251"></a>
+<FONT color="green">252</FONT>            int level;<a name="line.252"></a>
+<FONT color="green">253</FONT>    <a name="line.253"></a>
+<FONT color="green">254</FONT>            public final static int TAG = 3;<a name="line.254"></a>
+<FONT color="green">255</FONT>        }<a name="line.255"></a>
+<FONT color="green">256</FONT>        <a name="line.256"></a>
+<FONT color="green">257</FONT>        /**<a name="line.257"></a>
+<FONT color="green">258</FONT>         * Base class for the reflection actions.<a name="line.258"></a>
+<FONT color="green">259</FONT>         */<a name="line.259"></a>
+<FONT color="green">260</FONT>        private class ReflectionAction extends Action {<a name="line.260"></a>
+<FONT color="green">261</FONT>            static final int TAG = 2;<a name="line.261"></a>
+<FONT color="green">262</FONT>    <a name="line.262"></a>
+<FONT color="green">263</FONT>            static final int BOOLEAN = 1;<a name="line.263"></a>
+<FONT color="green">264</FONT>            static final int BYTE = 2;<a name="line.264"></a>
+<FONT color="green">265</FONT>            static final int SHORT = 3;<a name="line.265"></a>
+<FONT color="green">266</FONT>            static final int INT = 4;<a name="line.266"></a>
+<FONT color="green">267</FONT>            static final int LONG = 5;<a name="line.267"></a>
+<FONT color="green">268</FONT>            static final int FLOAT = 6;<a name="line.268"></a>
+<FONT color="green">269</FONT>            static final int DOUBLE = 7;<a name="line.269"></a>
+<FONT color="green">270</FONT>            static final int CHAR = 8;<a name="line.270"></a>
+<FONT color="green">271</FONT>            static final int STRING = 9;<a name="line.271"></a>
+<FONT color="green">272</FONT>            static final int CHAR_SEQUENCE = 10;<a name="line.272"></a>
+<FONT color="green">273</FONT>            static final int URI = 11;<a name="line.273"></a>
+<FONT color="green">274</FONT>            static final int BITMAP = 12;<a name="line.274"></a>
+<FONT color="green">275</FONT>    <a name="line.275"></a>
+<FONT color="green">276</FONT>            int viewId;<a name="line.276"></a>
+<FONT color="green">277</FONT>            String methodName;<a name="line.277"></a>
+<FONT color="green">278</FONT>            int type;<a name="line.278"></a>
+<FONT color="green">279</FONT>            Object value;<a name="line.279"></a>
+<FONT color="green">280</FONT>    <a name="line.280"></a>
+<FONT color="green">281</FONT>            ReflectionAction(int viewId, String methodName, int type, Object value) {<a name="line.281"></a>
+<FONT color="green">282</FONT>                this.viewId = viewId;<a name="line.282"></a>
+<FONT color="green">283</FONT>                this.methodName = methodName;<a name="line.283"></a>
+<FONT color="green">284</FONT>                this.type = type;<a name="line.284"></a>
+<FONT color="green">285</FONT>                this.value = value;<a name="line.285"></a>
+<FONT color="green">286</FONT>            }<a name="line.286"></a>
+<FONT color="green">287</FONT>    <a name="line.287"></a>
+<FONT color="green">288</FONT>            ReflectionAction(Parcel in) {<a name="line.288"></a>
+<FONT color="green">289</FONT>                this.viewId = in.readInt();<a name="line.289"></a>
+<FONT color="green">290</FONT>                this.methodName = in.readString();<a name="line.290"></a>
+<FONT color="green">291</FONT>                this.type = in.readInt();<a name="line.291"></a>
+<FONT color="green">292</FONT>                if (false) {<a name="line.292"></a>
+<FONT color="green">293</FONT>                    Log.d("RemoteViews", "read viewId=0x" + Integer.toHexString(this.viewId)<a name="line.293"></a>
+<FONT color="green">294</FONT>                            + " methodName=" + this.methodName + " type=" + this.type);<a name="line.294"></a>
+<FONT color="green">295</FONT>                }<a name="line.295"></a>
+<FONT color="green">296</FONT>                switch (this.type) {<a name="line.296"></a>
+<FONT color="green">297</FONT>                    case BOOLEAN:<a name="line.297"></a>
+<FONT color="green">298</FONT>                        this.value = in.readInt() != 0;<a name="line.298"></a>
+<FONT color="green">299</FONT>                        break;<a name="line.299"></a>
+<FONT color="green">300</FONT>                    case BYTE:<a name="line.300"></a>
+<FONT color="green">301</FONT>                        this.value = in.readByte();<a name="line.301"></a>
+<FONT color="green">302</FONT>                        break;<a name="line.302"></a>
+<FONT color="green">303</FONT>                    case SHORT:<a name="line.303"></a>
+<FONT color="green">304</FONT>                        this.value = (short)in.readInt();<a name="line.304"></a>
+<FONT color="green">305</FONT>                        break;<a name="line.305"></a>
+<FONT color="green">306</FONT>                    case INT:<a name="line.306"></a>
+<FONT color="green">307</FONT>                        this.value = in.readInt();<a name="line.307"></a>
+<FONT color="green">308</FONT>                        break;<a name="line.308"></a>
+<FONT color="green">309</FONT>                    case LONG:<a name="line.309"></a>
+<FONT color="green">310</FONT>                        this.value = in.readLong();<a name="line.310"></a>
+<FONT color="green">311</FONT>                        break;<a name="line.311"></a>
+<FONT color="green">312</FONT>                    case FLOAT:<a name="line.312"></a>
+<FONT color="green">313</FONT>                        this.value = in.readFloat();<a name="line.313"></a>
+<FONT color="green">314</FONT>                        break;<a name="line.314"></a>
+<FONT color="green">315</FONT>                    case DOUBLE:<a name="line.315"></a>
+<FONT color="green">316</FONT>                        this.value = in.readDouble();<a name="line.316"></a>
+<FONT color="green">317</FONT>                        break;<a name="line.317"></a>
+<FONT color="green">318</FONT>                    case CHAR:<a name="line.318"></a>
+<FONT color="green">319</FONT>                        this.value = (char)in.readInt();<a name="line.319"></a>
+<FONT color="green">320</FONT>                        break;<a name="line.320"></a>
+<FONT color="green">321</FONT>                    case STRING:<a name="line.321"></a>
+<FONT color="green">322</FONT>                        this.value = in.readString();<a name="line.322"></a>
+<FONT color="green">323</FONT>                        break;<a name="line.323"></a>
+<FONT color="green">324</FONT>                    case CHAR_SEQUENCE:<a name="line.324"></a>
+<FONT color="green">325</FONT>                        this.value = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(in);<a name="line.325"></a>
+<FONT color="green">326</FONT>                        break;<a name="line.326"></a>
+<FONT color="green">327</FONT>                    case URI:<a name="line.327"></a>
+<FONT color="green">328</FONT>                        this.value = Uri.CREATOR.createFromParcel(in);<a name="line.328"></a>
+<FONT color="green">329</FONT>                        break;<a name="line.329"></a>
+<FONT color="green">330</FONT>                    case BITMAP:<a name="line.330"></a>
+<FONT color="green">331</FONT>                        this.value = Bitmap.CREATOR.createFromParcel(in);<a name="line.331"></a>
+<FONT color="green">332</FONT>                        break;<a name="line.332"></a>
+<FONT color="green">333</FONT>                    default:<a name="line.333"></a>
+<FONT color="green">334</FONT>                        break;<a name="line.334"></a>
+<FONT color="green">335</FONT>                }<a name="line.335"></a>
+<FONT color="green">336</FONT>            }<a name="line.336"></a>
+<FONT color="green">337</FONT>    <a name="line.337"></a>
+<FONT color="green">338</FONT>            public void writeToParcel(Parcel out, int flags) {<a name="line.338"></a>
+<FONT color="green">339</FONT>                out.writeInt(TAG);<a name="line.339"></a>
+<FONT color="green">340</FONT>                out.writeInt(this.viewId);<a name="line.340"></a>
+<FONT color="green">341</FONT>                out.writeString(this.methodName);<a name="line.341"></a>
+<FONT color="green">342</FONT>                out.writeInt(this.type);<a name="line.342"></a>
+<FONT color="green">343</FONT>                if (false) {<a name="line.343"></a>
+<FONT color="green">344</FONT>                    Log.d("RemoteViews", "write viewId=0x" + Integer.toHexString(this.viewId)<a name="line.344"></a>
+<FONT color="green">345</FONT>                            + " methodName=" + this.methodName + " type=" + this.type);<a name="line.345"></a>
+<FONT color="green">346</FONT>                }<a name="line.346"></a>
+<FONT color="green">347</FONT>                switch (this.type) {<a name="line.347"></a>
+<FONT color="green">348</FONT>                    case BOOLEAN:<a name="line.348"></a>
+<FONT color="green">349</FONT>                        out.writeInt(((Boolean)this.value).booleanValue() ? 1 : 0);<a name="line.349"></a>
+<FONT color="green">350</FONT>                        break;<a name="line.350"></a>
+<FONT color="green">351</FONT>                    case BYTE:<a name="line.351"></a>
+<FONT color="green">352</FONT>                        out.writeByte(((Byte)this.value).byteValue());<a name="line.352"></a>
+<FONT color="green">353</FONT>                        break;<a name="line.353"></a>
+<FONT color="green">354</FONT>                    case SHORT:<a name="line.354"></a>
+<FONT color="green">355</FONT>                        out.writeInt(((Short)this.value).shortValue());<a name="line.355"></a>
+<FONT color="green">356</FONT>                        break;<a name="line.356"></a>
+<FONT color="green">357</FONT>                    case INT:<a name="line.357"></a>
+<FONT color="green">358</FONT>                        out.writeInt(((Integer)this.value).intValue());<a name="line.358"></a>
+<FONT color="green">359</FONT>                        break;<a name="line.359"></a>
+<FONT color="green">360</FONT>                    case LONG:<a name="line.360"></a>
+<FONT color="green">361</FONT>                        out.writeLong(((Long)this.value).longValue());<a name="line.361"></a>
+<FONT color="green">362</FONT>                        break;<a name="line.362"></a>
+<FONT color="green">363</FONT>                    case FLOAT:<a name="line.363"></a>
+<FONT color="green">364</FONT>                        out.writeFloat(((Float)this.value).floatValue());<a name="line.364"></a>
+<FONT color="green">365</FONT>                        break;<a name="line.365"></a>
+<FONT color="green">366</FONT>                    case DOUBLE:<a name="line.366"></a>
+<FONT color="green">367</FONT>                        out.writeDouble(((Double)this.value).doubleValue());<a name="line.367"></a>
+<FONT color="green">368</FONT>                        break;<a name="line.368"></a>
+<FONT color="green">369</FONT>                    case CHAR:<a name="line.369"></a>
+<FONT color="green">370</FONT>                        out.writeInt((int)((Character)this.value).charValue());<a name="line.370"></a>
+<FONT color="green">371</FONT>                        break;<a name="line.371"></a>
+<FONT color="green">372</FONT>                    case STRING:<a name="line.372"></a>
+<FONT color="green">373</FONT>                        out.writeString((String)this.value);<a name="line.373"></a>
+<FONT color="green">374</FONT>                        break;<a name="line.374"></a>
+<FONT color="green">375</FONT>                    case CHAR_SEQUENCE:<a name="line.375"></a>
+<FONT color="green">376</FONT>                        TextUtils.writeToParcel((CharSequence)this.value, out, flags);   <a name="line.376"></a>
+<FONT color="green">377</FONT>                        break;<a name="line.377"></a>
+<FONT color="green">378</FONT>                    case URI:<a name="line.378"></a>
+<FONT color="green">379</FONT>                        ((Uri)this.value).writeToParcel(out, flags);<a name="line.379"></a>
+<FONT color="green">380</FONT>                        break;<a name="line.380"></a>
+<FONT color="green">381</FONT>                    case BITMAP:<a name="line.381"></a>
+<FONT color="green">382</FONT>                        ((Bitmap)this.value).writeToParcel(out, flags);<a name="line.382"></a>
+<FONT color="green">383</FONT>                        break;<a name="line.383"></a>
+<FONT color="green">384</FONT>                    default:<a name="line.384"></a>
+<FONT color="green">385</FONT>                        break;<a name="line.385"></a>
+<FONT color="green">386</FONT>                }<a name="line.386"></a>
+<FONT color="green">387</FONT>            }<a name="line.387"></a>
+<FONT color="green">388</FONT>    <a name="line.388"></a>
+<FONT color="green">389</FONT>            private Class getParameterType() {<a name="line.389"></a>
+<FONT color="green">390</FONT>                switch (this.type) {<a name="line.390"></a>
+<FONT color="green">391</FONT>                    case BOOLEAN:<a name="line.391"></a>
+<FONT color="green">392</FONT>                        return boolean.class;<a name="line.392"></a>
+<FONT color="green">393</FONT>                    case BYTE:<a name="line.393"></a>
+<FONT color="green">394</FONT>                        return byte.class;<a name="line.394"></a>
+<FONT color="green">395</FONT>                    case SHORT:<a name="line.395"></a>
+<FONT color="green">396</FONT>                        return short.class;<a name="line.396"></a>
+<FONT color="green">397</FONT>                    case INT:<a name="line.397"></a>
+<FONT color="green">398</FONT>                        return int.class;<a name="line.398"></a>
+<FONT color="green">399</FONT>                    case LONG:<a name="line.399"></a>
+<FONT color="green">400</FONT>                        return long.class;<a name="line.400"></a>
+<FONT color="green">401</FONT>                    case FLOAT:<a name="line.401"></a>
+<FONT color="green">402</FONT>                        return float.class;<a name="line.402"></a>
+<FONT color="green">403</FONT>                    case DOUBLE:<a name="line.403"></a>
+<FONT color="green">404</FONT>                        return double.class;<a name="line.404"></a>
+<FONT color="green">405</FONT>                    case CHAR:<a name="line.405"></a>
+<FONT color="green">406</FONT>                        return char.class;<a name="line.406"></a>
+<FONT color="green">407</FONT>                    case STRING:<a name="line.407"></a>
+<FONT color="green">408</FONT>                        return String.class;<a name="line.408"></a>
+<FONT color="green">409</FONT>                    case CHAR_SEQUENCE:<a name="line.409"></a>
+<FONT color="green">410</FONT>                        return CharSequence.class;<a name="line.410"></a>
+<FONT color="green">411</FONT>                    case URI:<a name="line.411"></a>
+<FONT color="green">412</FONT>                        return Uri.class;<a name="line.412"></a>
+<FONT color="green">413</FONT>                    case BITMAP:<a name="line.413"></a>
+<FONT color="green">414</FONT>                        return Bitmap.class;<a name="line.414"></a>
+<FONT color="green">415</FONT>                    default:<a name="line.415"></a>
+<FONT color="green">416</FONT>                        return null;<a name="line.416"></a>
+<FONT color="green">417</FONT>                }<a name="line.417"></a>
+<FONT color="green">418</FONT>            }<a name="line.418"></a>
+<FONT color="green">419</FONT>    <a name="line.419"></a>
+<FONT color="green">420</FONT>            @Override<a name="line.420"></a>
+<FONT color="green">421</FONT>            public void apply(View root) {<a name="line.421"></a>
+<FONT color="green">422</FONT>                final View view = root.findViewById(viewId);<a name="line.422"></a>
+<FONT color="green">423</FONT>                if (view == null) {<a name="line.423"></a>
+<FONT color="green">424</FONT>                    throw new ActionException("can't find view: 0x" + Integer.toHexString(viewId));<a name="line.424"></a>
+<FONT color="green">425</FONT>                }<a name="line.425"></a>
+<FONT color="green">426</FONT>    <a name="line.426"></a>
+<FONT color="green">427</FONT>                Class param = getParameterType();<a name="line.427"></a>
+<FONT color="green">428</FONT>                if (param == null) {<a name="line.428"></a>
+<FONT color="green">429</FONT>                    throw new ActionException("bad type: " + this.type);<a name="line.429"></a>
+<FONT color="green">430</FONT>                }<a name="line.430"></a>
+<FONT color="green">431</FONT>    <a name="line.431"></a>
+<FONT color="green">432</FONT>                Class klass = view.getClass();<a name="line.432"></a>
+<FONT color="green">433</FONT>                Method method = null;<a name="line.433"></a>
+<FONT color="green">434</FONT>                try {<a name="line.434"></a>
+<FONT color="green">435</FONT>                    method = klass.getMethod(this.methodName, getParameterType());<a name="line.435"></a>
+<FONT color="green">436</FONT>                }<a name="line.436"></a>
+<FONT color="green">437</FONT>                catch (NoSuchMethodException ex) {<a name="line.437"></a>
+<FONT color="green">438</FONT>                    throw new ActionException("view: " + klass.getName() + " doesn't have method: "<a name="line.438"></a>
+<FONT color="green">439</FONT>                            + this.methodName + "(" + param.getName() + ")");<a name="line.439"></a>
+<FONT color="green">440</FONT>                }<a name="line.440"></a>
+<FONT color="green">441</FONT>    <a name="line.441"></a>
+<FONT color="green">442</FONT>                if (!method.isAnnotationPresent(RemotableViewMethod.class)) {<a name="line.442"></a>
+<FONT color="green">443</FONT>                    throw new ActionException("view: " + klass.getName()<a name="line.443"></a>
+<FONT color="green">444</FONT>                            + " can't use method with RemoteViews: "<a name="line.444"></a>
+<FONT color="green">445</FONT>                            + this.methodName + "(" + param.getName() + ")");<a name="line.445"></a>
+<FONT color="green">446</FONT>                }<a name="line.446"></a>
+<FONT color="green">447</FONT>    <a name="line.447"></a>
+<FONT color="green">448</FONT>                try {<a name="line.448"></a>
+<FONT color="green">449</FONT>                    if (false) {<a name="line.449"></a>
+<FONT color="green">450</FONT>                        Log.d("RemoteViews", "view: " + klass.getName() + " calling method: "<a name="line.450"></a>
+<FONT color="green">451</FONT>                            + this.methodName + "(" + param.getName() + ") with "<a name="line.451"></a>
+<FONT color="green">452</FONT>                            + (this.value == null ? "null" : this.value.getClass().getName()));<a name="line.452"></a>
+<FONT color="green">453</FONT>                    }<a name="line.453"></a>
+<FONT color="green">454</FONT>                    method.invoke(view, this.value);<a name="line.454"></a>
+<FONT color="green">455</FONT>                }<a name="line.455"></a>
+<FONT color="green">456</FONT>                catch (Exception ex) {<a name="line.456"></a>
+<FONT color="green">457</FONT>                    throw new ActionException(ex);<a name="line.457"></a>
+<FONT color="green">458</FONT>                }<a name="line.458"></a>
+<FONT color="green">459</FONT>            }<a name="line.459"></a>
+<FONT color="green">460</FONT>        }<a name="line.460"></a>
+<FONT color="green">461</FONT>    <a name="line.461"></a>
+<FONT color="green">462</FONT>    <a name="line.462"></a>
+<FONT color="green">463</FONT>        /**<a name="line.463"></a>
+<FONT color="green">464</FONT>         * Create a new RemoteViews object that will display the views contained<a name="line.464"></a>
+<FONT color="green">465</FONT>         * in the specified layout file.<a name="line.465"></a>
+<FONT color="green">466</FONT>         * <a name="line.466"></a>
+<FONT color="green">467</FONT>         * @param packageName Name of the package that contains the layout resource<a name="line.467"></a>
+<FONT color="green">468</FONT>         * @param layoutId The id of the layout resource<a name="line.468"></a>
+<FONT color="green">469</FONT>         */<a name="line.469"></a>
+<FONT color="green">470</FONT>        public RemoteViews(String packageName, int layoutId) {<a name="line.470"></a>
+<FONT color="green">471</FONT>            mPackage = packageName;<a name="line.471"></a>
+<FONT color="green">472</FONT>            mLayoutId = layoutId;<a name="line.472"></a>
+<FONT color="green">473</FONT>        }<a name="line.473"></a>
+<FONT color="green">474</FONT>    <a name="line.474"></a>
+<FONT color="green">475</FONT>        /**<a name="line.475"></a>
+<FONT color="green">476</FONT>         * Reads a RemoteViews object from a parcel.<a name="line.476"></a>
+<FONT color="green">477</FONT>         * <a name="line.477"></a>
+<FONT color="green">478</FONT>         * @param parcel<a name="line.478"></a>
+<FONT color="green">479</FONT>         */<a name="line.479"></a>
+<FONT color="green">480</FONT>        public RemoteViews(Parcel parcel) {<a name="line.480"></a>
+<FONT color="green">481</FONT>            mPackage = parcel.readString();<a name="line.481"></a>
+<FONT color="green">482</FONT>            mLayoutId = parcel.readInt();<a name="line.482"></a>
+<FONT color="green">483</FONT>            int count = parcel.readInt();<a name="line.483"></a>
+<FONT color="green">484</FONT>            if (count &gt; 0) {<a name="line.484"></a>
+<FONT color="green">485</FONT>                mActions = new ArrayList&lt;Action&gt;(count);<a name="line.485"></a>
+<FONT color="green">486</FONT>                for (int i=0; i&lt;count; i++) {<a name="line.486"></a>
+<FONT color="green">487</FONT>                    int tag = parcel.readInt();<a name="line.487"></a>
+<FONT color="green">488</FONT>                    switch (tag) {<a name="line.488"></a>
+<FONT color="green">489</FONT>                    case SetOnClickPendingIntent.TAG:<a name="line.489"></a>
+<FONT color="green">490</FONT>                        mActions.add(new SetOnClickPendingIntent(parcel));<a name="line.490"></a>
+<FONT color="green">491</FONT>                        break;<a name="line.491"></a>
+<FONT color="green">492</FONT>                    case SetDrawableParameters.TAG:<a name="line.492"></a>
+<FONT color="green">493</FONT>                        mActions.add(new SetDrawableParameters(parcel));<a name="line.493"></a>
+<FONT color="green">494</FONT>                        break;<a name="line.494"></a>
+<FONT color="green">495</FONT>                    case ReflectionAction.TAG:<a name="line.495"></a>
+<FONT color="green">496</FONT>                        mActions.add(new ReflectionAction(parcel));<a name="line.496"></a>
+<FONT color="green">497</FONT>                        break;<a name="line.497"></a>
+<FONT color="green">498</FONT>                    default:<a name="line.498"></a>
+<FONT color="green">499</FONT>                        throw new ActionException("Tag " + tag + " not found");<a name="line.499"></a>
+<FONT color="green">500</FONT>                    }<a name="line.500"></a>
+<FONT color="green">501</FONT>                }<a name="line.501"></a>
+<FONT color="green">502</FONT>            }<a name="line.502"></a>
+<FONT color="green">503</FONT>        }<a name="line.503"></a>
+<FONT color="green">504</FONT>    <a name="line.504"></a>
+<FONT color="green">505</FONT>        public String getPackage() {<a name="line.505"></a>
+<FONT color="green">506</FONT>            return mPackage;<a name="line.506"></a>
+<FONT color="green">507</FONT>        }<a name="line.507"></a>
+<FONT color="green">508</FONT>    <a name="line.508"></a>
+<FONT color="green">509</FONT>        public int getLayoutId() {<a name="line.509"></a>
+<FONT color="green">510</FONT>            return mLayoutId;<a name="line.510"></a>
+<FONT color="green">511</FONT>        }<a name="line.511"></a>
+<FONT color="green">512</FONT>    <a name="line.512"></a>
+<FONT color="green">513</FONT>        /**<a name="line.513"></a>
+<FONT color="green">514</FONT>         * Add an action to be executed on the remote side when apply is called.<a name="line.514"></a>
+<FONT color="green">515</FONT>         * <a name="line.515"></a>
+<FONT color="green">516</FONT>         * @param a The action to add<a name="line.516"></a>
+<FONT color="green">517</FONT>         */<a name="line.517"></a>
+<FONT color="green">518</FONT>        private void addAction(Action a) {<a name="line.518"></a>
+<FONT color="green">519</FONT>            if (mActions == null) {<a name="line.519"></a>
+<FONT color="green">520</FONT>                mActions = new ArrayList&lt;Action&gt;();<a name="line.520"></a>
+<FONT color="green">521</FONT>            }<a name="line.521"></a>
+<FONT color="green">522</FONT>            mActions.add(a);<a name="line.522"></a>
+<FONT color="green">523</FONT>        }<a name="line.523"></a>
+<FONT color="green">524</FONT>        <a name="line.524"></a>
+<FONT color="green">525</FONT>        /**<a name="line.525"></a>
+<FONT color="green">526</FONT>         * Equivalent to calling View.setVisibility<a name="line.526"></a>
+<FONT color="green">527</FONT>         * <a name="line.527"></a>
+<FONT color="green">528</FONT>         * @param viewId The id of the view whose visibility should change<a name="line.528"></a>
+<FONT color="green">529</FONT>         * @param visibility The new visibility for the view<a name="line.529"></a>
+<FONT color="green">530</FONT>         */<a name="line.530"></a>
+<FONT color="green">531</FONT>        public void setViewVisibility(int viewId, int visibility) {<a name="line.531"></a>
+<FONT color="green">532</FONT>            setInt(viewId, "setVisibility", visibility);<a name="line.532"></a>
+<FONT color="green">533</FONT>        }<a name="line.533"></a>
+<FONT color="green">534</FONT>        <a name="line.534"></a>
+<FONT color="green">535</FONT>        /**<a name="line.535"></a>
+<FONT color="green">536</FONT>         * Equivalent to calling TextView.setText<a name="line.536"></a>
+<FONT color="green">537</FONT>         * <a name="line.537"></a>
+<FONT color="green">538</FONT>         * @param viewId The id of the view whose text should change<a name="line.538"></a>
+<FONT color="green">539</FONT>         * @param text The new text for the view<a name="line.539"></a>
+<FONT color="green">540</FONT>         */<a name="line.540"></a>
+<FONT color="green">541</FONT>        public void setTextViewText(int viewId, CharSequence text) {<a name="line.541"></a>
+<FONT color="green">542</FONT>            setCharSequence(viewId, "setText", text);<a name="line.542"></a>
+<FONT color="green">543</FONT>        }<a name="line.543"></a>
+<FONT color="green">544</FONT>        <a name="line.544"></a>
+<FONT color="green">545</FONT>        /**<a name="line.545"></a>
+<FONT color="green">546</FONT>         * Equivalent to calling ImageView.setImageResource<a name="line.546"></a>
+<FONT color="green">547</FONT>         * <a name="line.547"></a>
+<FONT color="green">548</FONT>         * @param viewId The id of the view whose drawable should change<a name="line.548"></a>
+<FONT color="green">549</FONT>         * @param srcId The new resource id for the drawable<a name="line.549"></a>
+<FONT color="green">550</FONT>         */<a name="line.550"></a>
+<FONT color="green">551</FONT>        public void setImageViewResource(int viewId, int srcId) {   <a name="line.551"></a>
+<FONT color="green">552</FONT>            setInt(viewId, "setImageResource", srcId);<a name="line.552"></a>
+<FONT color="green">553</FONT>        }<a name="line.553"></a>
+<FONT color="green">554</FONT>    <a name="line.554"></a>
+<FONT color="green">555</FONT>        /**<a name="line.555"></a>
+<FONT color="green">556</FONT>         * Equivalent to calling ImageView.setImageURI<a name="line.556"></a>
+<FONT color="green">557</FONT>         * <a name="line.557"></a>
+<FONT color="green">558</FONT>         * @param viewId The id of the view whose drawable should change<a name="line.558"></a>
+<FONT color="green">559</FONT>         * @param uri The Uri for the image<a name="line.559"></a>
+<FONT color="green">560</FONT>         */<a name="line.560"></a>
+<FONT color="green">561</FONT>        public void setImageViewUri(int viewId, Uri uri) {<a name="line.561"></a>
+<FONT color="green">562</FONT>            setUri(viewId, "setImageURI", uri);<a name="line.562"></a>
+<FONT color="green">563</FONT>        }<a name="line.563"></a>
+<FONT color="green">564</FONT>    <a name="line.564"></a>
+<FONT color="green">565</FONT>        /**<a name="line.565"></a>
+<FONT color="green">566</FONT>         * Equivalent to calling ImageView.setImageBitmap<a name="line.566"></a>
+<FONT color="green">567</FONT>         * <a name="line.567"></a>
+<FONT color="green">568</FONT>         * @param viewId The id of the view whose drawable should change<a name="line.568"></a>
+<FONT color="green">569</FONT>         * @param bitmap The new Bitmap for the drawable<a name="line.569"></a>
+<FONT color="green">570</FONT>         */<a name="line.570"></a>
+<FONT color="green">571</FONT>        public void setImageViewBitmap(int viewId, Bitmap bitmap) {<a name="line.571"></a>
+<FONT color="green">572</FONT>            setBitmap(viewId, "setImageBitmap", bitmap);<a name="line.572"></a>
+<FONT color="green">573</FONT>        }<a name="line.573"></a>
+<FONT color="green">574</FONT>    <a name="line.574"></a>
+<FONT color="green">575</FONT>        /**<a name="line.575"></a>
+<FONT color="green">576</FONT>         * Equivalent to calling {@link Chronometer#setBase Chronometer.setBase},<a name="line.576"></a>
+<FONT color="green">577</FONT>         * {@link Chronometer#setFormat Chronometer.setFormat},<a name="line.577"></a>
+<FONT color="green">578</FONT>         * and {@link Chronometer#start Chronometer.start()} or<a name="line.578"></a>
+<FONT color="green">579</FONT>         * {@link Chronometer#stop Chronometer.stop()}.<a name="line.579"></a>
+<FONT color="green">580</FONT>         * <a name="line.580"></a>
+<FONT color="green">581</FONT>         * @param viewId The id of the view whose text should change<a name="line.581"></a>
+<FONT color="green">582</FONT>         * @param base The time at which the timer would have read 0:00.  This<a name="line.582"></a>
+<FONT color="green">583</FONT>         *             time should be based off of<a name="line.583"></a>
+<FONT color="green">584</FONT>         *             {@link android.os.SystemClock#elapsedRealtime SystemClock.elapsedRealtime()}.<a name="line.584"></a>
+<FONT color="green">585</FONT>         * @param format The Chronometer format string, or null to<a name="line.585"></a>
+<FONT color="green">586</FONT>         *               simply display the timer value.<a name="line.586"></a>
+<FONT color="green">587</FONT>         * @param started True if you want the clock to be started, false if not.<a name="line.587"></a>
+<FONT color="green">588</FONT>         */<a name="line.588"></a>
+<FONT color="green">589</FONT>        public void setChronometer(int viewId, long base, String format, boolean started) {<a name="line.589"></a>
+<FONT color="green">590</FONT>            setLong(viewId, "setBase", base);<a name="line.590"></a>
+<FONT color="green">591</FONT>            setString(viewId, "setFormat", format);<a name="line.591"></a>
+<FONT color="green">592</FONT>            setBoolean(viewId, "setStarted", started);<a name="line.592"></a>
+<FONT color="green">593</FONT>        }<a name="line.593"></a>
+<FONT color="green">594</FONT>        <a name="line.594"></a>
+<FONT color="green">595</FONT>        /**<a name="line.595"></a>
+<FONT color="green">596</FONT>         * Equivalent to calling {@link ProgressBar#setMax ProgressBar.setMax},<a name="line.596"></a>
+<FONT color="green">597</FONT>         * {@link ProgressBar#setProgress ProgressBar.setProgress}, and<a name="line.597"></a>
+<FONT color="green">598</FONT>         * {@link ProgressBar#setIndeterminate ProgressBar.setIndeterminate}<a name="line.598"></a>
+<FONT color="green">599</FONT>         *<a name="line.599"></a>
+<FONT color="green">600</FONT>         * If indeterminate is true, then the values for max and progress are ignored.<a name="line.600"></a>
+<FONT color="green">601</FONT>         * <a name="line.601"></a>
+<FONT color="green">602</FONT>         * @param viewId The id of the view whose text should change<a name="line.602"></a>
+<FONT color="green">603</FONT>         * @param max The 100% value for the progress bar<a name="line.603"></a>
+<FONT color="green">604</FONT>         * @param progress The current value of the progress bar.<a name="line.604"></a>
+<FONT color="green">605</FONT>         * @param indeterminate True if the progress bar is indeterminate, <a name="line.605"></a>
+<FONT color="green">606</FONT>         *                false if not.<a name="line.606"></a>
+<FONT color="green">607</FONT>         */<a name="line.607"></a>
+<FONT color="green">608</FONT>        public void setProgressBar(int viewId, int max, int progress, <a name="line.608"></a>
+<FONT color="green">609</FONT>                boolean indeterminate) {<a name="line.609"></a>
+<FONT color="green">610</FONT>            setBoolean(viewId, "setIndeterminate", indeterminate);<a name="line.610"></a>
+<FONT color="green">611</FONT>            if (!indeterminate) {<a name="line.611"></a>
+<FONT color="green">612</FONT>                setInt(viewId, "setMax", max);<a name="line.612"></a>
+<FONT color="green">613</FONT>                setInt(viewId, "setProgress", progress);<a name="line.613"></a>
+<FONT color="green">614</FONT>            }<a name="line.614"></a>
+<FONT color="green">615</FONT>        }<a name="line.615"></a>
+<FONT color="green">616</FONT>        <a name="line.616"></a>
+<FONT color="green">617</FONT>        /**<a name="line.617"></a>
+<FONT color="green">618</FONT>         * Equivalent to calling<a name="line.618"></a>
+<FONT color="green">619</FONT>         * {@link android.view.View#setOnClickListener(android.view.View.OnClickListener)}<a name="line.619"></a>
+<FONT color="green">620</FONT>         * to launch the provided {@link PendingIntent}.<a name="line.620"></a>
+<FONT color="green">621</FONT>         * <a name="line.621"></a>
+<FONT color="green">622</FONT>         * @param viewId The id of the view that will trigger the {@link PendingIntent} when clicked<a name="line.622"></a>
+<FONT color="green">623</FONT>         * @param pendingIntent The {@link PendingIntent} to send when user clicks<a name="line.623"></a>
+<FONT color="green">624</FONT>         */<a name="line.624"></a>
+<FONT color="green">625</FONT>        public void setOnClickPendingIntent(int viewId, PendingIntent pendingIntent) {<a name="line.625"></a>
+<FONT color="green">626</FONT>            addAction(new SetOnClickPendingIntent(viewId, pendingIntent));<a name="line.626"></a>
+<FONT color="green">627</FONT>        }<a name="line.627"></a>
+<FONT color="green">628</FONT>    <a name="line.628"></a>
+<FONT color="green">629</FONT>        /**<a name="line.629"></a>
+<FONT color="green">630</FONT>         * @hide<a name="line.630"></a>
+<FONT color="green">631</FONT>         * Equivalent to calling a combination of {@link Drawable#setAlpha(int)},<a name="line.631"></a>
+<FONT color="green">632</FONT>         * {@link Drawable#setColorFilter(int, android.graphics.PorterDuff.Mode)},<a name="line.632"></a>
+<FONT color="green">633</FONT>         * and/or {@link Drawable#setLevel(int)} on the {@link Drawable} of a given<a name="line.633"></a>
+<FONT color="green">634</FONT>         * view.<a name="line.634"></a>
+<FONT color="green">635</FONT>         * &lt;p&gt;<a name="line.635"></a>
+<FONT color="green">636</FONT>         * You can omit specific calls by marking their values with null or -1.<a name="line.636"></a>
+<FONT color="green">637</FONT>         * <a name="line.637"></a>
+<FONT color="green">638</FONT>         * @param viewId The id of the view that contains the target<a name="line.638"></a>
+<FONT color="green">639</FONT>         *            {@link Drawable}<a name="line.639"></a>
+<FONT color="green">640</FONT>         * @param targetBackground If true, apply these parameters to the<a name="line.640"></a>
+<FONT color="green">641</FONT>         *            {@link Drawable} returned by<a name="line.641"></a>
+<FONT color="green">642</FONT>         *            {@link android.view.View#getBackground()}. Otherwise, assume<a name="line.642"></a>
+<FONT color="green">643</FONT>         *            the target view is an {@link ImageView} and apply them to<a name="line.643"></a>
+<FONT color="green">644</FONT>         *            {@link ImageView#getDrawable()}.<a name="line.644"></a>
+<FONT color="green">645</FONT>         * @param alpha Specify an alpha value for the drawable, or -1 to leave<a name="line.645"></a>
+<FONT color="green">646</FONT>         *            unchanged.<a name="line.646"></a>
+<FONT color="green">647</FONT>         * @param colorFilter Specify a color for a<a name="line.647"></a>
+<FONT color="green">648</FONT>         *            {@link android.graphics.ColorFilter} for this drawable, or -1<a name="line.648"></a>
+<FONT color="green">649</FONT>         *            to leave unchanged.<a name="line.649"></a>
+<FONT color="green">650</FONT>         * @param mode Specify a PorterDuff mode for this drawable, or null to leave<a name="line.650"></a>
+<FONT color="green">651</FONT>         *            unchanged.<a name="line.651"></a>
+<FONT color="green">652</FONT>         * @param level Specify the level for the drawable, or -1 to leave<a name="line.652"></a>
+<FONT color="green">653</FONT>         *            unchanged.<a name="line.653"></a>
+<FONT color="green">654</FONT>         */<a name="line.654"></a>
+<FONT color="green">655</FONT>        public void setDrawableParameters(int viewId, boolean targetBackground, int alpha,<a name="line.655"></a>
+<FONT color="green">656</FONT>                int colorFilter, PorterDuff.Mode mode, int level) {<a name="line.656"></a>
+<FONT color="green">657</FONT>            addAction(new SetDrawableParameters(viewId, targetBackground, alpha,<a name="line.657"></a>
+<FONT color="green">658</FONT>                    colorFilter, mode, level));<a name="line.658"></a>
+<FONT color="green">659</FONT>        }<a name="line.659"></a>
+<FONT color="green">660</FONT>    <a name="line.660"></a>
+<FONT color="green">661</FONT>        /**<a name="line.661"></a>
+<FONT color="green">662</FONT>         * Equivalent to calling {@link android.widget.TextView#setTextColor(int)}.<a name="line.662"></a>
+<FONT color="green">663</FONT>         * <a name="line.663"></a>
+<FONT color="green">664</FONT>         * @param viewId The id of the view whose text should change<a name="line.664"></a>
+<FONT color="green">665</FONT>         * @param color Sets the text color for all the states (normal, selected,<a name="line.665"></a>
+<FONT color="green">666</FONT>         *            focused) to be this color.<a name="line.666"></a>
+<FONT color="green">667</FONT>         */<a name="line.667"></a>
+<FONT color="green">668</FONT>        public void setTextColor(int viewId, int color) {<a name="line.668"></a>
+<FONT color="green">669</FONT>            setInt(viewId, "setTextColor", color);<a name="line.669"></a>
+<FONT color="green">670</FONT>        }<a name="line.670"></a>
+<FONT color="green">671</FONT>    <a name="line.671"></a>
+<FONT color="green">672</FONT>        /**<a name="line.672"></a>
+<FONT color="green">673</FONT>         * Call a method taking one boolean on a view in the layout for this RemoteViews.<a name="line.673"></a>
+<FONT color="green">674</FONT>         *<a name="line.674"></a>
+<FONT color="green">675</FONT>         * @param viewId The id of the view whose text should change<a name="line.675"></a>
+<FONT color="green">676</FONT>         * @param methodName The name of the method to call.<a name="line.676"></a>
+<FONT color="green">677</FONT>         * @param value The value to pass to the method.<a name="line.677"></a>
+<FONT color="green">678</FONT>         */<a name="line.678"></a>
+<FONT color="green">679</FONT>        public void setBoolean(int viewId, String methodName, boolean value) {<a name="line.679"></a>
+<FONT color="green">680</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.BOOLEAN, value));<a name="line.680"></a>
+<FONT color="green">681</FONT>        }<a name="line.681"></a>
+<FONT color="green">682</FONT>    <a name="line.682"></a>
+<FONT color="green">683</FONT>        /**<a name="line.683"></a>
+<FONT color="green">684</FONT>         * Call a method taking one byte on a view in the layout for this RemoteViews.<a name="line.684"></a>
+<FONT color="green">685</FONT>         *<a name="line.685"></a>
+<FONT color="green">686</FONT>         * @param viewId The id of the view whose text should change<a name="line.686"></a>
+<FONT color="green">687</FONT>         * @param methodName The name of the method to call.<a name="line.687"></a>
+<FONT color="green">688</FONT>         * @param value The value to pass to the method.<a name="line.688"></a>
+<FONT color="green">689</FONT>         */<a name="line.689"></a>
+<FONT color="green">690</FONT>        public void setByte(int viewId, String methodName, byte value) {<a name="line.690"></a>
+<FONT color="green">691</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.BYTE, value));<a name="line.691"></a>
+<FONT color="green">692</FONT>        }<a name="line.692"></a>
+<FONT color="green">693</FONT>    <a name="line.693"></a>
+<FONT color="green">694</FONT>        /**<a name="line.694"></a>
+<FONT color="green">695</FONT>         * Call a method taking one short on a view in the layout for this RemoteViews.<a name="line.695"></a>
+<FONT color="green">696</FONT>         *<a name="line.696"></a>
+<FONT color="green">697</FONT>         * @param viewId The id of the view whose text should change<a name="line.697"></a>
+<FONT color="green">698</FONT>         * @param methodName The name of the method to call.<a name="line.698"></a>
+<FONT color="green">699</FONT>         * @param value The value to pass to the method.<a name="line.699"></a>
+<FONT color="green">700</FONT>         */<a name="line.700"></a>
+<FONT color="green">701</FONT>        public void setShort(int viewId, String methodName, short value) {<a name="line.701"></a>
+<FONT color="green">702</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.SHORT, value));<a name="line.702"></a>
+<FONT color="green">703</FONT>        }<a name="line.703"></a>
+<FONT color="green">704</FONT>    <a name="line.704"></a>
+<FONT color="green">705</FONT>        /**<a name="line.705"></a>
+<FONT color="green">706</FONT>         * Call a method taking one int on a view in the layout for this RemoteViews.<a name="line.706"></a>
+<FONT color="green">707</FONT>         *<a name="line.707"></a>
+<FONT color="green">708</FONT>         * @param viewId The id of the view whose text should change<a name="line.708"></a>
+<FONT color="green">709</FONT>         * @param methodName The name of the method to call.<a name="line.709"></a>
+<FONT color="green">710</FONT>         * @param value The value to pass to the method.<a name="line.710"></a>
+<FONT color="green">711</FONT>         */<a name="line.711"></a>
+<FONT color="green">712</FONT>        public void setInt(int viewId, String methodName, int value) {<a name="line.712"></a>
+<FONT color="green">713</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.INT, value));<a name="line.713"></a>
+<FONT color="green">714</FONT>        }<a name="line.714"></a>
+<FONT color="green">715</FONT>    <a name="line.715"></a>
+<FONT color="green">716</FONT>        /**<a name="line.716"></a>
+<FONT color="green">717</FONT>         * Call a method taking one long on a view in the layout for this RemoteViews.<a name="line.717"></a>
+<FONT color="green">718</FONT>         *<a name="line.718"></a>
+<FONT color="green">719</FONT>         * @param viewId The id of the view whose text should change<a name="line.719"></a>
+<FONT color="green">720</FONT>         * @param methodName The name of the method to call.<a name="line.720"></a>
+<FONT color="green">721</FONT>         * @param value The value to pass to the method.<a name="line.721"></a>
+<FONT color="green">722</FONT>         */<a name="line.722"></a>
+<FONT color="green">723</FONT>        public void setLong(int viewId, String methodName, long value) {<a name="line.723"></a>
+<FONT color="green">724</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.LONG, value));<a name="line.724"></a>
+<FONT color="green">725</FONT>        }<a name="line.725"></a>
+<FONT color="green">726</FONT>    <a name="line.726"></a>
+<FONT color="green">727</FONT>        /**<a name="line.727"></a>
+<FONT color="green">728</FONT>         * Call a method taking one float on a view in the layout for this RemoteViews.<a name="line.728"></a>
+<FONT color="green">729</FONT>         *<a name="line.729"></a>
+<FONT color="green">730</FONT>         * @param viewId The id of the view whose text should change<a name="line.730"></a>
+<FONT color="green">731</FONT>         * @param methodName The name of the method to call.<a name="line.731"></a>
+<FONT color="green">732</FONT>         * @param value The value to pass to the method.<a name="line.732"></a>
+<FONT color="green">733</FONT>         */<a name="line.733"></a>
+<FONT color="green">734</FONT>        public void setFloat(int viewId, String methodName, float value) {<a name="line.734"></a>
+<FONT color="green">735</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.FLOAT, value));<a name="line.735"></a>
+<FONT color="green">736</FONT>        }<a name="line.736"></a>
+<FONT color="green">737</FONT>    <a name="line.737"></a>
+<FONT color="green">738</FONT>        /**<a name="line.738"></a>
+<FONT color="green">739</FONT>         * Call a method taking one double on a view in the layout for this RemoteViews.<a name="line.739"></a>
+<FONT color="green">740</FONT>         *<a name="line.740"></a>
+<FONT color="green">741</FONT>         * @param viewId The id of the view whose text should change<a name="line.741"></a>
+<FONT color="green">742</FONT>         * @param methodName The name of the method to call.<a name="line.742"></a>
+<FONT color="green">743</FONT>         * @param value The value to pass to the method.<a name="line.743"></a>
+<FONT color="green">744</FONT>         */<a name="line.744"></a>
+<FONT color="green">745</FONT>        public void setDouble(int viewId, String methodName, double value) {<a name="line.745"></a>
+<FONT color="green">746</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.DOUBLE, value));<a name="line.746"></a>
+<FONT color="green">747</FONT>        }<a name="line.747"></a>
+<FONT color="green">748</FONT>    <a name="line.748"></a>
+<FONT color="green">749</FONT>        /**<a name="line.749"></a>
+<FONT color="green">750</FONT>         * Call a method taking one char on a view in the layout for this RemoteViews.<a name="line.750"></a>
+<FONT color="green">751</FONT>         *<a name="line.751"></a>
+<FONT color="green">752</FONT>         * @param viewId The id of the view whose text should change<a name="line.752"></a>
+<FONT color="green">753</FONT>         * @param methodName The name of the method to call.<a name="line.753"></a>
+<FONT color="green">754</FONT>         * @param value The value to pass to the method.<a name="line.754"></a>
+<FONT color="green">755</FONT>         */<a name="line.755"></a>
+<FONT color="green">756</FONT>        public void setChar(int viewId, String methodName, char value) {<a name="line.756"></a>
+<FONT color="green">757</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.CHAR, value));<a name="line.757"></a>
+<FONT color="green">758</FONT>        }<a name="line.758"></a>
+<FONT color="green">759</FONT>    <a name="line.759"></a>
+<FONT color="green">760</FONT>        /**<a name="line.760"></a>
+<FONT color="green">761</FONT>         * Call a method taking one String on a view in the layout for this RemoteViews.<a name="line.761"></a>
+<FONT color="green">762</FONT>         *<a name="line.762"></a>
+<FONT color="green">763</FONT>         * @param viewId The id of the view whose text should change<a name="line.763"></a>
+<FONT color="green">764</FONT>         * @param methodName The name of the method to call.<a name="line.764"></a>
+<FONT color="green">765</FONT>         * @param value The value to pass to the method.<a name="line.765"></a>
+<FONT color="green">766</FONT>         */<a name="line.766"></a>
+<FONT color="green">767</FONT>        public void setString(int viewId, String methodName, String value) {<a name="line.767"></a>
+<FONT color="green">768</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.STRING, value));<a name="line.768"></a>
+<FONT color="green">769</FONT>        }<a name="line.769"></a>
+<FONT color="green">770</FONT>    <a name="line.770"></a>
+<FONT color="green">771</FONT>        /**<a name="line.771"></a>
+<FONT color="green">772</FONT>         * Call a method taking one CharSequence on a view in the layout for this RemoteViews.<a name="line.772"></a>
+<FONT color="green">773</FONT>         *<a name="line.773"></a>
+<FONT color="green">774</FONT>         * @param viewId The id of the view whose text should change<a name="line.774"></a>
+<FONT color="green">775</FONT>         * @param methodName The name of the method to call.<a name="line.775"></a>
+<FONT color="green">776</FONT>         * @param value The value to pass to the method.<a name="line.776"></a>
+<FONT color="green">777</FONT>         */<a name="line.777"></a>
+<FONT color="green">778</FONT>        public void setCharSequence(int viewId, String methodName, CharSequence value) {<a name="line.778"></a>
+<FONT color="green">779</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.CHAR_SEQUENCE, value));<a name="line.779"></a>
+<FONT color="green">780</FONT>        }<a name="line.780"></a>
+<FONT color="green">781</FONT>    <a name="line.781"></a>
+<FONT color="green">782</FONT>        /**<a name="line.782"></a>
+<FONT color="green">783</FONT>         * Call a method taking one Uri on a view in the layout for this RemoteViews.<a name="line.783"></a>
+<FONT color="green">784</FONT>         *<a name="line.784"></a>
+<FONT color="green">785</FONT>         * @param viewId The id of the view whose text should change<a name="line.785"></a>
+<FONT color="green">786</FONT>         * @param methodName The name of the method to call.<a name="line.786"></a>
+<FONT color="green">787</FONT>         * @param value The value to pass to the method.<a name="line.787"></a>
+<FONT color="green">788</FONT>         */<a name="line.788"></a>
+<FONT color="green">789</FONT>        public void setUri(int viewId, String methodName, Uri value) {<a name="line.789"></a>
+<FONT color="green">790</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.URI, value));<a name="line.790"></a>
+<FONT color="green">791</FONT>        }<a name="line.791"></a>
+<FONT color="green">792</FONT>    <a name="line.792"></a>
+<FONT color="green">793</FONT>        /**<a name="line.793"></a>
+<FONT color="green">794</FONT>         * Call a method taking one Bitmap on a view in the layout for this RemoteViews.<a name="line.794"></a>
+<FONT color="green">795</FONT>         * @more<a name="line.795"></a>
+<FONT color="green">796</FONT>         * &lt;p class="note"&gt;The bitmap will be flattened into the parcel if this object is<a name="line.796"></a>
+<FONT color="green">797</FONT>         * sent across processes, so it may end up using a lot of memory, and may be fairly slow.&lt;/p&gt;<a name="line.797"></a>
+<FONT color="green">798</FONT>         *<a name="line.798"></a>
+<FONT color="green">799</FONT>         * @param viewId The id of the view whose text should change<a name="line.799"></a>
+<FONT color="green">800</FONT>         * @param methodName The name of the method to call.<a name="line.800"></a>
+<FONT color="green">801</FONT>         * @param value The value to pass to the method.<a name="line.801"></a>
+<FONT color="green">802</FONT>         */<a name="line.802"></a>
+<FONT color="green">803</FONT>        public void setBitmap(int viewId, String methodName, Bitmap value) {<a name="line.803"></a>
+<FONT color="green">804</FONT>            addAction(new ReflectionAction(viewId, methodName, ReflectionAction.BITMAP, value));<a name="line.804"></a>
+<FONT color="green">805</FONT>        }<a name="line.805"></a>
+<FONT color="green">806</FONT>    <a name="line.806"></a>
+<FONT color="green">807</FONT>        /**<a name="line.807"></a>
+<FONT color="green">808</FONT>         * Inflates the view hierarchy represented by this object and applies<a name="line.808"></a>
+<FONT color="green">809</FONT>         * all of the actions.<a name="line.809"></a>
+<FONT color="green">810</FONT>         * <a name="line.810"></a>
+<FONT color="green">811</FONT>         * &lt;p&gt;&lt;strong&gt;Caller beware: this may throw&lt;/strong&gt;<a name="line.811"></a>
+<FONT color="green">812</FONT>         * <a name="line.812"></a>
+<FONT color="green">813</FONT>         * @param context Default context to use<a name="line.813"></a>
+<FONT color="green">814</FONT>         * @param parent Parent that the resulting view hierarchy will be attached to. This method<a name="line.814"></a>
+<FONT color="green">815</FONT>         * does &lt;strong&gt;not&lt;/strong&gt; attach the hierarchy. The caller should do so when appropriate.<a name="line.815"></a>
+<FONT color="green">816</FONT>         * @return The inflated view hierarchy<a name="line.816"></a>
+<FONT color="green">817</FONT>         */<a name="line.817"></a>
+<FONT color="green">818</FONT>        public View apply(Context context, ViewGroup parent) {<a name="line.818"></a>
+<FONT color="green">819</FONT>            View result = null;<a name="line.819"></a>
+<FONT color="green">820</FONT>    <a name="line.820"></a>
+<FONT color="green">821</FONT>            Context c = prepareContext(context);<a name="line.821"></a>
+<FONT color="green">822</FONT>    <a name="line.822"></a>
+<FONT color="green">823</FONT>            Resources r = c.getResources();<a name="line.823"></a>
+<FONT color="green">824</FONT>            LayoutInflater inflater = (LayoutInflater) c<a name="line.824"></a>
+<FONT color="green">825</FONT>                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);<a name="line.825"></a>
+<FONT color="green">826</FONT>    <a name="line.826"></a>
+<FONT color="green">827</FONT>            inflater = inflater.cloneInContext(c);<a name="line.827"></a>
+<FONT color="green">828</FONT>            inflater.setFilter(this);<a name="line.828"></a>
+<FONT color="green">829</FONT>    <a name="line.829"></a>
+<FONT color="green">830</FONT>            result = inflater.inflate(mLayoutId, parent, false);<a name="line.830"></a>
+<FONT color="green">831</FONT>    <a name="line.831"></a>
+<FONT color="green">832</FONT>            performApply(result);<a name="line.832"></a>
+<FONT color="green">833</FONT>    <a name="line.833"></a>
+<FONT color="green">834</FONT>            return result;<a name="line.834"></a>
+<FONT color="green">835</FONT>        }<a name="line.835"></a>
+<FONT color="green">836</FONT>        <a name="line.836"></a>
+<FONT color="green">837</FONT>        /**<a name="line.837"></a>
+<FONT color="green">838</FONT>         * Applies all of the actions to the provided view.<a name="line.838"></a>
+<FONT color="green">839</FONT>         *<a name="line.839"></a>
+<FONT color="green">840</FONT>         * &lt;p&gt;&lt;strong&gt;Caller beware: this may throw&lt;/strong&gt;<a name="line.840"></a>
+<FONT color="green">841</FONT>         * <a name="line.841"></a>
+<FONT color="green">842</FONT>         * @param v The view to apply the actions to.  This should be the result of<a name="line.842"></a>
+<FONT color="green">843</FONT>         * the {@link #apply(Context,ViewGroup)} call.<a name="line.843"></a>
+<FONT color="green">844</FONT>         */<a name="line.844"></a>
+<FONT color="green">845</FONT>        public void reapply(Context context, View v) {<a name="line.845"></a>
+<FONT color="green">846</FONT>            prepareContext(context);<a name="line.846"></a>
+<FONT color="green">847</FONT>            performApply(v);<a name="line.847"></a>
+<FONT color="green">848</FONT>        }<a name="line.848"></a>
+<FONT color="green">849</FONT>    <a name="line.849"></a>
+<FONT color="green">850</FONT>        private void performApply(View v) {<a name="line.850"></a>
+<FONT color="green">851</FONT>            if (mActions != null) {<a name="line.851"></a>
+<FONT color="green">852</FONT>                final int count = mActions.size();<a name="line.852"></a>
+<FONT color="green">853</FONT>                for (int i = 0; i &lt; count; i++) {<a name="line.853"></a>
+<FONT color="green">854</FONT>                    Action a = mActions.get(i);<a name="line.854"></a>
+<FONT color="green">855</FONT>                    a.apply(v);<a name="line.855"></a>
+<FONT color="green">856</FONT>                }<a name="line.856"></a>
+<FONT color="green">857</FONT>            }<a name="line.857"></a>
+<FONT color="green">858</FONT>        }<a name="line.858"></a>
+<FONT color="green">859</FONT>    <a name="line.859"></a>
+<FONT color="green">860</FONT>        private Context prepareContext(Context context) {<a name="line.860"></a>
+<FONT color="green">861</FONT>            Context c = null;<a name="line.861"></a>
+<FONT color="green">862</FONT>            String packageName = mPackage;<a name="line.862"></a>
+<FONT color="green">863</FONT>    <a name="line.863"></a>
+<FONT color="green">864</FONT>            if (packageName != null) {<a name="line.864"></a>
+<FONT color="green">865</FONT>                try {<a name="line.865"></a>
+<FONT color="green">866</FONT>                    c = context.createPackageContext(packageName, 0);<a name="line.866"></a>
+<FONT color="green">867</FONT>                } catch (NameNotFoundException e) {<a name="line.867"></a>
+<FONT color="green">868</FONT>                    Log.e(LOG_TAG, "Package name " + packageName + " not found");<a name="line.868"></a>
+<FONT color="green">869</FONT>                    c = context;<a name="line.869"></a>
+<FONT color="green">870</FONT>                }<a name="line.870"></a>
+<FONT color="green">871</FONT>            } else {<a name="line.871"></a>
+<FONT color="green">872</FONT>                c = context;<a name="line.872"></a>
+<FONT color="green">873</FONT>            }<a name="line.873"></a>
+<FONT color="green">874</FONT>    <a name="line.874"></a>
+<FONT color="green">875</FONT>            mContext = c;<a name="line.875"></a>
+<FONT color="green">876</FONT>    <a name="line.876"></a>
+<FONT color="green">877</FONT>            return c;<a name="line.877"></a>
+<FONT color="green">878</FONT>        }<a name="line.878"></a>
+<FONT color="green">879</FONT>    <a name="line.879"></a>
+<FONT color="green">880</FONT>        /* (non-Javadoc)<a name="line.880"></a>
+<FONT color="green">881</FONT>         * Used to restrict the views which can be inflated<a name="line.881"></a>
+<FONT color="green">882</FONT>         * <a name="line.882"></a>
+<FONT color="green">883</FONT>         * @see android.view.LayoutInflater.Filter#onLoadClass(java.lang.Class)<a name="line.883"></a>
+<FONT color="green">884</FONT>         */<a name="line.884"></a>
+<FONT color="green">885</FONT>        public boolean onLoadClass(Class clazz) {<a name="line.885"></a>
+<FONT color="green">886</FONT>            return clazz.isAnnotationPresent(RemoteView.class);<a name="line.886"></a>
+<FONT color="green">887</FONT>        }<a name="line.887"></a>
+<FONT color="green">888</FONT>        <a name="line.888"></a>
+<FONT color="green">889</FONT>        public int describeContents() {<a name="line.889"></a>
+<FONT color="green">890</FONT>            return 0;<a name="line.890"></a>
+<FONT color="green">891</FONT>        }<a name="line.891"></a>
+<FONT color="green">892</FONT>    <a name="line.892"></a>
+<FONT color="green">893</FONT>        public void writeToParcel(Parcel dest, int flags) {<a name="line.893"></a>
+<FONT color="green">894</FONT>            dest.writeString(mPackage);<a name="line.894"></a>
+<FONT color="green">895</FONT>            dest.writeInt(mLayoutId);<a name="line.895"></a>
+<FONT color="green">896</FONT>            int count;<a name="line.896"></a>
+<FONT color="green">897</FONT>            if (mActions != null) {<a name="line.897"></a>
+<FONT color="green">898</FONT>                count = mActions.size();<a name="line.898"></a>
+<FONT color="green">899</FONT>            } else {<a name="line.899"></a>
+<FONT color="green">900</FONT>                count = 0;<a name="line.900"></a>
+<FONT color="green">901</FONT>            }<a name="line.901"></a>
+<FONT color="green">902</FONT>            dest.writeInt(count);<a name="line.902"></a>
+<FONT color="green">903</FONT>            for (int i=0; i&lt;count; i++) {<a name="line.903"></a>
+<FONT color="green">904</FONT>                Action a = mActions.get(i);<a name="line.904"></a>
+<FONT color="green">905</FONT>                a.writeToParcel(dest, 0);<a name="line.905"></a>
+<FONT color="green">906</FONT>            }<a name="line.906"></a>
+<FONT color="green">907</FONT>        }<a name="line.907"></a>
+<FONT color="green">908</FONT>    <a name="line.908"></a>
+<FONT color="green">909</FONT>        /**<a name="line.909"></a>
+<FONT color="green">910</FONT>         * Parcelable.Creator that instantiates RemoteViews objects<a name="line.910"></a>
+<FONT color="green">911</FONT>         */<a name="line.911"></a>
+<FONT color="green">912</FONT>        public static final Parcelable.Creator&lt;RemoteViews&gt; CREATOR = new Parcelable.Creator&lt;RemoteViews&gt;() {<a name="line.912"></a>
+<FONT color="green">913</FONT>            public RemoteViews createFromParcel(Parcel parcel) {<a name="line.913"></a>
+<FONT color="green">914</FONT>                return new RemoteViews(parcel);<a name="line.914"></a>
+<FONT color="green">915</FONT>            }<a name="line.915"></a>
+<FONT color="green">916</FONT>    <a name="line.916"></a>
+<FONT color="green">917</FONT>            public RemoteViews[] newArray(int size) {<a name="line.917"></a>
+<FONT color="green">918</FONT>                return new RemoteViews[size];<a name="line.918"></a>
+<FONT color="green">919</FONT>            }<a name="line.919"></a>
+<FONT color="green">920</FONT>        };<a name="line.920"></a>
+<FONT color="green">921</FONT>    }<a name="line.921"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

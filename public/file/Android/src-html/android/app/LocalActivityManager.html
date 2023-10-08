@@ -1,0 +1,693 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * Copyright (C) 2006 The Android Open Source Project<a name="line.2"></a>
+<FONT color="green">003</FONT>     *<a name="line.3"></a>
+<FONT color="green">004</FONT>     * Licensed under the Apache License, Version 2.0 (the "License");<a name="line.4"></a>
+<FONT color="green">005</FONT>     * you may not use this file except in compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * You may obtain a copy of the License at<a name="line.6"></a>
+<FONT color="green">007</FONT>     *<a name="line.7"></a>
+<FONT color="green">008</FONT>     *      http://www.apache.org/licenses/LICENSE-2.0<a name="line.8"></a>
+<FONT color="green">009</FONT>     *<a name="line.9"></a>
+<FONT color="green">010</FONT>     * Unless required by applicable law or agreed to in writing, software<a name="line.10"></a>
+<FONT color="green">011</FONT>     * distributed under the License is distributed on an "AS IS" BASIS,<a name="line.11"></a>
+<FONT color="green">012</FONT>     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<a name="line.12"></a>
+<FONT color="green">013</FONT>     * See the License for the specific language governing permissions and<a name="line.13"></a>
+<FONT color="green">014</FONT>     * limitations under the License.<a name="line.14"></a>
+<FONT color="green">015</FONT>     */<a name="line.15"></a>
+<FONT color="green">016</FONT>    <a name="line.16"></a>
+<FONT color="green">017</FONT>    package android.app;<a name="line.17"></a>
+<FONT color="green">018</FONT>    <a name="line.18"></a>
+<FONT color="green">019</FONT>    import android.content.Intent;<a name="line.19"></a>
+<FONT color="green">020</FONT>    import android.content.pm.ActivityInfo;<a name="line.20"></a>
+<FONT color="green">021</FONT>    import android.os.Binder;<a name="line.21"></a>
+<FONT color="green">022</FONT>    import android.os.Bundle;<a name="line.22"></a>
+<FONT color="green">023</FONT>    import android.util.Config;<a name="line.23"></a>
+<FONT color="green">024</FONT>    import android.util.Log;<a name="line.24"></a>
+<FONT color="green">025</FONT>    import android.view.Window;<a name="line.25"></a>
+<FONT color="green">026</FONT>    <a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.ArrayList;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.HashMap;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.Iterator;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Map;<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    /**<a name="line.32"></a>
+<FONT color="green">033</FONT>     * Helper class for managing multiple running embedded activities in the same<a name="line.33"></a>
+<FONT color="green">034</FONT>     * process. This class is not normally used directly, but rather created for<a name="line.34"></a>
+<FONT color="green">035</FONT>     * you as part of the {@link android.app.ActivityGroup} implementation.<a name="line.35"></a>
+<FONT color="green">036</FONT>     *<a name="line.36"></a>
+<FONT color="green">037</FONT>     * @see ActivityGroup<a name="line.37"></a>
+<FONT color="green">038</FONT>     */<a name="line.38"></a>
+<FONT color="green">039</FONT>    public class LocalActivityManager {<a name="line.39"></a>
+<FONT color="green">040</FONT>        private static final String TAG = "LocalActivityManager";<a name="line.40"></a>
+<FONT color="green">041</FONT>        private static final boolean localLOGV = false || Config.LOGV;<a name="line.41"></a>
+<FONT color="green">042</FONT>    <a name="line.42"></a>
+<FONT color="green">043</FONT>        // Internal token for an Activity being managed by LocalActivityManager.<a name="line.43"></a>
+<FONT color="green">044</FONT>        private static class LocalActivityRecord extends Binder {<a name="line.44"></a>
+<FONT color="green">045</FONT>            LocalActivityRecord(String _id, Intent _intent) {<a name="line.45"></a>
+<FONT color="green">046</FONT>                id = _id;<a name="line.46"></a>
+<FONT color="green">047</FONT>                intent = _intent;<a name="line.47"></a>
+<FONT color="green">048</FONT>            }<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>            final String id;                // Unique name of this record.<a name="line.50"></a>
+<FONT color="green">051</FONT>            Intent intent;                  // Which activity to run here.<a name="line.51"></a>
+<FONT color="green">052</FONT>            ActivityInfo activityInfo;      // Package manager info about activity.<a name="line.52"></a>
+<FONT color="green">053</FONT>            Activity activity;              // Currently instantiated activity.<a name="line.53"></a>
+<FONT color="green">054</FONT>            Window window;                  // Activity's top-level window.<a name="line.54"></a>
+<FONT color="green">055</FONT>            Bundle instanceState;           // Last retrieved freeze state.<a name="line.55"></a>
+<FONT color="green">056</FONT>            int curState = RESTORED;        // Current state the activity is in.<a name="line.56"></a>
+<FONT color="green">057</FONT>        }<a name="line.57"></a>
+<FONT color="green">058</FONT>    <a name="line.58"></a>
+<FONT color="green">059</FONT>        static final int RESTORED = 0;      // State restored, but no startActivity().<a name="line.59"></a>
+<FONT color="green">060</FONT>        static final int INITIALIZING = 1;  // Ready to launch (after startActivity()).<a name="line.60"></a>
+<FONT color="green">061</FONT>        static final int CREATED = 2;       // Created, not started or resumed.<a name="line.61"></a>
+<FONT color="green">062</FONT>        static final int STARTED = 3;       // Created and started, not resumed.<a name="line.62"></a>
+<FONT color="green">063</FONT>        static final int RESUMED = 4;       // Created started and resumed.<a name="line.63"></a>
+<FONT color="green">064</FONT>        static final int DESTROYED = 5;     // No longer with us.<a name="line.64"></a>
+<FONT color="green">065</FONT>        <a name="line.65"></a>
+<FONT color="green">066</FONT>        /** Thread our activities are running in. */<a name="line.66"></a>
+<FONT color="green">067</FONT>        private final ActivityThread mActivityThread;<a name="line.67"></a>
+<FONT color="green">068</FONT>        /** The containing activity that owns the activities we create. */<a name="line.68"></a>
+<FONT color="green">069</FONT>        private final Activity mParent;<a name="line.69"></a>
+<FONT color="green">070</FONT>    <a name="line.70"></a>
+<FONT color="green">071</FONT>        /** The activity that is currently resumed. */<a name="line.71"></a>
+<FONT color="green">072</FONT>        private LocalActivityRecord mResumed;<a name="line.72"></a>
+<FONT color="green">073</FONT>        /** id -&gt; record of all known activities. */<a name="line.73"></a>
+<FONT color="green">074</FONT>        private final Map&lt;String, LocalActivityRecord&gt; mActivities<a name="line.74"></a>
+<FONT color="green">075</FONT>                = new HashMap&lt;String, LocalActivityRecord&gt;();<a name="line.75"></a>
+<FONT color="green">076</FONT>        /** array of all known activities for easy iterating. */<a name="line.76"></a>
+<FONT color="green">077</FONT>        private final ArrayList&lt;LocalActivityRecord&gt; mActivityArray<a name="line.77"></a>
+<FONT color="green">078</FONT>                = new ArrayList&lt;LocalActivityRecord&gt;();<a name="line.78"></a>
+<FONT color="green">079</FONT>    <a name="line.79"></a>
+<FONT color="green">080</FONT>        /** True if only one activity can be resumed at a time */<a name="line.80"></a>
+<FONT color="green">081</FONT>        private boolean mSingleMode;<a name="line.81"></a>
+<FONT color="green">082</FONT>        <a name="line.82"></a>
+<FONT color="green">083</FONT>        /** Set to true once we find out the container is finishing. */<a name="line.83"></a>
+<FONT color="green">084</FONT>        private boolean mFinishing;<a name="line.84"></a>
+<FONT color="green">085</FONT>        <a name="line.85"></a>
+<FONT color="green">086</FONT>        /** Current state the owner (ActivityGroup) is in */<a name="line.86"></a>
+<FONT color="green">087</FONT>        private int mCurState = INITIALIZING;<a name="line.87"></a>
+<FONT color="green">088</FONT>        <a name="line.88"></a>
+<FONT color="green">089</FONT>        /** String ids of running activities starting with least recently used. */<a name="line.89"></a>
+<FONT color="green">090</FONT>        // TODO: put back in stopping of activities.<a name="line.90"></a>
+<FONT color="green">091</FONT>        //private List&lt;LocalActivityRecord&gt;  mLRU = new ArrayList();<a name="line.91"></a>
+<FONT color="green">092</FONT>    <a name="line.92"></a>
+<FONT color="green">093</FONT>        /**<a name="line.93"></a>
+<FONT color="green">094</FONT>         * Create a new LocalActivityManager for holding activities running within<a name="line.94"></a>
+<FONT color="green">095</FONT>         * the given &lt;var&gt;parent&lt;/var&gt;.<a name="line.95"></a>
+<FONT color="green">096</FONT>         * <a name="line.96"></a>
+<FONT color="green">097</FONT>         * @param parent the host of the embedded activities<a name="line.97"></a>
+<FONT color="green">098</FONT>         * @param singleMode True if the LocalActivityManger should keep a maximum<a name="line.98"></a>
+<FONT color="green">099</FONT>         * of one activity resumed<a name="line.99"></a>
+<FONT color="green">100</FONT>         */<a name="line.100"></a>
+<FONT color="green">101</FONT>        public LocalActivityManager(Activity parent, boolean singleMode) {<a name="line.101"></a>
+<FONT color="green">102</FONT>            mActivityThread = ActivityThread.currentActivityThread();<a name="line.102"></a>
+<FONT color="green">103</FONT>            mParent = parent;<a name="line.103"></a>
+<FONT color="green">104</FONT>            mSingleMode = singleMode;<a name="line.104"></a>
+<FONT color="green">105</FONT>        }<a name="line.105"></a>
+<FONT color="green">106</FONT>    <a name="line.106"></a>
+<FONT color="green">107</FONT>        private void moveToState(LocalActivityRecord r, int desiredState) {<a name="line.107"></a>
+<FONT color="green">108</FONT>            if (r.curState == RESTORED || r.curState == DESTROYED) {<a name="line.108"></a>
+<FONT color="green">109</FONT>                // startActivity() has not yet been called, so nothing to do.<a name="line.109"></a>
+<FONT color="green">110</FONT>                return;<a name="line.110"></a>
+<FONT color="green">111</FONT>            }<a name="line.111"></a>
+<FONT color="green">112</FONT>            <a name="line.112"></a>
+<FONT color="green">113</FONT>            if (r.curState == INITIALIZING) {<a name="line.113"></a>
+<FONT color="green">114</FONT>                // Get the lastNonConfigurationInstance for the activity<a name="line.114"></a>
+<FONT color="green">115</FONT>                HashMap&lt;String,Object&gt; lastNonConfigurationInstances =<a name="line.115"></a>
+<FONT color="green">116</FONT>                    mParent.getLastNonConfigurationChildInstances();<a name="line.116"></a>
+<FONT color="green">117</FONT>                Object instance = null;<a name="line.117"></a>
+<FONT color="green">118</FONT>                if (lastNonConfigurationInstances != null) {<a name="line.118"></a>
+<FONT color="green">119</FONT>                    instance = lastNonConfigurationInstances.get(r.id);<a name="line.119"></a>
+<FONT color="green">120</FONT>                }<a name="line.120"></a>
+<FONT color="green">121</FONT>                <a name="line.121"></a>
+<FONT color="green">122</FONT>                // We need to have always created the activity.<a name="line.122"></a>
+<FONT color="green">123</FONT>                if (localLOGV) Log.v(TAG, r.id + ": starting " + r.intent);<a name="line.123"></a>
+<FONT color="green">124</FONT>                if (r.activityInfo == null) {<a name="line.124"></a>
+<FONT color="green">125</FONT>                    r.activityInfo = mActivityThread.resolveActivityInfo(r.intent);<a name="line.125"></a>
+<FONT color="green">126</FONT>                }<a name="line.126"></a>
+<FONT color="green">127</FONT>                r.activity = mActivityThread.startActivityNow(<a name="line.127"></a>
+<FONT color="green">128</FONT>                        mParent, r.id, r.intent, r.activityInfo, r, r.instanceState, instance);<a name="line.128"></a>
+<FONT color="green">129</FONT>                if (r.activity == null) {<a name="line.129"></a>
+<FONT color="green">130</FONT>                    return;<a name="line.130"></a>
+<FONT color="green">131</FONT>                }<a name="line.131"></a>
+<FONT color="green">132</FONT>                r.window = r.activity.getWindow();<a name="line.132"></a>
+<FONT color="green">133</FONT>                r.instanceState = null;<a name="line.133"></a>
+<FONT color="green">134</FONT>                r.curState = STARTED;<a name="line.134"></a>
+<FONT color="green">135</FONT>                <a name="line.135"></a>
+<FONT color="green">136</FONT>                if (desiredState == RESUMED) {<a name="line.136"></a>
+<FONT color="green">137</FONT>                    if (localLOGV) Log.v(TAG, r.id + ": resuming");<a name="line.137"></a>
+<FONT color="green">138</FONT>                    mActivityThread.performResumeActivity(r, true);<a name="line.138"></a>
+<FONT color="green">139</FONT>                    r.curState = RESUMED;<a name="line.139"></a>
+<FONT color="green">140</FONT>                }<a name="line.140"></a>
+<FONT color="green">141</FONT>                <a name="line.141"></a>
+<FONT color="green">142</FONT>                // Don't do anything more here.  There is an important case:<a name="line.142"></a>
+<FONT color="green">143</FONT>                // if this is being done as part of onCreate() of the group, then<a name="line.143"></a>
+<FONT color="green">144</FONT>                // the launching of the activity gets its state a little ahead<a name="line.144"></a>
+<FONT color="green">145</FONT>                // of our own (it is now STARTED, while we are only CREATED).<a name="line.145"></a>
+<FONT color="green">146</FONT>                // If we just leave things as-is, we'll deal with it as the<a name="line.146"></a>
+<FONT color="green">147</FONT>                // group's state catches up.<a name="line.147"></a>
+<FONT color="green">148</FONT>                return;<a name="line.148"></a>
+<FONT color="green">149</FONT>            }<a name="line.149"></a>
+<FONT color="green">150</FONT>            <a name="line.150"></a>
+<FONT color="green">151</FONT>            switch (r.curState) {<a name="line.151"></a>
+<FONT color="green">152</FONT>                case CREATED:<a name="line.152"></a>
+<FONT color="green">153</FONT>                    if (desiredState == STARTED) {<a name="line.153"></a>
+<FONT color="green">154</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": restarting");<a name="line.154"></a>
+<FONT color="green">155</FONT>                        mActivityThread.performRestartActivity(r);<a name="line.155"></a>
+<FONT color="green">156</FONT>                        r.curState = STARTED;<a name="line.156"></a>
+<FONT color="green">157</FONT>                    }<a name="line.157"></a>
+<FONT color="green">158</FONT>                    if (desiredState == RESUMED) {<a name="line.158"></a>
+<FONT color="green">159</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": restarting and resuming");<a name="line.159"></a>
+<FONT color="green">160</FONT>                        mActivityThread.performRestartActivity(r);<a name="line.160"></a>
+<FONT color="green">161</FONT>                        mActivityThread.performResumeActivity(r, true);<a name="line.161"></a>
+<FONT color="green">162</FONT>                        r.curState = RESUMED;<a name="line.162"></a>
+<FONT color="green">163</FONT>                    }<a name="line.163"></a>
+<FONT color="green">164</FONT>                    return;<a name="line.164"></a>
+<FONT color="green">165</FONT>                    <a name="line.165"></a>
+<FONT color="green">166</FONT>                case STARTED:<a name="line.166"></a>
+<FONT color="green">167</FONT>                    if (desiredState == RESUMED) {<a name="line.167"></a>
+<FONT color="green">168</FONT>                        // Need to resume it...<a name="line.168"></a>
+<FONT color="green">169</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": resuming");<a name="line.169"></a>
+<FONT color="green">170</FONT>                        mActivityThread.performResumeActivity(r, true);<a name="line.170"></a>
+<FONT color="green">171</FONT>                        r.instanceState = null;<a name="line.171"></a>
+<FONT color="green">172</FONT>                        r.curState = RESUMED;<a name="line.172"></a>
+<FONT color="green">173</FONT>                    }<a name="line.173"></a>
+<FONT color="green">174</FONT>                    if (desiredState == CREATED) {<a name="line.174"></a>
+<FONT color="green">175</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": stopping");<a name="line.175"></a>
+<FONT color="green">176</FONT>                        mActivityThread.performStopActivity(r);<a name="line.176"></a>
+<FONT color="green">177</FONT>                        r.curState = CREATED;<a name="line.177"></a>
+<FONT color="green">178</FONT>                    }<a name="line.178"></a>
+<FONT color="green">179</FONT>                    return;<a name="line.179"></a>
+<FONT color="green">180</FONT>                    <a name="line.180"></a>
+<FONT color="green">181</FONT>                case RESUMED:<a name="line.181"></a>
+<FONT color="green">182</FONT>                    if (desiredState == STARTED) {<a name="line.182"></a>
+<FONT color="green">183</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": pausing");<a name="line.183"></a>
+<FONT color="green">184</FONT>                        performPause(r, mFinishing);<a name="line.184"></a>
+<FONT color="green">185</FONT>                        r.curState = STARTED;<a name="line.185"></a>
+<FONT color="green">186</FONT>                    }<a name="line.186"></a>
+<FONT color="green">187</FONT>                    if (desiredState == CREATED) {<a name="line.187"></a>
+<FONT color="green">188</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": pausing");<a name="line.188"></a>
+<FONT color="green">189</FONT>                        performPause(r, mFinishing);<a name="line.189"></a>
+<FONT color="green">190</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": stopping");<a name="line.190"></a>
+<FONT color="green">191</FONT>                        mActivityThread.performStopActivity(r);<a name="line.191"></a>
+<FONT color="green">192</FONT>                        r.curState = CREATED;<a name="line.192"></a>
+<FONT color="green">193</FONT>                    }<a name="line.193"></a>
+<FONT color="green">194</FONT>                    return;<a name="line.194"></a>
+<FONT color="green">195</FONT>            }<a name="line.195"></a>
+<FONT color="green">196</FONT>        }<a name="line.196"></a>
+<FONT color="green">197</FONT>        <a name="line.197"></a>
+<FONT color="green">198</FONT>        private void performPause(LocalActivityRecord r, boolean finishing) {<a name="line.198"></a>
+<FONT color="green">199</FONT>            boolean needState = r.instanceState == null;<a name="line.199"></a>
+<FONT color="green">200</FONT>            Bundle instanceState = mActivityThread.performPauseActivity(r,<a name="line.200"></a>
+<FONT color="green">201</FONT>                    finishing, needState);<a name="line.201"></a>
+<FONT color="green">202</FONT>            if (needState) {<a name="line.202"></a>
+<FONT color="green">203</FONT>                r.instanceState = instanceState;<a name="line.203"></a>
+<FONT color="green">204</FONT>            }<a name="line.204"></a>
+<FONT color="green">205</FONT>        }<a name="line.205"></a>
+<FONT color="green">206</FONT>        <a name="line.206"></a>
+<FONT color="green">207</FONT>        /**<a name="line.207"></a>
+<FONT color="green">208</FONT>         * Start a new activity running in the group.  Every activity you start<a name="line.208"></a>
+<FONT color="green">209</FONT>         * must have a unique string ID associated with it -- this is used to keep<a name="line.209"></a>
+<FONT color="green">210</FONT>         * track of the activity, so that if you later call startActivity() again<a name="line.210"></a>
+<FONT color="green">211</FONT>         * on it the same activity object will be retained.<a name="line.211"></a>
+<FONT color="green">212</FONT>         * <a name="line.212"></a>
+<FONT color="green">213</FONT>         * &lt;p&gt;When there had previously been an activity started under this id,<a name="line.213"></a>
+<FONT color="green">214</FONT>         * it may either be destroyed and a new one started, or the current<a name="line.214"></a>
+<FONT color="green">215</FONT>         * one re-used, based on these conditions, in order:&lt;/p&gt;<a name="line.215"></a>
+<FONT color="green">216</FONT>         * <a name="line.216"></a>
+<FONT color="green">217</FONT>         * &lt;ul&gt;<a name="line.217"></a>
+<FONT color="green">218</FONT>         * &lt;li&gt; If the Intent maps to a different activity component than is<a name="line.218"></a>
+<FONT color="green">219</FONT>         * currently running, the current activity is finished and a new one<a name="line.219"></a>
+<FONT color="green">220</FONT>         * started.<a name="line.220"></a>
+<FONT color="green">221</FONT>         * &lt;li&gt; If the current activity uses a non-multiple launch mode (such<a name="line.221"></a>
+<FONT color="green">222</FONT>         * as singleTop), or the Intent has the<a name="line.222"></a>
+<FONT color="green">223</FONT>         * {@link Intent#FLAG_ACTIVITY_SINGLE_TOP} flag set, then the current<a name="line.223"></a>
+<FONT color="green">224</FONT>         * activity will remain running and its<a name="line.224"></a>
+<FONT color="green">225</FONT>         * {@link Activity#onNewIntent(Intent) Activity.onNewIntent()} method<a name="line.225"></a>
+<FONT color="green">226</FONT>         * called.<a name="line.226"></a>
+<FONT color="green">227</FONT>         * &lt;li&gt; If the new Intent is the same (excluding extras) as the previous<a name="line.227"></a>
+<FONT color="green">228</FONT>         * one, and the new Intent does not have the<a name="line.228"></a>
+<FONT color="green">229</FONT>         * {@link Intent#FLAG_ACTIVITY_CLEAR_TOP} set, then the current activity<a name="line.229"></a>
+<FONT color="green">230</FONT>         * will remain running as-is.<a name="line.230"></a>
+<FONT color="green">231</FONT>         * &lt;li&gt; Otherwise, the current activity will be finished and a new<a name="line.231"></a>
+<FONT color="green">232</FONT>         * one started.<a name="line.232"></a>
+<FONT color="green">233</FONT>         * &lt;/ul&gt;<a name="line.233"></a>
+<FONT color="green">234</FONT>         * <a name="line.234"></a>
+<FONT color="green">235</FONT>         * &lt;p&gt;If the given Intent can not be resolved to an available Activity,<a name="line.235"></a>
+<FONT color="green">236</FONT>         * this method throws {@link android.content.ActivityNotFoundException}.<a name="line.236"></a>
+<FONT color="green">237</FONT>         * <a name="line.237"></a>
+<FONT color="green">238</FONT>         * &lt;p&gt;Warning: There is an issue where, if the Intent does not<a name="line.238"></a>
+<FONT color="green">239</FONT>         * include an explicit component, we can restore the state for a different<a name="line.239"></a>
+<FONT color="green">240</FONT>         * activity class than was previously running when the state was saved (if<a name="line.240"></a>
+<FONT color="green">241</FONT>         * the set of available activities changes between those points).<a name="line.241"></a>
+<FONT color="green">242</FONT>         * <a name="line.242"></a>
+<FONT color="green">243</FONT>         * @param id Unique identifier of the activity to be started<a name="line.243"></a>
+<FONT color="green">244</FONT>         * @param intent The Intent describing the activity to be started<a name="line.244"></a>
+<FONT color="green">245</FONT>         * <a name="line.245"></a>
+<FONT color="green">246</FONT>         * @return Returns the window of the activity.  The caller needs to take<a name="line.246"></a>
+<FONT color="green">247</FONT>         * care of adding this window to a view hierarchy, and likewise dealing<a name="line.247"></a>
+<FONT color="green">248</FONT>         * with removing the old window if the activity has changed.<a name="line.248"></a>
+<FONT color="green">249</FONT>         * <a name="line.249"></a>
+<FONT color="green">250</FONT>         * @throws android.content.ActivityNotFoundException<a name="line.250"></a>
+<FONT color="green">251</FONT>         */<a name="line.251"></a>
+<FONT color="green">252</FONT>        public Window startActivity(String id, Intent intent) {<a name="line.252"></a>
+<FONT color="green">253</FONT>            if (mCurState == INITIALIZING) {<a name="line.253"></a>
+<FONT color="green">254</FONT>                throw new IllegalStateException(<a name="line.254"></a>
+<FONT color="green">255</FONT>                        "Activities can't be added until the containing group has been created.");<a name="line.255"></a>
+<FONT color="green">256</FONT>            }<a name="line.256"></a>
+<FONT color="green">257</FONT>            <a name="line.257"></a>
+<FONT color="green">258</FONT>            boolean adding = false;<a name="line.258"></a>
+<FONT color="green">259</FONT>            boolean sameIntent = false;<a name="line.259"></a>
+<FONT color="green">260</FONT>    <a name="line.260"></a>
+<FONT color="green">261</FONT>            ActivityInfo aInfo = null;<a name="line.261"></a>
+<FONT color="green">262</FONT>            <a name="line.262"></a>
+<FONT color="green">263</FONT>            // Already have information about the new activity id?<a name="line.263"></a>
+<FONT color="green">264</FONT>            LocalActivityRecord r = mActivities.get(id);<a name="line.264"></a>
+<FONT color="green">265</FONT>            if (r == null) {<a name="line.265"></a>
+<FONT color="green">266</FONT>                // Need to create it...<a name="line.266"></a>
+<FONT color="green">267</FONT>                r = new LocalActivityRecord(id, intent);<a name="line.267"></a>
+<FONT color="green">268</FONT>                adding = true;<a name="line.268"></a>
+<FONT color="green">269</FONT>            } else if (r.intent != null) {<a name="line.269"></a>
+<FONT color="green">270</FONT>                sameIntent = r.intent.filterEquals(intent); <a name="line.270"></a>
+<FONT color="green">271</FONT>                if (sameIntent) {<a name="line.271"></a>
+<FONT color="green">272</FONT>                    // We are starting the same activity.<a name="line.272"></a>
+<FONT color="green">273</FONT>                    aInfo = r.activityInfo;<a name="line.273"></a>
+<FONT color="green">274</FONT>                }<a name="line.274"></a>
+<FONT color="green">275</FONT>            }<a name="line.275"></a>
+<FONT color="green">276</FONT>            if (aInfo == null) {<a name="line.276"></a>
+<FONT color="green">277</FONT>                aInfo = mActivityThread.resolveActivityInfo(intent);<a name="line.277"></a>
+<FONT color="green">278</FONT>            }<a name="line.278"></a>
+<FONT color="green">279</FONT>            <a name="line.279"></a>
+<FONT color="green">280</FONT>            // Pause the currently running activity if there is one and only a single<a name="line.280"></a>
+<FONT color="green">281</FONT>            // activity is allowed to be running at a time.<a name="line.281"></a>
+<FONT color="green">282</FONT>            if (mSingleMode) {<a name="line.282"></a>
+<FONT color="green">283</FONT>                LocalActivityRecord old = mResumed;<a name="line.283"></a>
+<FONT color="green">284</FONT>        <a name="line.284"></a>
+<FONT color="green">285</FONT>                // If there was a previous activity, and it is not the current<a name="line.285"></a>
+<FONT color="green">286</FONT>                // activity, we need to stop it.<a name="line.286"></a>
+<FONT color="green">287</FONT>                if (old != null &amp;&amp; old != r &amp;&amp; mCurState == RESUMED) {<a name="line.287"></a>
+<FONT color="green">288</FONT>                    moveToState(old, STARTED);<a name="line.288"></a>
+<FONT color="green">289</FONT>                }<a name="line.289"></a>
+<FONT color="green">290</FONT>            }<a name="line.290"></a>
+<FONT color="green">291</FONT>    <a name="line.291"></a>
+<FONT color="green">292</FONT>            if (adding) {<a name="line.292"></a>
+<FONT color="green">293</FONT>                // It's a brand new world.<a name="line.293"></a>
+<FONT color="green">294</FONT>                mActivities.put(id, r);<a name="line.294"></a>
+<FONT color="green">295</FONT>                mActivityArray.add(r);<a name="line.295"></a>
+<FONT color="green">296</FONT>            } else if (r.activityInfo != null) {<a name="line.296"></a>
+<FONT color="green">297</FONT>                // If the new activity is the same as the current one, then<a name="line.297"></a>
+<FONT color="green">298</FONT>                // we may be able to reuse it.<a name="line.298"></a>
+<FONT color="green">299</FONT>                if (aInfo == r.activityInfo ||<a name="line.299"></a>
+<FONT color="green">300</FONT>                        (aInfo.name.equals(r.activityInfo.name) &amp;&amp;<a name="line.300"></a>
+<FONT color="green">301</FONT>                                aInfo.packageName.equals(r.activityInfo.packageName))) {<a name="line.301"></a>
+<FONT color="green">302</FONT>                    if (aInfo.launchMode != ActivityInfo.LAUNCH_MULTIPLE ||<a name="line.302"></a>
+<FONT color="green">303</FONT>                            (intent.getFlags()&amp;Intent.FLAG_ACTIVITY_SINGLE_TOP) != 0) {<a name="line.303"></a>
+<FONT color="green">304</FONT>                        // The activity wants onNewIntent() called.<a name="line.304"></a>
+<FONT color="green">305</FONT>                        ArrayList&lt;Intent&gt; intents = new ArrayList&lt;Intent&gt;(1);<a name="line.305"></a>
+<FONT color="green">306</FONT>                        intents.add(intent);<a name="line.306"></a>
+<FONT color="green">307</FONT>                        if (localLOGV) Log.v(TAG, r.id + ": new intent");<a name="line.307"></a>
+<FONT color="green">308</FONT>                        mActivityThread.performNewIntents(r, intents);<a name="line.308"></a>
+<FONT color="green">309</FONT>                        r.intent = intent;<a name="line.309"></a>
+<FONT color="green">310</FONT>                        moveToState(r, mCurState);<a name="line.310"></a>
+<FONT color="green">311</FONT>                        if (mSingleMode) {<a name="line.311"></a>
+<FONT color="green">312</FONT>                            mResumed = r;<a name="line.312"></a>
+<FONT color="green">313</FONT>                        }<a name="line.313"></a>
+<FONT color="green">314</FONT>                        return r.window;<a name="line.314"></a>
+<FONT color="green">315</FONT>                    }<a name="line.315"></a>
+<FONT color="green">316</FONT>                    if (sameIntent &amp;&amp;<a name="line.316"></a>
+<FONT color="green">317</FONT>                            (intent.getFlags()&amp;Intent.FLAG_ACTIVITY_CLEAR_TOP) == 0) {<a name="line.317"></a>
+<FONT color="green">318</FONT>                        // We are showing the same thing, so this activity is<a name="line.318"></a>
+<FONT color="green">319</FONT>                        // just resumed and stays as-is.<a name="line.319"></a>
+<FONT color="green">320</FONT>                        r.intent = intent;<a name="line.320"></a>
+<FONT color="green">321</FONT>                        moveToState(r, mCurState);<a name="line.321"></a>
+<FONT color="green">322</FONT>                        if (mSingleMode) {<a name="line.322"></a>
+<FONT color="green">323</FONT>                            mResumed = r;<a name="line.323"></a>
+<FONT color="green">324</FONT>                        }<a name="line.324"></a>
+<FONT color="green">325</FONT>                        return r.window;<a name="line.325"></a>
+<FONT color="green">326</FONT>                    }<a name="line.326"></a>
+<FONT color="green">327</FONT>                }<a name="line.327"></a>
+<FONT color="green">328</FONT>                <a name="line.328"></a>
+<FONT color="green">329</FONT>                // The new activity is different than the current one, or it<a name="line.329"></a>
+<FONT color="green">330</FONT>                // is a multiple launch activity, so we need to destroy what<a name="line.330"></a>
+<FONT color="green">331</FONT>                // is currently there.<a name="line.331"></a>
+<FONT color="green">332</FONT>                performDestroy(r, true);<a name="line.332"></a>
+<FONT color="green">333</FONT>            }<a name="line.333"></a>
+<FONT color="green">334</FONT>            <a name="line.334"></a>
+<FONT color="green">335</FONT>            r.intent = intent;<a name="line.335"></a>
+<FONT color="green">336</FONT>            r.curState = INITIALIZING;<a name="line.336"></a>
+<FONT color="green">337</FONT>            r.activityInfo = aInfo;<a name="line.337"></a>
+<FONT color="green">338</FONT>    <a name="line.338"></a>
+<FONT color="green">339</FONT>            moveToState(r, mCurState);<a name="line.339"></a>
+<FONT color="green">340</FONT>    <a name="line.340"></a>
+<FONT color="green">341</FONT>            // When in single mode keep track of the current activity<a name="line.341"></a>
+<FONT color="green">342</FONT>            if (mSingleMode) {<a name="line.342"></a>
+<FONT color="green">343</FONT>                mResumed = r;<a name="line.343"></a>
+<FONT color="green">344</FONT>            }<a name="line.344"></a>
+<FONT color="green">345</FONT>            return r.window;<a name="line.345"></a>
+<FONT color="green">346</FONT>        }<a name="line.346"></a>
+<FONT color="green">347</FONT>    <a name="line.347"></a>
+<FONT color="green">348</FONT>        private Window performDestroy(LocalActivityRecord r, boolean finish) {<a name="line.348"></a>
+<FONT color="green">349</FONT>            Window win = null;<a name="line.349"></a>
+<FONT color="green">350</FONT>            win = r.window;<a name="line.350"></a>
+<FONT color="green">351</FONT>            if (r.curState == RESUMED &amp;&amp; !finish) {<a name="line.351"></a>
+<FONT color="green">352</FONT>                performPause(r, finish);<a name="line.352"></a>
+<FONT color="green">353</FONT>            }<a name="line.353"></a>
+<FONT color="green">354</FONT>            if (localLOGV) Log.v(TAG, r.id + ": destroying");<a name="line.354"></a>
+<FONT color="green">355</FONT>            mActivityThread.performDestroyActivity(r, finish);<a name="line.355"></a>
+<FONT color="green">356</FONT>            r.activity = null;<a name="line.356"></a>
+<FONT color="green">357</FONT>            r.window = null;<a name="line.357"></a>
+<FONT color="green">358</FONT>            if (finish) {<a name="line.358"></a>
+<FONT color="green">359</FONT>                r.instanceState = null;<a name="line.359"></a>
+<FONT color="green">360</FONT>            }<a name="line.360"></a>
+<FONT color="green">361</FONT>            r.curState = DESTROYED;<a name="line.361"></a>
+<FONT color="green">362</FONT>            return win;<a name="line.362"></a>
+<FONT color="green">363</FONT>        }<a name="line.363"></a>
+<FONT color="green">364</FONT>        <a name="line.364"></a>
+<FONT color="green">365</FONT>        /**<a name="line.365"></a>
+<FONT color="green">366</FONT>         * Destroy the activity associated with a particular id.  This activity<a name="line.366"></a>
+<FONT color="green">367</FONT>         * will go through the normal lifecycle events and fine onDestroy(), and<a name="line.367"></a>
+<FONT color="green">368</FONT>         * then the id removed from the group.<a name="line.368"></a>
+<FONT color="green">369</FONT>         * <a name="line.369"></a>
+<FONT color="green">370</FONT>         * @param id Unique identifier of the activity to be destroyed<a name="line.370"></a>
+<FONT color="green">371</FONT>         * @param finish If true, this activity will be finished, so its id and<a name="line.371"></a>
+<FONT color="green">372</FONT>         * all state are removed from the group.<a name="line.372"></a>
+<FONT color="green">373</FONT>         * <a name="line.373"></a>
+<FONT color="green">374</FONT>         * @return Returns the window that was used to display the activity, or<a name="line.374"></a>
+<FONT color="green">375</FONT>         * null if there was none.<a name="line.375"></a>
+<FONT color="green">376</FONT>         */<a name="line.376"></a>
+<FONT color="green">377</FONT>        public Window destroyActivity(String id, boolean finish) {<a name="line.377"></a>
+<FONT color="green">378</FONT>            LocalActivityRecord r = mActivities.get(id);<a name="line.378"></a>
+<FONT color="green">379</FONT>            Window win = null;<a name="line.379"></a>
+<FONT color="green">380</FONT>            if (r != null) {<a name="line.380"></a>
+<FONT color="green">381</FONT>                win = performDestroy(r, finish);<a name="line.381"></a>
+<FONT color="green">382</FONT>                if (finish) {<a name="line.382"></a>
+<FONT color="green">383</FONT>                    mActivities.remove(r);<a name="line.383"></a>
+<FONT color="green">384</FONT>                }<a name="line.384"></a>
+<FONT color="green">385</FONT>            }<a name="line.385"></a>
+<FONT color="green">386</FONT>            return win;<a name="line.386"></a>
+<FONT color="green">387</FONT>        }<a name="line.387"></a>
+<FONT color="green">388</FONT>        <a name="line.388"></a>
+<FONT color="green">389</FONT>        /**<a name="line.389"></a>
+<FONT color="green">390</FONT>         * Retrieve the Activity that is currently running.<a name="line.390"></a>
+<FONT color="green">391</FONT>         * <a name="line.391"></a>
+<FONT color="green">392</FONT>         * @return the currently running (resumed) Activity, or null if there is<a name="line.392"></a>
+<FONT color="green">393</FONT>         *         not one<a name="line.393"></a>
+<FONT color="green">394</FONT>         * <a name="line.394"></a>
+<FONT color="green">395</FONT>         * @see #startActivity<a name="line.395"></a>
+<FONT color="green">396</FONT>         * @see #getCurrentId<a name="line.396"></a>
+<FONT color="green">397</FONT>         */<a name="line.397"></a>
+<FONT color="green">398</FONT>        public Activity getCurrentActivity() {<a name="line.398"></a>
+<FONT color="green">399</FONT>            return mResumed != null ? mResumed.activity : null;<a name="line.399"></a>
+<FONT color="green">400</FONT>        }<a name="line.400"></a>
+<FONT color="green">401</FONT>    <a name="line.401"></a>
+<FONT color="green">402</FONT>        /**<a name="line.402"></a>
+<FONT color="green">403</FONT>         * Retrieve the ID of the activity that is currently running.<a name="line.403"></a>
+<FONT color="green">404</FONT>         * <a name="line.404"></a>
+<FONT color="green">405</FONT>         * @return the ID of the currently running (resumed) Activity, or null if<a name="line.405"></a>
+<FONT color="green">406</FONT>         *         there is not one<a name="line.406"></a>
+<FONT color="green">407</FONT>         * <a name="line.407"></a>
+<FONT color="green">408</FONT>         * @see #startActivity<a name="line.408"></a>
+<FONT color="green">409</FONT>         * @see #getCurrentActivity<a name="line.409"></a>
+<FONT color="green">410</FONT>         */<a name="line.410"></a>
+<FONT color="green">411</FONT>        public String getCurrentId() {<a name="line.411"></a>
+<FONT color="green">412</FONT>            return mResumed != null ? mResumed.id : null;<a name="line.412"></a>
+<FONT color="green">413</FONT>        }<a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>        /**<a name="line.415"></a>
+<FONT color="green">416</FONT>         * Return the Activity object associated with a string ID.<a name="line.416"></a>
+<FONT color="green">417</FONT>         * <a name="line.417"></a>
+<FONT color="green">418</FONT>         * @see #startActivity<a name="line.418"></a>
+<FONT color="green">419</FONT>         * <a name="line.419"></a>
+<FONT color="green">420</FONT>         * @return the associated Activity object, or null if the id is unknown or<a name="line.420"></a>
+<FONT color="green">421</FONT>         *         its activity is not currently instantiated<a name="line.421"></a>
+<FONT color="green">422</FONT>         */<a name="line.422"></a>
+<FONT color="green">423</FONT>        public Activity getActivity(String id) {<a name="line.423"></a>
+<FONT color="green">424</FONT>            LocalActivityRecord r = mActivities.get(id);<a name="line.424"></a>
+<FONT color="green">425</FONT>            return r != null ? r.activity : null;<a name="line.425"></a>
+<FONT color="green">426</FONT>        }<a name="line.426"></a>
+<FONT color="green">427</FONT>    <a name="line.427"></a>
+<FONT color="green">428</FONT>        /**<a name="line.428"></a>
+<FONT color="green">429</FONT>         * Restore a state that was previously returned by {@link #saveInstanceState}.  This<a name="line.429"></a>
+<FONT color="green">430</FONT>         * adds to the activity group information about all activity IDs that had<a name="line.430"></a>
+<FONT color="green">431</FONT>         * previously been saved, even if they have not been started yet, so if the<a name="line.431"></a>
+<FONT color="green">432</FONT>         * user later navigates to them the correct state will be restored.<a name="line.432"></a>
+<FONT color="green">433</FONT>         * <a name="line.433"></a>
+<FONT color="green">434</FONT>         * &lt;p&gt;Note: This does &lt;b&gt;not&lt;/b&gt; change the current running activity, or<a name="line.434"></a>
+<FONT color="green">435</FONT>         * start whatever activity was previously running when the state was saved.<a name="line.435"></a>
+<FONT color="green">436</FONT>         * That is up to the client to do, in whatever way it thinks is best.<a name="line.436"></a>
+<FONT color="green">437</FONT>         * <a name="line.437"></a>
+<FONT color="green">438</FONT>         * @param state a previously saved state; does nothing if this is null<a name="line.438"></a>
+<FONT color="green">439</FONT>         * <a name="line.439"></a>
+<FONT color="green">440</FONT>         * @see #saveInstanceState<a name="line.440"></a>
+<FONT color="green">441</FONT>         */<a name="line.441"></a>
+<FONT color="green">442</FONT>        public void dispatchCreate(Bundle state) {<a name="line.442"></a>
+<FONT color="green">443</FONT>            if (state != null) {<a name="line.443"></a>
+<FONT color="green">444</FONT>                final Iterator&lt;String&gt; i = state.keySet().iterator();<a name="line.444"></a>
+<FONT color="green">445</FONT>                while (i.hasNext()) {<a name="line.445"></a>
+<FONT color="green">446</FONT>                    try {<a name="line.446"></a>
+<FONT color="green">447</FONT>                        final String id = i.next();<a name="line.447"></a>
+<FONT color="green">448</FONT>                        final Bundle astate = state.getBundle(id);<a name="line.448"></a>
+<FONT color="green">449</FONT>                        LocalActivityRecord r = mActivities.get(id);<a name="line.449"></a>
+<FONT color="green">450</FONT>                        if (r != null) {<a name="line.450"></a>
+<FONT color="green">451</FONT>                            r.instanceState = astate;<a name="line.451"></a>
+<FONT color="green">452</FONT>                        } else {<a name="line.452"></a>
+<FONT color="green">453</FONT>                            r = new LocalActivityRecord(id, null);<a name="line.453"></a>
+<FONT color="green">454</FONT>                            r.instanceState = astate;<a name="line.454"></a>
+<FONT color="green">455</FONT>                            mActivities.put(id, r);<a name="line.455"></a>
+<FONT color="green">456</FONT>                            mActivityArray.add(r);<a name="line.456"></a>
+<FONT color="green">457</FONT>                        }<a name="line.457"></a>
+<FONT color="green">458</FONT>                    } catch (Exception e) {<a name="line.458"></a>
+<FONT color="green">459</FONT>                        // Recover from -all- app errors.<a name="line.459"></a>
+<FONT color="green">460</FONT>                        Log.e(TAG,<a name="line.460"></a>
+<FONT color="green">461</FONT>                              "Exception thrown when restoring LocalActivityManager state",<a name="line.461"></a>
+<FONT color="green">462</FONT>                              e);<a name="line.462"></a>
+<FONT color="green">463</FONT>                    }<a name="line.463"></a>
+<FONT color="green">464</FONT>                }<a name="line.464"></a>
+<FONT color="green">465</FONT>            }<a name="line.465"></a>
+<FONT color="green">466</FONT>            <a name="line.466"></a>
+<FONT color="green">467</FONT>            mCurState = CREATED;<a name="line.467"></a>
+<FONT color="green">468</FONT>        }<a name="line.468"></a>
+<FONT color="green">469</FONT>    <a name="line.469"></a>
+<FONT color="green">470</FONT>        /**<a name="line.470"></a>
+<FONT color="green">471</FONT>         * Retrieve the state of all activities known by the group.  For<a name="line.471"></a>
+<FONT color="green">472</FONT>         * activities that have previously run and are now stopped or finished, the<a name="line.472"></a>
+<FONT color="green">473</FONT>         * last saved state is used.  For the current running activity, its<a name="line.473"></a>
+<FONT color="green">474</FONT>         * {@link Activity#onSaveInstanceState} is called to retrieve its current state.<a name="line.474"></a>
+<FONT color="green">475</FONT>         * <a name="line.475"></a>
+<FONT color="green">476</FONT>         * @return a Bundle holding the newly created state of all known activities<a name="line.476"></a>
+<FONT color="green">477</FONT>         * <a name="line.477"></a>
+<FONT color="green">478</FONT>         * @see #dispatchCreate<a name="line.478"></a>
+<FONT color="green">479</FONT>         */<a name="line.479"></a>
+<FONT color="green">480</FONT>        public Bundle saveInstanceState() {<a name="line.480"></a>
+<FONT color="green">481</FONT>            Bundle state = null;<a name="line.481"></a>
+<FONT color="green">482</FONT>    <a name="line.482"></a>
+<FONT color="green">483</FONT>            // FIXME: child activities will freeze as part of onPaused. Do we<a name="line.483"></a>
+<FONT color="green">484</FONT>            // need to do this here?<a name="line.484"></a>
+<FONT color="green">485</FONT>            final int N = mActivityArray.size();<a name="line.485"></a>
+<FONT color="green">486</FONT>            for (int i=0; i&lt;N; i++) {<a name="line.486"></a>
+<FONT color="green">487</FONT>                final LocalActivityRecord r = mActivityArray.get(i);<a name="line.487"></a>
+<FONT color="green">488</FONT>                if (state == null) {<a name="line.488"></a>
+<FONT color="green">489</FONT>                    state = new Bundle();<a name="line.489"></a>
+<FONT color="green">490</FONT>                }<a name="line.490"></a>
+<FONT color="green">491</FONT>                if ((r.instanceState != null || r.curState == RESUMED)<a name="line.491"></a>
+<FONT color="green">492</FONT>                        &amp;&amp; r.activity != null) {<a name="line.492"></a>
+<FONT color="green">493</FONT>                    // We need to save the state now, if we don't currently<a name="line.493"></a>
+<FONT color="green">494</FONT>                    // already have it or the activity is currently resumed.<a name="line.494"></a>
+<FONT color="green">495</FONT>                    final Bundle childState = new Bundle();<a name="line.495"></a>
+<FONT color="green">496</FONT>                    r.activity.onSaveInstanceState(childState);<a name="line.496"></a>
+<FONT color="green">497</FONT>                    r.instanceState = childState;<a name="line.497"></a>
+<FONT color="green">498</FONT>                }<a name="line.498"></a>
+<FONT color="green">499</FONT>                if (r.instanceState != null) {<a name="line.499"></a>
+<FONT color="green">500</FONT>                    state.putBundle(r.id, r.instanceState);<a name="line.500"></a>
+<FONT color="green">501</FONT>                }<a name="line.501"></a>
+<FONT color="green">502</FONT>            }<a name="line.502"></a>
+<FONT color="green">503</FONT>    <a name="line.503"></a>
+<FONT color="green">504</FONT>            return state;<a name="line.504"></a>
+<FONT color="green">505</FONT>        }<a name="line.505"></a>
+<FONT color="green">506</FONT>    <a name="line.506"></a>
+<FONT color="green">507</FONT>        /**<a name="line.507"></a>
+<FONT color="green">508</FONT>         * Called by the container activity in its {@link Activity#onResume} so<a name="line.508"></a>
+<FONT color="green">509</FONT>         * that LocalActivityManager can perform the corresponding action on the<a name="line.509"></a>
+<FONT color="green">510</FONT>         * activities it holds.<a name="line.510"></a>
+<FONT color="green">511</FONT>         * <a name="line.511"></a>
+<FONT color="green">512</FONT>         * @see Activity#onResume<a name="line.512"></a>
+<FONT color="green">513</FONT>         */<a name="line.513"></a>
+<FONT color="green">514</FONT>        public void dispatchResume() {<a name="line.514"></a>
+<FONT color="green">515</FONT>            mCurState = RESUMED;<a name="line.515"></a>
+<FONT color="green">516</FONT>            if (mSingleMode) {<a name="line.516"></a>
+<FONT color="green">517</FONT>                if (mResumed != null) {<a name="line.517"></a>
+<FONT color="green">518</FONT>                    moveToState(mResumed, RESUMED);<a name="line.518"></a>
+<FONT color="green">519</FONT>                }<a name="line.519"></a>
+<FONT color="green">520</FONT>            } else {<a name="line.520"></a>
+<FONT color="green">521</FONT>                final int N = mActivityArray.size();<a name="line.521"></a>
+<FONT color="green">522</FONT>                for (int i=0; i&lt;N; i++) {<a name="line.522"></a>
+<FONT color="green">523</FONT>                    moveToState(mActivityArray.get(i), RESUMED);<a name="line.523"></a>
+<FONT color="green">524</FONT>                }<a name="line.524"></a>
+<FONT color="green">525</FONT>            }<a name="line.525"></a>
+<FONT color="green">526</FONT>        }<a name="line.526"></a>
+<FONT color="green">527</FONT>    <a name="line.527"></a>
+<FONT color="green">528</FONT>        /**<a name="line.528"></a>
+<FONT color="green">529</FONT>         * Called by the container activity in its {@link Activity#onPause} so<a name="line.529"></a>
+<FONT color="green">530</FONT>         * that LocalActivityManager can perform the corresponding action on the<a name="line.530"></a>
+<FONT color="green">531</FONT>         * activities it holds.<a name="line.531"></a>
+<FONT color="green">532</FONT>         * <a name="line.532"></a>
+<FONT color="green">533</FONT>         * @param finishing set to true if the parent activity has been finished;<a name="line.533"></a>
+<FONT color="green">534</FONT>         *                  this can be determined by calling<a name="line.534"></a>
+<FONT color="green">535</FONT>         *                  Activity.isFinishing()<a name="line.535"></a>
+<FONT color="green">536</FONT>         * <a name="line.536"></a>
+<FONT color="green">537</FONT>         * @see Activity#onPause<a name="line.537"></a>
+<FONT color="green">538</FONT>         * @see Activity#isFinishing<a name="line.538"></a>
+<FONT color="green">539</FONT>         */<a name="line.539"></a>
+<FONT color="green">540</FONT>        public void dispatchPause(boolean finishing) {<a name="line.540"></a>
+<FONT color="green">541</FONT>            if (finishing) {<a name="line.541"></a>
+<FONT color="green">542</FONT>                mFinishing = true;<a name="line.542"></a>
+<FONT color="green">543</FONT>            }<a name="line.543"></a>
+<FONT color="green">544</FONT>            mCurState = STARTED;<a name="line.544"></a>
+<FONT color="green">545</FONT>            if (mSingleMode) {<a name="line.545"></a>
+<FONT color="green">546</FONT>                if (mResumed != null) {<a name="line.546"></a>
+<FONT color="green">547</FONT>                    moveToState(mResumed, STARTED);<a name="line.547"></a>
+<FONT color="green">548</FONT>                }<a name="line.548"></a>
+<FONT color="green">549</FONT>            } else {<a name="line.549"></a>
+<FONT color="green">550</FONT>                final int N = mActivityArray.size();<a name="line.550"></a>
+<FONT color="green">551</FONT>                for (int i=0; i&lt;N; i++) {<a name="line.551"></a>
+<FONT color="green">552</FONT>                    LocalActivityRecord r = mActivityArray.get(i);<a name="line.552"></a>
+<FONT color="green">553</FONT>                    if (r.curState == RESUMED) {<a name="line.553"></a>
+<FONT color="green">554</FONT>                        moveToState(r, STARTED);<a name="line.554"></a>
+<FONT color="green">555</FONT>                    }<a name="line.555"></a>
+<FONT color="green">556</FONT>                }<a name="line.556"></a>
+<FONT color="green">557</FONT>            }<a name="line.557"></a>
+<FONT color="green">558</FONT>        }<a name="line.558"></a>
+<FONT color="green">559</FONT>    <a name="line.559"></a>
+<FONT color="green">560</FONT>        /**<a name="line.560"></a>
+<FONT color="green">561</FONT>         * Called by the container activity in its {@link Activity#onStop} so<a name="line.561"></a>
+<FONT color="green">562</FONT>         * that LocalActivityManager can perform the corresponding action on the<a name="line.562"></a>
+<FONT color="green">563</FONT>         * activities it holds.<a name="line.563"></a>
+<FONT color="green">564</FONT>         * <a name="line.564"></a>
+<FONT color="green">565</FONT>         * @see Activity#onStop<a name="line.565"></a>
+<FONT color="green">566</FONT>         */<a name="line.566"></a>
+<FONT color="green">567</FONT>        public void dispatchStop() {<a name="line.567"></a>
+<FONT color="green">568</FONT>            mCurState = CREATED;<a name="line.568"></a>
+<FONT color="green">569</FONT>            final int N = mActivityArray.size();<a name="line.569"></a>
+<FONT color="green">570</FONT>            for (int i=0; i&lt;N; i++) {<a name="line.570"></a>
+<FONT color="green">571</FONT>                LocalActivityRecord r = mActivityArray.get(i);<a name="line.571"></a>
+<FONT color="green">572</FONT>                moveToState(r, CREATED);<a name="line.572"></a>
+<FONT color="green">573</FONT>            }<a name="line.573"></a>
+<FONT color="green">574</FONT>        }<a name="line.574"></a>
+<FONT color="green">575</FONT>        <a name="line.575"></a>
+<FONT color="green">576</FONT>        /**<a name="line.576"></a>
+<FONT color="green">577</FONT>         * Call onRetainNonConfigurationInstance on each child activity and store the<a name="line.577"></a>
+<FONT color="green">578</FONT>         * results in a HashMap by id.  Only construct the HashMap if there is a non-null<a name="line.578"></a>
+<FONT color="green">579</FONT>         * object to store.  Note that this does not support nested ActivityGroups.<a name="line.579"></a>
+<FONT color="green">580</FONT>         * <a name="line.580"></a>
+<FONT color="green">581</FONT>         * {@hide}<a name="line.581"></a>
+<FONT color="green">582</FONT>         */<a name="line.582"></a>
+<FONT color="green">583</FONT>        public HashMap&lt;String,Object&gt; dispatchRetainNonConfigurationInstance() {<a name="line.583"></a>
+<FONT color="green">584</FONT>            HashMap&lt;String,Object&gt; instanceMap = null;<a name="line.584"></a>
+<FONT color="green">585</FONT>            <a name="line.585"></a>
+<FONT color="green">586</FONT>            final int N = mActivityArray.size();<a name="line.586"></a>
+<FONT color="green">587</FONT>            for (int i=0; i&lt;N; i++) {<a name="line.587"></a>
+<FONT color="green">588</FONT>                LocalActivityRecord r = mActivityArray.get(i);<a name="line.588"></a>
+<FONT color="green">589</FONT>                if ((r != null) &amp;&amp; (r.activity != null)) {<a name="line.589"></a>
+<FONT color="green">590</FONT>                    Object instance = r.activity.onRetainNonConfigurationInstance();<a name="line.590"></a>
+<FONT color="green">591</FONT>                    if (instance != null) {<a name="line.591"></a>
+<FONT color="green">592</FONT>                        if (instanceMap == null) {<a name="line.592"></a>
+<FONT color="green">593</FONT>                            instanceMap = new HashMap&lt;String,Object&gt;();<a name="line.593"></a>
+<FONT color="green">594</FONT>                        }<a name="line.594"></a>
+<FONT color="green">595</FONT>                        instanceMap.put(r.id, instance);<a name="line.595"></a>
+<FONT color="green">596</FONT>                    }<a name="line.596"></a>
+<FONT color="green">597</FONT>                }<a name="line.597"></a>
+<FONT color="green">598</FONT>            }<a name="line.598"></a>
+<FONT color="green">599</FONT>            return instanceMap;<a name="line.599"></a>
+<FONT color="green">600</FONT>        }<a name="line.600"></a>
+<FONT color="green">601</FONT>    <a name="line.601"></a>
+<FONT color="green">602</FONT>        /**<a name="line.602"></a>
+<FONT color="green">603</FONT>         * Remove all activities from this LocalActivityManager, performing an<a name="line.603"></a>
+<FONT color="green">604</FONT>         * {@link Activity#onDestroy} on any that are currently instantiated.<a name="line.604"></a>
+<FONT color="green">605</FONT>         */<a name="line.605"></a>
+<FONT color="green">606</FONT>        public void removeAllActivities() {<a name="line.606"></a>
+<FONT color="green">607</FONT>            dispatchDestroy(true);<a name="line.607"></a>
+<FONT color="green">608</FONT>        }<a name="line.608"></a>
+<FONT color="green">609</FONT>    <a name="line.609"></a>
+<FONT color="green">610</FONT>        /**<a name="line.610"></a>
+<FONT color="green">611</FONT>         * Called by the container activity in its {@link Activity#onDestroy} so<a name="line.611"></a>
+<FONT color="green">612</FONT>         * that LocalActivityManager can perform the corresponding action on the<a name="line.612"></a>
+<FONT color="green">613</FONT>         * activities it holds.<a name="line.613"></a>
+<FONT color="green">614</FONT>         * <a name="line.614"></a>
+<FONT color="green">615</FONT>         * @see Activity#onDestroy<a name="line.615"></a>
+<FONT color="green">616</FONT>         */<a name="line.616"></a>
+<FONT color="green">617</FONT>        public void dispatchDestroy(boolean finishing) {<a name="line.617"></a>
+<FONT color="green">618</FONT>            final int N = mActivityArray.size();<a name="line.618"></a>
+<FONT color="green">619</FONT>            for (int i=0; i&lt;N; i++) {<a name="line.619"></a>
+<FONT color="green">620</FONT>                LocalActivityRecord r = mActivityArray.get(i);<a name="line.620"></a>
+<FONT color="green">621</FONT>                if (localLOGV) Log.v(TAG, r.id + ": destroying");<a name="line.621"></a>
+<FONT color="green">622</FONT>                mActivityThread.performDestroyActivity(r, finishing);<a name="line.622"></a>
+<FONT color="green">623</FONT>            }<a name="line.623"></a>
+<FONT color="green">624</FONT>            mActivities.clear();<a name="line.624"></a>
+<FONT color="green">625</FONT>            mActivityArray.clear();<a name="line.625"></a>
+<FONT color="green">626</FONT>        }<a name="line.626"></a>
+<FONT color="green">627</FONT>    }<a name="line.627"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
